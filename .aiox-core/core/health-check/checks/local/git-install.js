@@ -8,8 +8,8 @@
  * @story HCS-2 - Health Check System Implementation
  */
 
-const { execSync } = require('child_process');
 const { BaseCheck, CheckSeverity, CheckDomain } = require('../../base-check');
+const { runFirstAvailable } = require('./command-utils');
 
 /**
  * Minimum required Git version
@@ -45,11 +45,9 @@ class GitInstallCheck extends BaseCheck {
   async execute(_context) {
     try {
       // Check if git is installed
-      const versionOutput = execSync('git --version', {
-        encoding: 'utf8',
+      const versionOutput = runFirstAvailable('git', ['--version'], {
         timeout: 5000,
-        windowsHide: true,
-      }).trim();
+      });
 
       // Parse version
       const versionMatch = versionOutput.match(/(\d+)\.(\d+)\.(\d+)/);
@@ -78,13 +76,13 @@ class GitInstallCheck extends BaseCheck {
       const configIssues = [];
 
       try {
-        execSync('git config user.name', { encoding: 'utf8', windowsHide: true });
+        runFirstAvailable('git', ['config', 'user.name']);
       } catch {
         configIssues.push('user.name not configured');
       }
 
       try {
-        execSync('git config user.email', { encoding: 'utf8', windowsHide: true });
+        runFirstAvailable('git', ['config', 'user.email']);
       } catch {
         configIssues.push('user.email not configured');
       }
@@ -107,11 +105,18 @@ class GitInstallCheck extends BaseCheck {
         details: { version },
       });
     } catch (error) {
+      if ((error.attempts || []).some((attempt) => attempt.includes('EPERM') || attempt.includes('EINVAL'))) {
+        return this.warning('Git binary exists but could not be executed in the current environment', {
+          recommendation: 'Retry in a normal terminal session outside restricted sandboxing',
+          details: { error: error.message, attempts: error.attempts || [] },
+        });
+      }
+
       return this.fail('Git is not installed or not in PATH', {
         recommendation: 'Install Git from https://git-scm.com/downloads',
         healable: false,
         healingTier: 3,
-        details: { error: error.message },
+        details: { error: error.message, attempts: error.attempts || [] },
       });
     }
   }

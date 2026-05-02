@@ -1,8 +1,8 @@
 /**
  * Doctor Check: Skills Count
  *
- * Counts skill directories in .claude/skills/ that contain SKILL.md.
- * PASS: >=7, WARN: 1-6, FAIL: 0 or directory missing.
+ * Counts skill directories in IDE skill locations.
+ * Supports Claude skills and Codex local-first skills.
  *
  * @module aiox-core/doctor/checks/skills-count
  * @story INS-4.8
@@ -13,50 +13,57 @@ const fs = require('fs');
 
 const name = 'skills-count';
 
-async function run(context) {
-  const skillsDir = path.join(context.projectRoot, '.claude', 'skills');
-
+function countSkills(skillsDir) {
   if (!fs.existsSync(skillsDir)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'Skills directory not found (.claude/skills/)',
-      fixCommand: 'npx aiox-core install --force',
-    };
+    return 0;
   }
 
   let entries;
   try {
     entries = fs.readdirSync(skillsDir, { withFileTypes: true });
   } catch {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'Cannot read skills directory',
-      fixCommand: 'npx aiox-core install --force',
-    };
+    return 0;
   }
 
-  const skills = entries.filter(
+  return entries.filter(
     (d) => d.isDirectory() && fs.existsSync(path.join(skillsDir, d.name, 'SKILL.md')),
-  );
+  ).length;
+}
 
-  const count = skills.length;
+async function run(context) {
+  const claudeSkillsDir = path.join(context.projectRoot, '.claude', 'skills');
+  const codexSkillsDir = path.join(context.projectRoot, '.codex', 'skills');
+  const codexAgentsDir = path.join(context.projectRoot, '.codex', 'agents');
+  const claudeCount = countSkills(claudeSkillsDir);
+  const codexCount = countSkills(codexSkillsDir);
+  const totalCount = claudeCount + codexCount;
+  const codexAgentCount = fs.existsSync(codexAgentsDir)
+    ? fs.readdirSync(codexAgentsDir).filter((entry) => entry.endsWith('.md')).length
+    : 0;
 
-  if (count === 0) {
+  if (claudeCount === 0 && codexCount === 0) {
     return {
       check: name,
       status: 'FAIL',
-      message: 'No skills found (expected >=7)',
+      message: 'No skills found in .claude/skills or .codex/skills',
       fixCommand: 'npx aiox-core install --force',
     };
   }
 
-  if (count >= 7) {
+  if (codexCount >= 1 && codexAgentCount >= 10) {
     return {
       check: name,
       status: 'PASS',
-      message: `${count} skills found`,
+      message: `Codex local-first mode active (${codexCount} Codex skill bundles, ${codexAgentCount} agent shortcuts)`,
+      fixCommand: null,
+    };
+  }
+
+  if (totalCount >= 7) {
+    return {
+      check: name,
+      status: 'PASS',
+      message: `${totalCount} skills found across IDEs`,
       fixCommand: null,
     };
   }
@@ -64,7 +71,7 @@ async function run(context) {
   return {
     check: name,
     status: 'WARN',
-    message: `Only ${count}/7 skills found`,
+    message: `Limited skill coverage detected (Claude: ${claudeCount}, Codex: ${codexCount})`,
     fixCommand: 'npx aiox-core install --force',
   };
 }

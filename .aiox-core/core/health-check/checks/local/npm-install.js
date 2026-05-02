@@ -8,8 +8,8 @@
  * @story HCS-2 - Health Check System Implementation
  */
 
-const { execSync } = require('child_process');
 const { BaseCheck, CheckSeverity, CheckDomain } = require('../../base-check');
+const { runFirstAvailable } = require('./command-utils');
 
 /**
  * Minimum required npm version
@@ -45,11 +45,9 @@ class NpmInstallCheck extends BaseCheck {
   async execute(_context) {
     try {
       // Check npm version
-      const npmVersion = execSync('npm --version', {
-        encoding: 'utf8',
+      const npmVersion = runFirstAvailable('npm', ['--version'], {
         timeout: 10000,
-        windowsHide: true,
-      }).trim();
+      });
 
       // Check version meets minimum
       if (this.compareVersions(npmVersion, MIN_NPM_VERSION) < 0) {
@@ -66,10 +64,8 @@ class NpmInstallCheck extends BaseCheck {
 
       // Check npm registry connectivity (quick ping)
       try {
-        execSync('npm ping 2>&1', {
-          encoding: 'utf8',
+        runFirstAvailable('npm', ['ping'], {
           timeout: 10000,
-          windowsHide: true,
         });
       } catch {
         return this.warning(`npm installed (v${npmVersion}) but registry unreachable`, {
@@ -84,11 +80,9 @@ class NpmInstallCheck extends BaseCheck {
       // Get npm config info
       let registry = 'https://registry.npmjs.org/';
       try {
-        registry = execSync('npm config get registry', {
-          encoding: 'utf8',
+        registry = runFirstAvailable('npm', ['config', 'get', 'registry'], {
           timeout: 3000,
-          windowsHide: true,
-        }).trim();
+        });
       } catch {
         // Use default
       }
@@ -100,11 +94,18 @@ class NpmInstallCheck extends BaseCheck {
         },
       });
     } catch (error) {
+      if ((error.attempts || []).some((attempt) => attempt.includes('EPERM') || attempt.includes('EINVAL'))) {
+        return this.warning('npm binary exists but could not be executed in the current environment', {
+          recommendation: 'Retry in a normal terminal session outside restricted sandboxing',
+          details: { error: error.message, attempts: error.attempts || [] },
+        });
+      }
+
       return this.fail('npm is not installed or not in PATH', {
         recommendation: 'Install Node.js from https://nodejs.org (npm is included)',
         healable: false,
         healingTier: 3,
-        details: { error: error.message },
+        details: { error: error.message, attempts: error.attempts || [] },
       });
     }
   }

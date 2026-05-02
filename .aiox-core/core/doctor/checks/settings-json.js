@@ -13,6 +13,22 @@ const fs = require('fs');
 
 const name = 'settings-json';
 
+function hasHookBasedProtection(settings) {
+  const sections = settings.hooks || {};
+  const hookCommands = Object.values(sections)
+    .flatMap((entries) => entries || [])
+    .flatMap((entry) => (entry.hooks || []).map((hook) => hook.command || ''));
+
+  const requiredMarkers = [
+    'gsd-prompt-guard',
+    'gsd-read-guard',
+    'gsd-workflow-guard',
+    'gsd-phase-boundary',
+  ];
+
+  return requiredMarkers.every((marker) => hookCommands.some((command) => command.includes(marker)));
+}
+
 /**
  * Checks that core-config.yaml boundary.protected paths are covered by deny rules.
  * Returns array of unprotected boundary paths.
@@ -91,6 +107,15 @@ async function run(context) {
   const allowCount = allowRules.length;
 
   if (denyCount < 40) {
+    if (hasHookBasedProtection(settings)) {
+      return {
+        check: name,
+        status: 'PASS',
+        message: `Hook-based protection mode active (${allowCount} allow rules, guard hooks configured)`,
+        fixCommand: null,
+      };
+    }
+
     return {
       check: name,
       status: 'WARN',

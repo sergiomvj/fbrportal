@@ -15,28 +15,31 @@ const fs = require('fs');
 const name = 'npm-packages';
 
 async function run(context) {
-  const nodeModulesPath = path.join(context.projectRoot, 'node_modules');
-  // Check 1: Project node_modules
-  if (!fs.existsSync(nodeModulesPath)) {
+  const projectPackageJson = path.join(context.projectRoot, 'package.json');
+  const projectNodeModules = path.join(context.projectRoot, 'node_modules');
+  const aioxCoreDir = path.join(context.projectRoot, '.aiox-core');
+  const aioxCorePackageJson = path.join(aioxCoreDir, 'package.json');
+  const aioxCoreNodeModules = path.join(aioxCoreDir, 'node_modules');
+  const hasProjectPackage = fs.existsSync(projectPackageJson);
+  const hasAioxCorePackage = fs.existsSync(aioxCorePackageJson);
+
+  // Check 1: root install only matters when the root is an npm package.
+  if (hasProjectPackage && !fs.existsSync(projectNodeModules)) {
     return {
       check: name,
       status: 'FAIL',
-      message: 'node_modules not found',
+      message: 'node_modules not found in project root',
       fixCommand: 'npm install',
     };
   }
 
   // Check 2 (INS-4.12): .aiox-core/node_modules/ completeness
-  const aioxCoreDir = path.join(context.projectRoot, '.aiox-core');
-  const aioxCorePackageJson = path.join(aioxCoreDir, 'package.json');
-  const aioxCoreNodeModules = path.join(aioxCoreDir, 'node_modules');
-
-  if (fs.existsSync(aioxCorePackageJson)) {
+  if (hasAioxCorePackage) {
     if (!fs.existsSync(aioxCoreNodeModules)) {
       return {
         check: name,
         status: 'FAIL',
-        message: 'node_modules present, but .aiox-core/node_modules/ missing',
+        message: '.aiox-core/package.json found, but .aiox-core/node_modules/ missing',
         fixCommand: 'cd .aiox-core && npm install --production',
       };
     }
@@ -67,10 +70,21 @@ async function run(context) {
     }
   }
 
+  if (!hasProjectPackage && !hasAioxCorePackage) {
+    return {
+      check: name,
+      status: 'WARN',
+      message: 'No package.json found in project root or .aiox-core',
+      fixCommand: null,
+    };
+  }
+
   return {
     check: name,
     status: 'PASS',
-    message: 'node_modules present' + (fs.existsSync(aioxCoreNodeModules) ? ', .aiox-core deps complete' : ''),
+    message:
+      (hasProjectPackage ? 'project node_modules present' : 'no root package.json to validate') +
+      (fs.existsSync(aioxCoreNodeModules) ? ', .aiox-core deps complete' : ''),
     fixCommand: null,
   };
 }

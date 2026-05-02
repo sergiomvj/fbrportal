@@ -16,8 +16,18 @@ const EXPECTED_HOOKS = ['pre-commit', 'pre-push'];
 
 async function run(context) {
   const huskyDir = path.join(context.projectRoot, '.husky');
+  const rootPackageJson = path.join(context.projectRoot, 'package.json');
 
   if (!fs.existsSync(huskyDir)) {
+    if (!fs.existsSync(rootPackageJson)) {
+      return {
+        check: name,
+        status: 'PASS',
+        message: 'No root package.json; Husky hooks are not expected in this repo layout',
+        fixCommand: null,
+      };
+    }
+
     return {
       check: name,
       status: 'WARN',
