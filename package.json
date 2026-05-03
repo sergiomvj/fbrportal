@@ -12,7 +12,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "test": "turbo test"
+    "test": "turbo test",
+    "stories:auto": "node scripts/stories-auto.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
