@@ -1,0 +1,63 @@
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top left, rgba(120, 220, 202, 0.22), transparent 24rem),
+    radial-gradient(circle at bottom right, rgba(58, 111, 248, 0.24), transparent 20rem),
+    #080b12;
+}
+
+.login-card {
+  width: min(100%, 28rem);
+  padding: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  background: rgba(8, 11, 18, 0.78);
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.38);
+}
+
+.login-copy {
+  color: #afbdd0;
+}
+
+.login-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f3f7fb;
+}
+
+.login-form input[aria-invalid='true'] {
+  border-color: #ff8c8c;
+}
+
+.login-form p[role='alert'] {
+  margin: 0;
+  color: #ffb4b4;
+}
+
+.login-form button {
+  margin-top: 0.5rem;
+  padding: 0.95rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #78dcca;
+  color: #07101e;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}

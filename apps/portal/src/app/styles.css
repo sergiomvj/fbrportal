@@ -1,0 +1,36 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  background: #080b12;
+  color: #f3f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.portal-home {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(49, 130, 206, 0.3), transparent 26rem),
+    linear-gradient(135deg, #07101e 0%, #0f172a 55%, #101820 100%);
+}
+
+.eyebrow {
+  color: #78dcca;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}

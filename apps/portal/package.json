@@ -1,0 +1,31 @@
+{
+  "name": "@fbr/portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -o -e ../../.env -e .env.local -v NODE_ENV=development -- next dev",
+    "build": "dotenv -o -e ../../.env -e .env.local -v NODE_ENV=production -- next build",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fbr/auth": "0.1.0",
+    "@fbr/portal-bridge": "0.1.0",
+    "@fbr/ui": "0.1.0",
+    "@hookform/resolvers": "^5.0.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "iron-session": "^8.0.4",
+    "next": "^15.3.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.56.1",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@fbr/tsconfig": "0.1.0",
+    "dotenv-cli": "^8.0.0"
+  }
+}

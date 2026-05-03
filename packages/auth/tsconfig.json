@@ -1,0 +1,7 @@
+{
+  "extends": "@fbr/tsconfig/react-library.json",
+  "compilerOptions": {
+    "types": ["node", "react"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
