@@ -56,10 +56,11 @@ function run(command, commandArgs, options = {}) {
     return { status: 0, stdout: '', stderr: '' };
   }
 
-  const result = spawnSync(command, commandArgs, {
+  const executable = process.platform === 'win32' && command === 'codex' ? 'codex.cmd' : command;
+  const result = spawnSync(executable, commandArgs, {
     cwd: root,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
+    shell: process.platform === 'win32' && command !== 'codex',
     stdio: options.capture ? 'pipe' : 'inherit',
   });
 
