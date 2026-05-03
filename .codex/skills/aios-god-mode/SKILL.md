@@ -1,8 +1,19 @@
 ---
 name: aios-god-mode
 description: The Supreme AIOS Operator — creates, configures, and orchestrates everything in Synkra AIOS. Creates agents, tasks, workflows, squads, templates, checklists, rules, and data files. Operates all 11 agents, 207+ tasks, 15 workflows. Enforces Constitutional governance, story lifecycle, and delegation matrix. Activates when users mention AIOS, agents, stories, epics, workflows, sprints, quality gates, creating components, or any development orchestration task.
-allowed-tools: Read Write Edit Glob Grep Bash(git:*) Bash(npm:*) Bash(node:*) Bash(mkdir:*) Bash(ls:*) Bash(cp:*)
-argument-hint: [command] [args]
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - Bash(git:*)
+  - Bash(npm:*)
+  - Bash(node:*)
+  - Bash(mkdir:*)
+  - Bash(ls:*)
+  - Bash(cp:*)
+argument-hint: "[command] [args]"
 ---
 
 # AIOS God Mode v3.0 — Supreme Creator Edition
