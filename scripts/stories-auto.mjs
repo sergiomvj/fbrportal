@@ -14,8 +14,6 @@ const max = args.max ? Number(args.max) : Number.POSITIVE_INFINITY;
 const dryRun = Boolean(args['dry-run']);
 
 const runDir = path.join(root, 'docs', 'story-runs');
-mkdirSync(runDir, { recursive: true });
-
 const runId = new Date().toISOString().replaceAll(':', '-').replace(/\.\d+Z$/, 'Z');
 const reportPath = path.join(runDir, `${runId}.md`);
 const report = [`# Story Auto Run ${runId}`, '', `range: ${from}..${to}`, `push: ${shouldPush}`, `dry_run: ${dryRun}`, ''];
@@ -178,6 +176,7 @@ if (!existsSync(storiesDir)) {
 }
 
 ensureCleanWorktree();
+mkdirSync(runDir, { recursive: true });
 
 const stories = readdirSync(storiesDir)
   .filter((name) => name.endsWith('.md'))
