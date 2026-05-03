@@ -56,8 +56,13 @@ function run(command, commandArgs, options = {}) {
     return { status: 0, stdout: '', stderr: '' };
   }
 
-  const executable = process.platform === 'win32' && command === 'codex' ? 'codex.cmd' : command;
-  const result = spawnSync(executable, commandArgs, {
+  const executable = process.platform === 'win32' && command === 'codex' ? 'powershell.exe' : command;
+  const argsForSpawn =
+    process.platform === 'win32' && command === 'codex'
+      ? ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', `& codex ${commandArgs.map(psQuote).join(' ')}`]
+      : commandArgs;
+
+  const result = spawnSync(executable, argsForSpawn, {
     cwd: root,
     encoding: 'utf8',
     shell: process.platform === 'win32' && command !== 'codex',
@@ -69,6 +74,10 @@ function run(command, commandArgs, options = {}) {
     stdout: result.stdout ?? '',
     stderr: result.stderr ?? '',
   };
+}
+
+function psQuote(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
 }
 
 function gitOutput(...gitArgs) {
