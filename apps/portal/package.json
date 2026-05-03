@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@fbr/arva-integration": "0.1.0",
     "@fbr/auth": "0.1.0",
     "@fbr/portal-bridge": "0.1.0",
     "@fbr/ui": "0.1.0",

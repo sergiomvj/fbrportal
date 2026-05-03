@@ -1,0 +1,44 @@
+{
+  "story": "docs/stories/1.2.shared-design-system-arva.md",
+  "command": "*validate-story-draft",
+  "agent": "@po",
+  "decision": "GO",
+  "implementation_readiness_score": 8,
+  "confidence": "Medium-High",
+  "status_change": {
+    "from": "Draft",
+    "to": "Ready"
+  },
+  "summary": "Story 1.2 is now actionable after SM rework. The executor and quality gate assignment is valid, formal PRD and architecture index paths exist, and the Arva contract, security boundary, module consumption contract, non-scope constraints, and test expectations are explicit enough for implementation.",
+  "validated_fixes": [
+    {
+      "id": "EXECUTOR_ASSIGNMENT_INVALID",
+      "result": "Resolved by assigning executor @ux-design-expert and quality_gate @dev."
+    },
+    {
+      "id": "CORE_CONTEXT_MISSING",
+      "result": "Resolved by adding docs/prd.md, docs/prd, docs/architecture.md, and docs/architecture shards expected by core-config.yaml."
+    },
+    {
+      "id": "ARVA_CONTRACT_UNSPECIFIED",
+      "result": "Resolved by defining endpoints, exported functions, domain types, and success/error handling expectations."
+    },
+    {
+      "id": "MODULE_CONSUMPTION_UNCLEAR",
+      "result": "Resolved by specifying shared CSS/export surface, AgentPicker props, module tag filters, callbacks, and no duplicated Arva client logic."
+    },
+    {
+      "id": "SECURITY_REQUIREMENTS_THIN",
+      "result": "Resolved by requiring ARVA_FBRCHAT_SHARED_TOKEN to remain server-only and never be exposed through NEXT_PUBLIC, browser bundles, logs, or rendered props."
+    },
+    {
+      "id": "TESTING_NOT_MAPPED_TO_AC6",
+      "result": "Resolved by adding explicit guard test/static assertion that module-specific workflows are not introduced."
+    }
+  ],
+  "non_blocking_notes": [
+    "Implementation should preserve the Story 1.1 app structure and avoid broad visual rewrites outside the shared token/import surface.",
+    "Accessibility checks are required but may be implemented with the test utilities already present in the workspace."
+  ],
+  "recommended_next_action": "Proceed to @dev or the configured executor for implementation."
+}

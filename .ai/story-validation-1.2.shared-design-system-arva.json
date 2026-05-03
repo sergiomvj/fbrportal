@@ -1,0 +1,50 @@
+{
+  "story": "docs/stories/1.2.shared-design-system-arva.md",
+  "command": "*validate-story-draft",
+  "agent": "@po",
+  "decision": "NO-GO",
+  "implementation_readiness_score": 6,
+  "confidence": "Medium",
+  "summary": "Story is sourced from existing FBR Portal documents and has usable acceptance criteria, but it is blocked by invalid executor/quality gate assignment under the configured story validation rules and by insufficient implementation detail for security, API contracts, and module-facing integration.",
+  "critical_issues": [
+    {
+      "id": "EXECUTOR_ASSIGNMENT_INVALID",
+      "location": "docs/stories/1.2.shared-design-system-arva.md:9",
+      "details": "Story assigns executor @dev and quality_gate @ux-design-expert. The validation task allows quality_gate only from @architect, @dev, or @pm, and the template mapping expects Design/UI Components to use executor @ux-design-expert with quality_gate @dev."
+    },
+    {
+      "id": "CORE_CONTEXT_MISSING",
+      "location": ".aiox-core/core-config.yaml",
+      "details": "core-config.yaml points to docs/prd and docs/architecture, but those paths are absent. The story is traceable to fbr-portal-docs, yet the formal validation inputs required by the task are unavailable."
+    }
+  ],
+  "should_fix_issues": [
+    {
+      "id": "ARVA_CONTRACT_UNSPECIFIED",
+      "location": "docs/stories/1.2.shared-design-system-arva.md:27",
+      "details": "AgentPicker and arva-integration behavior is described at feature level, but request/response shapes, auth header behavior, error handling, and token handling are not specified."
+    },
+    {
+      "id": "MODULE_CONSUMPTION_UNCLEAR",
+      "location": "docs/stories/1.2.shared-design-system-arva.md:30",
+      "details": "AC5 requires every module to consume shared patterns without duplication, but the story does not define the exported package surface, CSS import pattern, or example module contract."
+    },
+    {
+      "id": "SECURITY_REQUIREMENTS_THIN",
+      "location": "docs/stories/1.2.shared-design-system-arva.md:29",
+      "details": "The story documents env vars but does not explicitly require avoiding NEXT_PUBLIC exposure for the shared token or define server-side proxy expectations for Arva calls."
+    },
+    {
+      "id": "TESTING_NOT_MAPPED_TO_AC6",
+      "location": "docs/stories/1.2.shared-design-system-arva.md:47",
+      "details": "Tests cover client/component states, but there is no explicit validation that module-specific business workflows are excluded."
+    }
+  ],
+  "passes": [
+    "Story status is Draft and therefore in the correct validation phase.",
+    "Required template sections are present, with only future-agent TBD placeholders in Dev Agent Record and QA Results.",
+    "CodeRabbit disabled notice is present and matches the current absence of coderabbit_integration.enabled in core-config.yaml.",
+    "Source references to TASKLIST_GERAL.md GLB-10, GLB-11, GLB-12 and DOCUMENTO_GERAL.md sections 4 and 13 are accessible."
+  ],
+  "recommended_next_action": "Return to @sm for story rework, then rerun @po *validate-story-draft."
+}
