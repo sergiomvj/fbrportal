@@ -129,13 +129,13 @@ function getStatus(storyPath) {
 function codexStep(label, prompt) {
   append(`\n## ${label}`);
   const result = run('codex', [
-    'exec',
-    '-C',
-    root,
     '-a',
     'never',
     '-s',
     'danger-full-access',
+    'exec',
+    '-C',
+    root,
     prompt,
   ]);
 
