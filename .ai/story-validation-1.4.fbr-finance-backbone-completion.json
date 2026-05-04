@@ -1,0 +1,95 @@
+{
+  "story": "docs/stories/1.4.fbr-finance-backbone-completion.md",
+  "validated_at": "2026-05-03",
+  "agent": "@po",
+  "agent_name": "Pax",
+  "command": "*validate-story-draft",
+  "decision": "NO-GO",
+  "readiness_score": 6,
+  "confidence": "Medium",
+  "status": "NEEDS REVISION",
+  "summary": "The draft is source-traceable and technically rich, but it is too broad for a single Ready story and assigns a mixed database/API/frontend/worker/reporting scope to one executor. It should be split or narrowed before implementation.",
+  "template_compliance": {
+    "status": "PARTIAL",
+    "findings": [
+      "Required story sections are present.",
+      "No obvious unresolved template variables remain in core story sections.",
+      "Dev Agent Record and QA Results are appropriately placeholder-only for a draft.",
+      "The story includes a Story Draft Checklist Result, but the result itself says NEEDS PO VALIDATION."
+    ]
+  },
+  "executor_assignment": {
+    "status": "PARTIAL",
+    "findings": [
+      "executor is present: @data-engineer.",
+      "quality_gate is present: @dev.",
+      "quality_gate_tools is present and non-empty.",
+      "executor and quality_gate are different.",
+      "The assignment fits the database/RLS/migration portion, but the story also includes substantial frontend, API/proxy, async worker, reports, exports, and anomaly alert work."
+    ]
+  },
+  "critical_issues": [
+    {
+      "id": "CRIT-1",
+      "title": "Story scope is too large for Ready",
+      "detail": "The draft combines Finance visual shell, 14-table data model, RLS, receivables, payables, cost centers, P&L, reconciliation workers, forecast, calendar, audit, reports, exports, anomaly alerts, Arva slots, cross-module events, and broad test coverage. This is effectively a multi-sprint epic slice, not a single executable story.",
+      "recommendation": "Split into child stories aligned to the documented sprints or technical surfaces: database/RLS baseline, receivables/dashboard, payables/cost centers/P&L, reconciliation worker/API/UI, forecast/calendar, audit/reports/anomalies, and Finance visual/Arva shell."
+    },
+    {
+      "id": "CRIT-2",
+      "title": "Executor assignment does not cover the full work type",
+      "detail": "@data-engineer is appropriate for schema/RLS/migrations, but the draft requires major frontend, Next.js proxy, service/worker, UI workflow, reports/export, and integration implementation.",
+      "recommendation": "Either narrow this story to the data-engineering slice or create separate stories with executor assignments such as @dev for API/frontend logic and @ux-design-expert for design-heavy UI if the framework requires it."
+    }
+  ],
+  "should_fix_issues": [
+    {
+      "id": "SF-1",
+      "title": "Backend/Supabase path decision remains unresolved",
+      "detail": "The story notes that product docs reference backend/FastAPI/Supabase paths not present in the repo, while current repo architecture starts under apps/portal and packages/*. This affects migration and worker tasks.",
+      "recommendation": "Before Ready, make the implementation boundary explicit for the first slice: create tracked backend/supabase surfaces with workspace integration, or limit this story to portal/proxy/contracts and defer backend/database."
+    },
+    {
+      "id": "SF-2",
+      "title": "Approval threshold conflict is identified but not resolved",
+      "detail": "The story correctly identifies conflicting governance thresholds between TASKS_FINANCE.md and PRD_SPEC_TASKLIST.md, but leaves implementation policy open.",
+      "recommendation": "Resolve as PO/architecture clarification or isolate visual display thresholds from executable approval policy with an explicit acceptance criterion."
+    },
+    {
+      "id": "SF-3",
+      "title": "Testing scope is too broad to verify as one final gate",
+      "detail": "The test plan spans migrations, RLS, APIs, workers, frontend components, security, reports, exports, and browser flows. This is valuable but too large for one story handoff.",
+      "recommendation": "Move relevant tests into each split story so completion can be binary."
+    }
+  ],
+  "anti_hallucination": {
+    "status": "PASS_WITH_RISK",
+    "findings": [
+      "Referenced Finance, global, architecture, and previous story documents are present in the repo.",
+      "Most technical claims trace to fbr-portal-docs/03_FINANCE, fbr-portal-docs/00_GERAL, docs/architecture, or prior stories.",
+      "No unsupported new library choice was detected in the story body; BullMQ, FastAPI, Redis, Supabase, Recharts, Next.js, Vitest, Testing Library, and Playwright are document-backed.",
+      "The implementation path adaptation from apps/modules/finance to apps/portal is an explicit inference from current repo architecture, not a direct product-doc requirement."
+    ]
+  },
+  "coderabbit": {
+    "status": "N/A",
+    "findings": [
+      "core-config.yaml has no enabled CodeRabbit integration.",
+      "Story includes the required disabled CodeRabbit skip notice.",
+      "Manual review fallback applies."
+    ]
+  },
+  "checklist": {
+    "goal_context_clarity": "PASS",
+    "technical_implementation_guidance": "PARTIAL",
+    "reference_effectiveness": "PASS",
+    "self_containment": "PASS",
+    "testing_guidance": "PARTIAL",
+    "coderabbit_integration": "N/A"
+  },
+  "handoff": {
+    "next_agent": "@sm",
+    "next_command": "*draft docs/stories/1.4.fbr-finance-backbone-completion.md",
+    "condition": "Story rejected as NO-GO; needs rework/splitting before Ready."
+  }
+}
