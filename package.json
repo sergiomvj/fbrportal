@@ -13,7 +13,8 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "stories:auto": "node scripts/stories-auto.mjs"
+    "stories:auto": "node scripts/stories-auto.mjs",
+    "stories:attack": "node scripts/stories-attack.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

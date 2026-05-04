@@ -1,0 +1,87 @@
+{
+  "story": "docs/stories/1.7.fbr-redacao-newsroom-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "decision": "NO-GO",
+  "status_after_validation": "Draft",
+  "implementation_readiness_score": 4,
+  "confidence": "Medium for source traceability; low for successful implementation from this story alone.",
+  "constitution": {
+    "applied": true,
+    "notes": [
+      "Article I CLI First requires backend/CLI-operable capability before UI emphasis.",
+      "Article II respected: PO validation only; QA Results not populated as QA verdict.",
+      "Article III enforced: story remains Draft until readiness blockers are fixed.",
+      "Article IV enforced: validation used existing source artifacts only.",
+      "Article V gates were run and passed; story remains blocked for readiness, not code quality."
+    ]
+  },
+  "sources_checked": [
+    ".aiox-core/constitution.md",
+    ".aiox-core/development/agents/po.md",
+    ".aiox-core/development/tasks/validate-next-story.md",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/product/checklists/po-master-checklist.md",
+    ".aiox-core/core-config.yaml",
+    "docs/stories/1.7.fbr-redacao-newsroom-completion.md",
+    "docs/prd.md",
+    "docs/architecture.md",
+    "fbr-portal-docs/06_REDACAO/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/06_REDACAO/TASKS_REDACAO.md",
+    "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md",
+    "fbr-portal-docs/apps/modules/redacao/src/types/redacao.ts"
+  ],
+  "template_compliance": {
+    "required_sections_present": true,
+    "placeholders_remaining": [
+      "TBD remains in Dev Agent Record fields and QA Results; acceptable before implementation/QA, but not evidence of readiness."
+    ],
+    "coderabbit_skip_notice_present": true
+  },
+  "critical_issues": [
+    {
+      "id": "NOT_SELF_CONTAINED",
+      "finding": "Dev Notes cite external documents instead of pulling enough implementation context into the story.",
+      "impact": "Dev agent must read external specs, violating the story template instruction."
+    },
+    {
+      "id": "SCOPE_TOO_BROAD",
+      "finding": "Story combines visual design, schema/RLS, API, frontend, Celery, n8n, WordPress, UGC moderation, search, alerts, Arva, Portal event integration, and TASK-RD01 through TASK-RD18.",
+      "impact": "Tasks are too large to track and verify as one implementation-ready increment."
+    },
+    {
+      "id": "PATH_MISMATCH",
+      "finding": "Source docs name production paths apps/modules/redacao, backend/api/redacao, backend/workers/redacao, and n8n/workflows, but current repo inspection found no matching production directories.",
+      "impact": "File creation/modification sequence is unclear."
+    },
+    {
+      "id": "EXECUTOR_GATE_RULE_CONFLICT",
+      "finding": "The story uses quality_gate @qa, which aligns with Constitution Article II quality authority, while validate-next-story.md allows @architect, @dev, or @pm as quality_gate values.",
+      "impact": "Framework validation rules conflict and should be reconciled before treating the assignment as machine-passable."
+    }
+  ],
+  "should_fix": [
+    "Split the story or expand subtasks so each AC has concrete file paths, dependencies, and validation steps.",
+    "Bring Redacao technical details into Dev Notes: 8 alert types, auto-resolution rules, UGC scoring/credits, pt-BR search configuration, Celery queues/retry policy, n8n workflow names, and article.published payload.",
+    "Clarify CLI/backend-first sequence before UI work.",
+    "Specify actual test file locations and commands."
+  ],
+  "anti_hallucination": {
+    "source_traceability": "Main claims in the draft trace to fbr-portal-docs/06_REDACAO and DOCUMENTO_GERAL.",
+    "unverifiable_or_weak_claims": [
+      "Expected production paths are cited from docs but not present in the current repository.",
+      "The story relies on external docs for essential implementation detail instead of embedding enough context."
+    ]
+  },
+  "coderabbit": {
+    "enabled": false,
+    "skip_notice_present": true,
+    "result": "N/A"
+  },
+  "gates": {
+    "npm_run_lint": "passed: turbo lint, 5/5 tasks successful, cached",
+    "npm_run_typecheck": "passed: turbo typecheck, 9/9 tasks successful, cached",
+    "npm_test": "passed: turbo test, 9/9 tasks successful, cached; portal suite 15 files/41 tests passed",
+    "npm_ps1_warning": "PowerShell emitted Test-Path access denied from C:\\Program Files\\nodejs\\npm.ps1 after each successful Turbo run; exit code remained 0."
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "story": "docs/stories/1.8.fbr-sales-revenue-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "command": "*validate-story-draft",
+  "decision": "NO-GO",
+  "implementation_readiness_score": 5,
+  "confidence": "Medium",
+  "status_after_validation": "Draft",
+  "constitution": {
+    "article_ii_agent_authority": "PASS - story draft validation performed by @po authority",
+    "article_iii_story_driven": "PASS - target story exists in docs/stories",
+    "article_iv_no_invention": "BLOCK - story is not self-contained enough and has unresolved source conflict",
+    "article_v_quality_first": "BLOCK - quality gates not run because draft validation blocked before implementation readiness"
+  },
+  "template_compliance": {
+    "status": "PARTIAL",
+    "notes": [
+      "Required high-level sections are present.",
+      "Community Origin optional section is absent, acceptable for internal story.",
+      "CodeRabbit skip notice is present and matches disabled configuration."
+    ]
+  },
+  "executor_assignment": {
+    "status": "PASS",
+    "executor": "@dev",
+    "quality_gate": "@architect",
+    "quality_gate_tools": [
+      "story-draft-checklist",
+      "lint",
+      "typecheck",
+      "test"
+    ],
+    "notes": [
+      "executor and quality_gate are present and different.",
+      "Assignment is broadly consistent with code/features/logic, but story includes database and integration work that may need split executor ownership."
+    ]
+  },
+  "checklist": [
+    {
+      "category": "Goal & Context Clarity",
+      "status": "PARTIAL",
+      "issues": [
+        "Business goal is clear.",
+        "Scope combines too many independent implementation areas in one story."
+      ]
+    },
+    {
+      "category": "Technical Implementation Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Important source docs are listed.",
+        "Concrete schemas, endpoints, files, event contracts, and dependency order are not summarized in the story."
+      ]
+    },
+    {
+      "category": "Reference Effectiveness",
+      "status": "PARTIAL",
+      "issues": [
+        "References are accessible.",
+        "References point mostly to whole documents instead of exact sections/tasks."
+      ]
+    },
+    {
+      "category": "Self-Containment Assessment",
+      "status": "FAIL",
+      "issues": [
+        "Developer must read the full Sales PRD/SPEC/tasklist to implement safely.",
+        "Acceptance criteria are too broad to verify without external decomposition."
+      ]
+    },
+    {
+      "category": "Testing Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Test areas are identified.",
+        "Test files, fixtures, and validation steps are not mapped to specific acceptance criteria."
+      ]
+    },
+    {
+      "category": "CodeRabbit Integration",
+      "status": "N/A",
+      "issues": [
+        "CodeRabbit disabled in .aiox-core/core-config.yaml.",
+        "Skip notice present in story."
+      ]
+    }
+  ],
+  "blocking_issues": [
+    "Story scope is too large; source tasklist already separates this into SA-V01..SA-V07, SA-D01..SA-D02, SA-C01..SA-C04, SA-A01, and TASK-SA01..TASK-SA18.",
+    "Source conflict for deal.closed initial partner state: DOCUMENTO_GERAL section 11.2 says onboarding, TASK-SA18 says prospect.",
+    "Dev Notes are not self-contained enough to satisfy No Invention for implementation.",
+    "File locations are broad path groups rather than task-to-file mappings."
+  ],
+  "should_fix_issues": [
+    "Split or narrow the story into implementable increments.",
+    "Map each acceptance criterion to exact source tasks and verification steps.",
+    "Add security and integration constraints from DOCUMENTO_GERAL.",
+    "Clarify Arva slot names versus PRD agent names."
+  ],
+  "source_references": [
+    "fbr-portal-docs/07_SALES/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/07_SALES/TASKS_SALES.md",
+    "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md sections 11.2, 11.3, 11.5, 11.6",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/product/checklists/story-draft-checklist.md",
+    ".aiox-core/constitution.md"
+  ],
+  "gates": {
+    "npm_run_lint": "not_run_blocked_at_draft_validation",
+    "npm_run_typecheck": "not_run_blocked_at_draft_validation",
+    "npm_test": "not_run_blocked_at_draft_validation"
+  },
+  "next_action": "Return to @sm *draft or @pm to split/refine the story and resolve the deal.closed source conflict."
+}

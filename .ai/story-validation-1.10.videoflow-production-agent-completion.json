@@ -1,0 +1,120 @@
+{
+  "story": "docs/stories/1.10.videoflow-production-agent-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "command": "*validate-story-draft",
+  "decision": "NO-GO",
+  "implementation_readiness_score": 5,
+  "confidence": "Medium",
+  "status_after_validation": "Draft",
+  "constitution": {
+    "article_i_cli_first": "PASS - validation performed through CLI artifacts; no UI-first execution required",
+    "article_ii_agent_authority": "PASS - story draft validation performed by @po authority",
+    "article_iii_story_driven": "PASS - target story exists in docs/stories and remains Draft",
+    "article_iv_no_invention": "BLOCK - story is not self-contained enough; implementation would require extracting many unstated contracts from external tasklists",
+    "article_v_quality_first": "BLOCK - quality gates not run because draft validation blocked before implementation readiness",
+    "article_vi_absolute_imports": "N/A - no implementation code reviewed"
+  },
+  "template_compliance": {
+    "status": "PARTIAL",
+    "notes": [
+      "Required high-level sections are present.",
+      "Community Origin optional section is absent, acceptable for internal story.",
+      "Dev Agent Record sections were present with TBD placeholders, expected before implementation.",
+      "CodeRabbit skip notice is present and matches disabled/not configured core-config state."
+    ]
+  },
+  "executor_assignment": {
+    "status": "PASS",
+    "executor": "@dev",
+    "quality_gate": "@architect",
+    "quality_gate_tools": [
+      "story-draft-checklist",
+      "lint",
+      "typecheck",
+      "test"
+    ],
+    "notes": [
+      "executor and quality_gate are present and different.",
+      "Both agents are valid under validate-next-story executor assignment rules.",
+      "For code/features/logic work, @dev with @architect quality gate is valid."
+    ]
+  },
+  "checklist": [
+    {
+      "category": "Goal & Context Clarity",
+      "status": "PARTIAL",
+      "issues": [
+        "Business goal is clear.",
+        "Scope combines visual design, DA model expansion, UI components, API routes, database, BullMQ workers, pgvector, SSE, ZIP packaging, FBR-Social handoff, human intervention, and full test coverage in one increment."
+      ]
+    },
+    {
+      "category": "Technical Implementation Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Important source docs are listed.",
+        "Concrete schemas, endpoints, files, event contracts, queue behavior, storage paths, retry rules, environment variables, and dependency order are not summarized in the story."
+      ]
+    },
+    {
+      "category": "Reference Effectiveness",
+      "status": "PARTIAL",
+      "issues": [
+        "References are accessible.",
+        "References point mostly to whole documents instead of exact sections/tasks."
+      ]
+    },
+    {
+      "category": "Self-Containment Assessment",
+      "status": "FAIL",
+      "issues": [
+        "Developer must read the full VideoFlow PRD/SPEC/tasklist to implement safely.",
+        "Acceptance criteria are too broad to verify without external decomposition."
+      ]
+    },
+    {
+      "category": "Testing Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Test areas are identified.",
+        "Test files, fixtures, mocks, and validation steps are not mapped to specific acceptance criteria or source tasks."
+      ]
+    },
+    {
+      "category": "CodeRabbit Integration",
+      "status": "N/A",
+      "issues": [
+        "CodeRabbit disabled/not configured in .aiox-core/core-config.yaml.",
+        "Skip notice present in story."
+      ]
+    }
+  ],
+  "blocking_issues": [
+    "Story scope is too large; source docs already separate this into VF-V01..VF-V09, VF-D01..VF-D02, VF-C01..VF-C05, VF-A01, and TASK-VF01..TASK-VF18 across four sprints.",
+    "Dev Notes are not self-contained enough to satisfy Article IV for implementation.",
+    "File locations are broad path groups and include paths that do not match the current repo tree; current app root is apps/portal, while the story lists apps/modules/videoflow and backend/api/videoflow.",
+    "Acceptance criteria require matching the full PRD_SPEC_TASKLIST and broad test classes without embedding the specific pass/fail conditions."
+  ],
+  "should_fix_issues": [
+    "Split or narrow the story into implementable increments following source dependency order.",
+    "Map each acceptance criterion to exact source tasks and verification steps.",
+    "Summarize the DA vector schema, Handoff envelope rules, database/RLS schema, API contracts, SSE event format, BullMQ queue behavior, FBR-Social payload/auth, storage paths, rate limits, retry rules, and environment variables.",
+    "Replace broad production paths with repo-aligned paths under apps/portal/src or explicitly document the intended module layout before development."
+  ],
+  "source_references": [
+    "fbr-portal-docs/09_VIDEOFLOW/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/09_VIDEOFLOW/TASKS_VIDEOFLOW.md",
+    "fbr-portal-docs/apps/modules/videoflow/src/src/types/videoflow.ts",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/product/checklists/story-draft-checklist.md",
+    ".aiox-core/development/tasks/validate-next-story.md",
+    ".aiox-core/constitution.md"
+  ],
+  "gates": {
+    "npm_run_lint": "not_run_blocked_at_draft_validation",
+    "npm_run_typecheck": "not_run_blocked_at_draft_validation",
+    "npm_test": "not_run_blocked_at_draft_validation"
+  },
+  "next_action": "Return to @sm *draft or @pm to split/refine the story and add self-contained implementation detail. Keep status as Draft until the revised story reaches GO score >= 7/10."
+}

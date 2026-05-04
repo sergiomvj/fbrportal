@@ -1,0 +1,75 @@
+{
+  "story": "docs/stories/1.6.fbr-mkt-intelligence-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "decision": "NO-GO",
+  "status_after_validation": "Draft",
+  "implementation_readiness_score": 4,
+  "confidence": "Medium for source traceability; low for successful implementation from this story alone.",
+  "constitution": {
+    "applied": true,
+    "notes": [
+      "Article I CLI First requires backend/CLI-operable capability before UI emphasis.",
+      "Article II respected: PO validation only; QA Results not populated as QA verdict.",
+      "Article III enforced: story remains Draft until readiness blockers are fixed.",
+      "Article IV enforced: validation used existing source artifacts only.",
+      "Article V gates were run and passed; story remains blocked for readiness, not code quality."
+    ]
+  },
+  "sources_checked": [
+    ".aiox-core/constitution.md",
+    ".aiox-core/development/agents/po.md",
+    ".aiox-core/development/tasks/validate-next-story.md",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/core-config.yaml",
+    "docs/stories/1.6.fbr-mkt-intelligence-completion.md",
+    "docs/stories/README.md",
+    "fbr-portal-docs/05_MKT/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/05_MKT/TASKS_MKT.md",
+    "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md"
+  ],
+  "critical_issues": [
+    {
+      "id": "EXECUTOR_GATE_INVALID",
+      "finding": "quality_gate is @qa, but validate-next-story allows @architect, @dev, or @pm as quality_gate values.",
+      "impact": "Story cannot pass executor assignment validation."
+    },
+    {
+      "id": "NOT_SELF_CONTAINED",
+      "finding": "Dev Notes cite external documents instead of pulling enough implementation context into the story.",
+      "impact": "Dev agent must read external specs, violating the story template instruction."
+    },
+    {
+      "id": "SCOPE_TOO_BROAD",
+      "finding": "Story combines UI, data model, API, workers, SSE, chat, export, Arva, Portal Bridge, and TASK-MK01 through TASK-MK20.",
+      "impact": "Tasks are too large to track and verify as one implementation-ready increment."
+    },
+    {
+      "id": "DATA_MODEL_SOURCE_CONFLICT",
+      "finding": "AC2 requires 16 entities from TASKS_MKT while the SPEC sprint 1 database section defines 4 core tables.",
+      "impact": "Implementation target is ambiguous."
+    },
+    {
+      "id": "PATH_MISMATCH",
+      "finding": "Expected production paths include apps/modules/mkt and backend/api/mkt, but current repo structure shows apps/portal, packages/*, and no root backend directory.",
+      "impact": "File creation/modification sequence is unclear."
+    }
+  ],
+  "should_fix": [
+    "Split grouped tasks into concrete subtasks with file paths, dependencies, and AC mapping.",
+    "Bring security, RLS, upload validation, and multi-tenant constraints into Dev Notes.",
+    "Clarify CLI/backend-first sequence before UI work.",
+    "Specify actual test file locations and commands."
+  ],
+  "coderabbit": {
+    "enabled": false,
+    "skip_notice_present": true,
+    "result": "N/A"
+  },
+  "gates": {
+    "npm_run_lint": "passed: turbo lint, 5/5 tasks successful, cached",
+    "npm_run_typecheck": "passed: turbo typecheck, 9/9 tasks successful, cached",
+    "npm_test": "passed: turbo test, 9/9 tasks successful, cached; portal suite 15 files/41 tests passed",
+    "npm_ps1_warning": "PowerShell emitted Test-Path access denied from C:\\Program Files\\nodejs\\npm.ps1 after each successful Turbo run; exit code remained 0."
+  }
+}

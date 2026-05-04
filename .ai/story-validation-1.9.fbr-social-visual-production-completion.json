@@ -1,0 +1,119 @@
+{
+  "story": "docs/stories/1.9.fbr-social-visual-production-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "command": "*validate-story-draft",
+  "decision": "NO-GO",
+  "implementation_readiness_score": 5,
+  "confidence": "Medium",
+  "status_after_validation": "Draft",
+  "constitution": {
+    "article_ii_agent_authority": "PASS - story draft validation performed by @po authority",
+    "article_iii_story_driven": "PASS - target story exists in docs/stories",
+    "article_iv_no_invention": "BLOCK - story is not self-contained enough and has unresolved source contract ambiguity",
+    "article_v_quality_first": "BLOCK - quality gates not run because draft validation blocked before implementation readiness"
+  },
+  "template_compliance": {
+    "status": "PARTIAL",
+    "notes": [
+      "Required high-level sections are present.",
+      "Community Origin optional section is absent, acceptable for internal story.",
+      "CodeRabbit skip notice is present and matches disabled configuration."
+    ]
+  },
+  "executor_assignment": {
+    "status": "FAIL",
+    "executor": "@dev",
+    "quality_gate": "@ux-design-expert",
+    "quality_gate_tools": [
+      "story-draft-checklist",
+      "lint",
+      "typecheck",
+      "test",
+      "accessibility-review"
+    ],
+    "notes": [
+      "executor and quality_gate are present and different.",
+      "quality_gate is invalid under validate-next-story executor assignment rules, which list @architect, @dev, and @pm as known quality gate agents.",
+      "For code/features/logic work, the expected assignment is executor @dev and quality_gate @architect.",
+      "The story also includes UI/accessibility work that can involve @ux-design-expert, but not as the formal quality_gate under the current validation rules."
+    ]
+  },
+  "checklist": [
+    {
+      "category": "Goal & Context Clarity",
+      "status": "PARTIAL",
+      "issues": [
+        "Business goal is clear.",
+        "Scope combines too many independent implementation areas in one story."
+      ]
+    },
+    {
+      "category": "Technical Implementation Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Important source docs are listed.",
+        "Concrete schemas, endpoints, files, event contracts, cache behavior, quality rules, and dependency order are not summarized in the story."
+      ]
+    },
+    {
+      "category": "Reference Effectiveness",
+      "status": "PARTIAL",
+      "issues": [
+        "References are accessible.",
+        "References point mostly to whole documents instead of exact sections/tasks."
+      ]
+    },
+    {
+      "category": "Self-Containment Assessment",
+      "status": "FAIL",
+      "issues": [
+        "Developer must read the full Social PRD/SPEC/tasklist to implement safely.",
+        "Acceptance criteria are too broad to verify without external decomposition."
+      ]
+    },
+    {
+      "category": "Testing Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Test areas are identified.",
+        "Test files, fixtures, and validation steps are not mapped to specific acceptance criteria."
+      ]
+    },
+    {
+      "category": "CodeRabbit Integration",
+      "status": "N/A",
+      "issues": [
+        "CodeRabbit disabled in .aiox-core/core-config.yaml.",
+        "Skip notice present in story."
+      ]
+    }
+  ],
+  "blocking_issues": [
+    "Story scope is too large; source tasklist already separates this into SO-V01..SO-V04, SO-D01, SO-C01..SO-C04, SO-A01, and TASK-SO01..TASK-SO18.",
+    "Executor assignment is invalid: quality_gate @ux-design-expert is not a known quality gate in validate-next-story rules; code/features/logic maps to @dev with @architect.",
+    "Dev Notes are not self-contained enough to satisfy No Invention for implementation.",
+    "File locations are broad path groups rather than task-to-file mappings.",
+    "Webhook contract ambiguity: DOCUMENTO_GERAL section 11.5 uses event + nested data fields, while TASK-SO15 describes a flat brand_kit_id/updated_at/signature payload."
+  ],
+  "should_fix_issues": [
+    "Split or narrow the story into implementable increments.",
+    "Map each acceptance criterion to exact source tasks and verification steps.",
+    "Add security and integration constraints from DOCUMENTO_GERAL.",
+    "Clarify webhook payload/header/signature contract before implementation."
+  ],
+  "source_references": [
+    "fbr-portal-docs/08_SOCIAL/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/08_SOCIAL/TASKS_SOCIAL.md",
+    "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md section 11.5",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/product/checklists/story-draft-checklist.md",
+    ".aiox-core/constitution.md"
+  ],
+  "gates": {
+    "npm_run_lint": "not_run_blocked_at_draft_validation",
+    "npm_run_typecheck": "not_run_blocked_at_draft_validation",
+    "npm_test": "not_run_blocked_at_draft_validation"
+  },
+  "next_action": "Return to @sm *draft or @pm to split/refine the story, correct executor quality gate assignment, and resolve the webhook payload contract."
+}

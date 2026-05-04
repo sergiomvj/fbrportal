@@ -1,0 +1,88 @@
+{
+  "story": "docs/stories/1.14.portal-ui-admin-settings-security.md",
+  "validated_at": "2026-05-04",
+  "agent": "@po",
+  "decision": "NO-GO",
+  "status_after_validation": "Draft",
+  "implementation_readiness_score": 5,
+  "confidence": "Medium after lifecycle and executor issues are corrected",
+  "critical_issues": [
+    {
+      "id": "PO-1.14-001",
+      "severity": "BLOCK",
+      "summary": "Dependency lifecycle is not ready.",
+      "evidence": "Story 1.14 lists dependencies on Story 1.12 and Story 1.13, and both story files remain Draft as of 2026-05-04."
+    },
+    {
+      "id": "PO-1.14-002",
+      "severity": "BLOCK",
+      "summary": "Executor assignment is too broad for the dynamic assignment matrix.",
+      "evidence": "The story includes DB/RLS/migrations, frontend admin/settings UI, E2E, and security review under executor @dev / quality_gate @architect; the template maps DB/RLS work to @data-engineer with @dev gate."
+    },
+    {
+      "id": "PO-1.14-003",
+      "severity": "BLOCK",
+      "summary": "Scope is too large without explicit split ownership and sequencing.",
+      "evidence": "TASK-P18 through TASK-P22 combine migrations, admin CRUD, health polling, settings, Playwright setup, and security review in one story."
+    }
+  ],
+  "should_fix_issues": [
+    {
+      "id": "PO-1.14-004",
+      "severity": "SHOULD_FIX",
+      "summary": "Add build to quality_gate_tools or document why it is excluded."
+    },
+    {
+      "id": "PO-1.14-005",
+      "severity": "SHOULD_FIX",
+      "summary": "Clarify the `empresas` schema or source because TASK-P18 requires it but SPEC SQL only defines profiles, user_roles, and notifications."
+    },
+    {
+      "id": "PO-1.14-006",
+      "severity": "SHOULD_FIX",
+      "summary": "Define the security checklist artifact path or ownership for the signed TASK-P22 review."
+    },
+    {
+      "id": "PO-1.14-007",
+      "severity": "SHOULD_FIX",
+      "summary": "Explicitly keep Super Admin API key management out of scope or source it, because SPEC mentions it but TASK-P21 does not."
+    }
+  ],
+  "source_traceability": {
+    "tasklist": [
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P18",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P19",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P20",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P21",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P22"
+    ],
+    "spec": [
+      "fbr-portal-docs/01_PORTAL_UI/SPEC.md#sprint-4-admin-e-configuracoes",
+      "fbr-portal-docs/01_PORTAL_UI/SPEC.md#banco-de-dados-tabelas-do-portal"
+    ],
+    "security": [
+      "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md#5.1-regras-absolutas"
+    ]
+  },
+  "checklist_result": {
+    "goal_context_clarity": "PARTIAL",
+    "technical_guidance": "PARTIAL",
+    "reference_effectiveness": "PASS",
+    "self_containment": "PARTIAL",
+    "testing_guidance": "PASS",
+    "coderabbit": "N/A - disabled in core-config.yaml; skip notice present"
+  },
+  "coderabbit": {
+    "enabled": false,
+    "result": "N/A - skip notice present; manual review fallback applies"
+  },
+  "gate_execution": {
+    "story_draft_checklist": "PASS - executed manually by @po",
+    "lint": "PASS - npm run lint exited 0; Turbo 5 successful, 5 total",
+    "typecheck": "PASS - npm run typecheck exited 0; Turbo 9 successful, 9 total",
+    "test": "PASS - npm test exited 0; Turbo 9 successful, 9 total; portal suite 15 test files / 41 tests passing",
+    "build": "PASS - npm run build exited 0; Turbo 5 successful, 5 total; Next.js build completed",
+    "warning": "npm/PowerShell emitted non-blocking PermissionDenied warnings while probing user-level npm config paths."
+  },
+  "file_list_note": "Implementation checklist and Dev Agent File List were not updated because no implementation work has started."
+}

@@ -1,0 +1,131 @@
+{
+  "story": "docs/stories/1.11.fbr-design-graphic-agent-completion.md",
+  "validated_at": "2026-05-04",
+  "validator": "@po",
+  "command": "*validate-story-draft",
+  "decision": "NO-GO",
+  "implementation_readiness_score": 4,
+  "confidence": "Medium",
+  "status_after_validation": "Draft",
+  "constitution": {
+    "article_i_cli_first": "PASS - validation performed through CLI artifacts; no UI-first execution required",
+    "article_ii_agent_authority": "PASS - story draft validation performed by @po authority",
+    "article_iii_story_driven": "PASS - target story exists in docs/stories and remains Draft",
+    "article_iv_no_invention": "BLOCK - story is not self-contained enough and referenced source contracts conflict",
+    "article_v_quality_first": "PASS - lint, typecheck, test, and build completed with exit code 0",
+    "article_vi_absolute_imports": "N/A - no implementation code reviewed"
+  },
+  "template_compliance": {
+    "status": "PARTIAL",
+    "notes": [
+      "Required high-level sections are present.",
+      "Community Origin optional section is absent, acceptable for internal story.",
+      "Dev Agent Record sections were present; File List has been updated with validation artifacts.",
+      "CodeRabbit skip notice is present and matches disabled/not configured core-config state."
+    ]
+  },
+  "executor_assignment": {
+    "status": "FAIL",
+    "executor": "@dev",
+    "quality_gate": "@ux-design-expert",
+    "quality_gate_tools": [
+      "story-draft-checklist",
+      "lint",
+      "typecheck",
+      "test",
+      "accessibility-review"
+    ],
+    "notes": [
+      "executor and quality_gate are present and different.",
+      "executor @dev is allowed under validate-next-story rules.",
+      "quality_gate @ux-design-expert is not allowed under validate-next-story rules, which list @architect, @dev, and @pm.",
+      "For a broad code/features story, @dev with @architect would match the formal mapping; for design/UI-only work, split the story and use @ux-design-expert with @dev."
+    ]
+  },
+  "checklist": [
+    {
+      "category": "Goal & Context Clarity",
+      "status": "PARTIAL",
+      "issues": [
+        "Business goal is clear.",
+        "Scope combines visual design, data model, UI components, database, API routes, storage, workers, agents, asset providers, approvals, webhooks, exports, integrations, and full tests in one increment."
+      ]
+    },
+    {
+      "category": "Technical Implementation Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Important source docs are listed.",
+        "Concrete schemas, endpoints, files, environment variables, storage paths, worker contracts, retry rules, and dependency order are not summarized in the story."
+      ]
+    },
+    {
+      "category": "Reference Effectiveness",
+      "status": "PARTIAL",
+      "issues": [
+        "References are accessible.",
+        "References point mostly to whole documents instead of exact sections/tasks."
+      ]
+    },
+    {
+      "category": "Self-Containment Assessment",
+      "status": "FAIL",
+      "issues": [
+        "Developer must read and reconcile the full FBR-Design PRD/SPEC/tasklist to implement safely.",
+        "Referenced brand-kit webhook contracts conflict between DOCUMENTO_GERAL.md section 11.5 and PRD_SPEC_TASKLIST.md TASK-DS16."
+      ]
+    },
+    {
+      "category": "Testing Guidance",
+      "status": "PARTIAL",
+      "issues": [
+        "Test areas are identified.",
+        "Test files, fixtures, mocks, HMAC vectors, worker fixtures, storage fixtures, and validation steps are not mapped to specific acceptance criteria or source tasks."
+      ]
+    },
+    {
+      "category": "CodeRabbit Integration",
+      "status": "N/A",
+      "issues": [
+        "CodeRabbit disabled/not configured in .aiox-core/core-config.yaml.",
+        "Skip notice present in story."
+      ]
+    }
+  ],
+  "blocking_issues": [
+    "Story scope is too large; source docs already separate this into DS-V01..DS-V05, DS-D01..DS-D02, DS-C01..DS-C06, DS-A01, and TASK-DS01..TASK-DS17 across ordered implementation tasks.",
+    "Executor assignment is invalid because @ux-design-expert is not an allowed quality_gate in validate-next-story rules.",
+    "Dev Notes are not self-contained enough to satisfy Article IV for implementation.",
+    "Cross-module brand-kit webhook contract conflicts across referenced sources: DOCUMENTO_GERAL.md section 11.5 uses brand_kit.updated with nested data fields, while PRD_SPEC_TASKLIST.md TASK-DS16 uses brand_kit_updated with a different payload shape.",
+    "File locations are broad path groups and may not match the current repo workspace structure.",
+    "Acceptance criteria require matching the full PRD_SPEC_TASKLIST and broad test classes without embedding the specific pass/fail conditions."
+  ],
+  "should_fix_issues": [
+    "Split or narrow the story into implementable increments following source dependency order.",
+    "Map each acceptance criterion to exact source tasks and verification steps.",
+    "Summarize the Brand Kit JSON schema, 8 auto-review rules, format taxonomy, database/RLS schema, API contracts, upload validation, worker interfaces, asset finder cascade, export behavior, HMAC rules, retry/debounce rules, storage paths, and environment variables.",
+    "Resolve whether production paths are apps/modules/design and backend/api/design or repo-aligned apps/portal/src paths before development."
+  ],
+  "source_references": [
+    "fbr-portal-docs/10_DESIGN/PRD_SPEC_TASKLIST.md",
+    "fbr-portal-docs/10_DESIGN/TASKS_DESIGN.md",
+    "fbr-portal-docs/00_GERAL/DOCUMENTO_GERAL.md#11.5",
+    "fbr-portal-docs/apps/modules/design/src/types/design.ts",
+    ".aiox-core/product/templates/story-tmpl.yaml",
+    ".aiox-core/product/checklists/story-draft-checklist.md",
+    ".aiox-core/development/tasks/validate-next-story.md",
+    ".aiox-core/constitution.md"
+  ],
+  "gates": {
+    "npm_run_lint": "PASS",
+    "npm_run_typecheck": "PASS",
+    "npm_test": "PASS",
+    "npm_run_build": "PASS",
+    "notes": [
+      "All gates completed with exit code 0 via Turbo.",
+      "npm commands emitted a PowerShell Test-Path permission warning for C:\\Users\\OEM\\AppData\\Roaming\\npm\\bin\\npm-cli.js after Turbo output.",
+      "build reported a non-blocking Next.js ESLint-plugin warning."
+    ]
+  },
+  "next_action": "Return to @sm *draft or @pm to split/refine the story, resolve source-contract conflict, correct executor assignment, and add self-contained implementation detail. Keep status as Draft until the revised story reaches GO score >= 7/10."
+}

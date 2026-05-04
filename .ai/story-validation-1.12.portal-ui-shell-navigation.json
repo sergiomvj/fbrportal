@@ -1,0 +1,62 @@
+{
+  "story": "docs/stories/1.12.portal-ui-shell-navigation.md",
+  "validated_at": "2026-05-04",
+  "agent": "@po",
+  "decision": "NO-GO",
+  "status_after_validation": "Draft",
+  "implementation_readiness_score": 6,
+  "confidence": "Medium",
+  "critical_issues": [
+    {
+      "id": "PO-1.12-001",
+      "severity": "BLOCK",
+      "summary": "Executor assignment conflicts with dynamic assignment rules for UI/component work.",
+      "evidence": "Story assigns executor @dev and quality_gate @ux-design-expert; story template maps Design/UI Components to executor @ux-design-expert and quality gate @dev, and validate-next-story does not list @ux-design-expert as a valid quality_gate."
+    },
+    {
+      "id": "PO-1.12-002",
+      "severity": "BLOCK",
+      "summary": "Quality gate ownership is not aligned to the required UI executor mapping.",
+      "evidence": "quality_gate_tools are present, but the quality_gate metadata itself is invalid for this work type."
+    }
+  ],
+  "should_fix_issues": [
+    {
+      "id": "PO-1.12-003",
+      "severity": "SHOULD_FIX",
+      "summary": "Dev Notes should inline enough TASK-P12/TASK-P13 component detail to keep implementation self-contained."
+    },
+    {
+      "id": "PO-1.12-004",
+      "severity": "SHOULD_FIX",
+      "summary": "StatusBadge variant count conflicts with TASK-P12, which lists nine module variants."
+    },
+    {
+      "id": "PO-1.12-005",
+      "severity": "SHOULD_FIX",
+      "summary": "TASK-P13 dependency changes for react-window and dnd-kit should be explicit in Tasks/Subtasks."
+    }
+  ],
+  "source_traceability": {
+    "tasklist": [
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P09",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P10",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P11",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P12",
+      "fbr-portal-docs/01_PORTAL_UI/TASKLIST.md#TASK-P13"
+    ],
+    "spec": [
+      "fbr-portal-docs/01_PORTAL_UI/SPEC.md#sprint-2-shell-principal-sidebar"
+    ]
+  },
+  "coderabbit": {
+    "enabled": false,
+    "result": "N/A - skip notice present; manual review fallback applies"
+  },
+  "gate_execution": {
+    "lint": "PASS - npm run lint exited 0; Turbo 5 successful, 5 total",
+    "typecheck": "PASS - npm run typecheck exited 0; Turbo 9 successful, 9 total",
+    "test": "PASS - npm test exited 0; Turbo 9 successful, 9 total; portal suite 15 test files / 41 tests passing",
+    "warning": "npm/PowerShell emitted non-blocking PermissionDenied warnings while probing user-level npm/git config paths."
+  }
+}
