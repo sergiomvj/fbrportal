@@ -2,6 +2,19 @@
 -- Date: 2026-04-01
 -- Story: 1.4.2
 
+CREATE OR REPLACE FUNCTION finance_current_company_id()
+RETURNS UUID AS $$
+  SELECT NULLIF(
+    COALESCE(
+      auth.jwt() -> 'user_metadata' ->> 'empresaId',
+      auth.jwt() -> 'app_metadata' ->> 'empresaId',
+      auth.jwt() -> 'user_metadata' ->> 'company_id',
+      auth.jwt() -> 'app_metadata' ->> 'company_id'
+    ),
+    ''
+  )::UUID;
+$$ LANGUAGE SQL STABLE;
+
 ALTER TABLE finance_companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_cost_centers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_suppliers ENABLE ROW LEVEL SECURITY;
@@ -17,30 +30,92 @@ ALTER TABLE finance_forecasts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_agent_actions ENABLE ROW LEVEL SECURITY;
 
--- Note: In a real Supabase environment, we would use a helper function or join with a members table.
--- For this MVP, we'll assume the existence of a check against 'auth.uid()'.
+CREATE POLICY "Company isolation for companies" ON finance_companies
+  FOR ALL
+  USING (id = finance_current_company_id())
+  WITH CHECK (id = finance_current_company_id());
 
--- Example Policy for finance_companies
--- In a real scenario, we'd check if the user belongs to the company.
-CREATE POLICY "Users can view their own companies" ON finance_companies
-  FOR SELECT USING (true); -- Placeholder: real logic would join with membership table
+CREATE POLICY "Company isolation for cost centers" ON finance_cost_centers
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
 
--- Policy Template for company-isolated tables
--- We use company_id to enforce isolation.
+CREATE POLICY "Company isolation for suppliers" ON finance_suppliers
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
 
--- Receivables
+CREATE POLICY "Company isolation for bank accounts" ON finance_bank_accounts
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
+
 CREATE POLICY "Company isolation for receivables" ON finance_receivables
-  FOR ALL USING (company_id IS NOT NULL); -- Placeholder: real logic would verify user company
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
 
--- Payables
 CREATE POLICY "Company isolation for payables" ON finance_payables
-  FOR ALL USING (company_id IS NOT NULL);
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
 
--- Audit Log (Read-only for authorized roles)
-CREATE POLICY "Company isolation for audit log" ON finance_audit_log
-  FOR SELECT USING (company_id IS NOT NULL);
+CREATE POLICY "Company isolation for transactions" ON finance_transactions
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
 
--- Deny UPDATE/DELETE on audit log
-CREATE POLICY "Audit log is append-only" ON finance_audit_log
-  FOR INSERT WITH CHECK (true);
--- No policy for UPDATE or DELETE effectively denies them if RLS is enabled and no other policy matches.
+CREATE POLICY "Company isolation for bank statements" ON finance_bank_statements
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
+
+CREATE POLICY "Company isolation for reconciliation items" ON finance_reconciliation_items
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
+
+CREATE POLICY "Company isolation for budgets" ON finance_budgets
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
+
+CREATE POLICY "Company isolation for approval flows" ON finance_approval_flows
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM finance_payables
+      WHERE finance_payables.id = finance_approval_flows.payable_id
+        AND finance_payables.company_id = finance_current_company_id()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM finance_payables
+      WHERE finance_payables.id = finance_approval_flows.payable_id
+        AND finance_payables.company_id = finance_current_company_id()
+    )
+  );
+
+CREATE POLICY "Company isolation for forecasts" ON finance_forecasts
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());
+
+CREATE POLICY "Company isolation for audit log reads" ON finance_audit_log
+  FOR SELECT
+  USING (company_id = finance_current_company_id());
+
+CREATE POLICY "Company isolation for audit log inserts" ON finance_audit_log
+  FOR INSERT
+  WITH CHECK (
+    company_id = finance_current_company_id()
+    AND pg_trigger_depth() > 0
+  );
+
+CREATE POLICY "Company isolation for agent actions" ON finance_agent_actions
+  FOR ALL
+  USING (company_id = finance_current_company_id())
+  WITH CHECK (company_id = finance_current_company_id());

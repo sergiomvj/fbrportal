@@ -45,18 +45,19 @@ export interface FinanceGovernanceRole {
   responsibility: string;
 }
 
-export const FinanceStatusSchema = z.enum(['pending', 'received', 'overdue', 'divergent']);
+export const FinanceStatusSchema = z.enum(['pendente', 'recebido', 'atrasado', 'divergente']);
 export type FinanceStatus = z.infer<typeof FinanceStatusSchema>;
 
 export const ReceivableSchema = z.object({
   id: z.string().uuid().optional(),
   company_id: z.string().uuid(),
+  parceiro_id: z.string().uuid().optional(),
   partner_name: z.string().min(1),
   amount: z.number().positive(),
   currency: z.string().default('BRL'),
   expected_date: z.string(), // ISO date
   received_date: z.string().optional(),
-  status: FinanceStatusSchema.default('pending'),
+  status: FinanceStatusSchema.default('pendente'),
   statement_ref: z.string().optional(),
   created_by: z.string().optional(),
   created_at: z.string().optional(),
@@ -76,6 +77,20 @@ export const DashboardKpisSchema = z.object({
 });
 
 export type DashboardKpis = z.infer<typeof DashboardKpisSchema>;
+
+export const ReceivablesQuerySchema = z.object({
+  parceiro: z.string().optional(),
+  status: z.array(FinanceStatusSchema).optional(),
+  data_inicio: z.string().optional(),
+  data_fim: z.string().optional(),
+  empresa_id: z.string().uuid().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  page_size: z.coerce.number().int().positive().max(100).default(10),
+  sort_by: z.enum(['partner_name', 'amount', 'expected_date', 'status']).default('expected_date'),
+  sort_dir: z.enum(['asc', 'desc']).default('asc'),
+});
+
+export type ReceivablesQuery = z.infer<typeof ReceivablesQuerySchema>;
 
 export const SalesIntakeSchema = z.object({
   event: z.literal('payment.received'),

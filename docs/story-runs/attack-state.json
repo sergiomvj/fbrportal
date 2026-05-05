@@ -2,15 +2,23 @@
   "runId": "2026-05-05T23-30-20Z",
   "from": "0",
   "to": "999",
-  "completed": [],
-  "failed": [],
+  "completed": [
+    "1.4.2.finance-domain-model-rls-audit.md"
+  ],
+  "failed": [
+    {
+      "storyName": "1.4.1.finance-shell-agents-governance.md",
+      "message": "QA loop exhausted without green gates.",
+      "at": "2026-05-05T23:48:45.934Z"
+    }
+  ],
   "current": {
-    "name": "1.4.1.finance-shell-agents-governance.md",
-    "number": "1.4.1",
-    "stage": "qa-review-attempt-1"
+    "name": "1.4.3.finance-receivables-dashboard-sales-events.md",
+    "number": "1.4.3",
+    "stage": "dev-implementation"
   },
   "interrupted": false,
-  "updatedAt": "2026-05-05T23:30:20.695Z",
+  "updatedAt": "2026-05-05T23:55:19.716Z",
   "allOpen": true,
   "dryRun": false,
   "continueOnFail": true,
