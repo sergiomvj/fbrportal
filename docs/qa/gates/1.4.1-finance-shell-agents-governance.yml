@@ -2,15 +2,15 @@ schema: 1
 story: '1.4.1'
 story_title: 'Finance Shell, Agent Slots, and Governance Surface'
 gate: FAIL
-status_reason: 'AC1-AC7 pass by inspection and cached root gates return PASS, but required fresh portal test execution remains blocked by local spawn EPERM failures; cached Turbo output is not sufficient as a fresh gate.'
+status_reason: 'AC1-AC7 pass by inspection and cached root gates return PASS, but required fresh portal test execution on 2026-05-05 remains blocked by local spawn EPERM failures; cached Turbo output is not sufficient as a fresh gate.'
 reviewer: 'Quinn (Test Architect)'
-updated: '2026-05-04T20:19:00-03:00'
+updated: '2026-05-05T10:34:46-03:00'
 
 top_issues:
   - id: QA-1.4.1-20260504-001
     severity: high
     category: test-environment
-    summary: 'Required fresh test gate cannot execute because child process spawn is denied with EPERM; focused portal Vitest fails while esbuild starts, uncached portal turbo test fails during Vitest config load, and direct esbuild transform reproduces the same blocker.'
+    summary: 'Required fresh test gate cannot execute because child process spawn is denied with EPERM; focused portal Vitest and forced uncached portal Turbo test fail while esbuild starts, and direct esbuild transform reproduces the same blocker on the 2026-05-05 QA rerun.'
     refs:
       - 'apps/portal/vitest.config.ts'
       - 'node_modules/@esbuild/win32-x64/esbuild.exe'
@@ -20,7 +20,7 @@ waiver:
   active: false
 
 quality_score: 80
-expires: '2026-05-18T14:18:09.2293364-03:00'
+expires: '2026-05-19T10:34:46-03:00'
 
 evidence:
   tests_reviewed:
@@ -40,14 +40,14 @@ nfr_validation:
     notes: 'Static fixture rendering and memoized finance-agent filtering create no blocking performance concern for this shell story.'
   reliability:
     status: FAIL
-    notes: 'Required fresh automated test execution is blocked by spawn EPERM in the current environment; npm run lint, npm run typecheck, and npm test returned cached Turbo replays in this pass.'
+    notes: 'Required fresh automated test execution is blocked by spawn EPERM in the current environment; npm run lint, npm run typecheck, npm test, and npm run build returned cached Turbo replays on 2026-05-05, while focused and forced portal Vitest still fail before test execution. Direct esbuild transform also fails with spawn EPERM.'
   maintainability:
     status: PASS
     notes: 'Implementation is split into route, component, local CSS, typed fixtures, and focused component tests following existing portal patterns.'
 
 recommendations:
   immediate:
-    - action: 'Fix the spawn EPERM environment blocker and re-run npm test without relying on Turbo cache.'
+    - action: 'Fix the spawn EPERM environment blocker and re-run npm test without relying on Turbo cache, plus the focused FinanceShell test.'
       refs:
         - 'node_modules/@esbuild/win32-x64/esbuild.exe'
         - 'apps/portal/vitest.config.ts'

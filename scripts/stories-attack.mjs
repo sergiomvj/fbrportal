@@ -21,6 +21,8 @@ const allowDirty = Boolean(args['allow-dirty']);
 const qaLoops = args['qa-loops'] ? Number(args['qa-loops']) : 2;
 const fixLoops = args['fix-loops'] ? Number(args['fix-loops']) : 2;
 const poReworkLoops = args['po-rework-loops'] ? Number(args['po-rework-loops']) : 1;
+const codexTimeoutMs = args['codex-timeout-ms'] ? Number(args['codex-timeout-ms']) : 600000;
+const gateTimeoutMs = args['gate-timeout-ms'] ? Number(args['gate-timeout-ms']) : 600000;
 const includeReview = args['include-review'] !== false;
 const includeDraft = args['include-draft'] !== false;
 const includeReady = args['include-ready'] !== false;
@@ -43,6 +45,8 @@ const report = [
   `qa_loops: ${qaLoops}`,
   `fix_loops: ${fixLoops}`,
   `po_rework_loops: ${poReworkLoops}`,
+  `codex_timeout_ms: ${codexTimeoutMs}`,
+  `gate_timeout_ms: ${gateTimeoutMs}`,
   `include_parents: ${includeParents}`,
   `codex_bin: ${codexBin}`,
   `resume: ${resume}`,
@@ -190,7 +194,16 @@ function run(command, commandArgs, options = {}) {
     encoding: 'utf8',
     shell: process.platform === 'win32' && command !== codexBin,
     stdio: options.capture ? 'pipe' : 'inherit',
+    timeout: options.timeoutMs,
   });
+
+  if (result.error) {
+    append(`command_error: ${result.error.message}`);
+  }
+
+  if (result.signal) {
+    append(`command_signal: ${result.signal}`);
+  }
 
   if (options.capture) {
     if (result.stdout) {
@@ -212,6 +225,7 @@ function run(command, commandArgs, options = {}) {
     status: result.status ?? 1,
     stdout: result.stdout ?? '',
     stderr: result.stderr ?? '',
+    timedOut: result.error?.code === 'ETIMEDOUT',
   };
 }
 
@@ -400,7 +414,7 @@ function codexPrompt(prompt) {
     '-C',
     root,
     prompt,
-  ]);
+  ], { timeoutMs: codexTimeoutMs });
 }
 
 function aiosStep(label, storyRelativePath, command, extra = '') {
@@ -422,10 +436,13 @@ function gates(label) {
   append(`\n## Gates: ${label}`);
 
   for (const script of ['lint', 'typecheck', 'test', 'build']) {
-    const result = run('npm.cmd', ['run', script]);
+    const result = run('npm.cmd', ['run', script], { timeoutMs: gateTimeoutMs });
 
     if (result.status !== 0) {
       append(`FAILED: npm run ${script}`);
+      if (result.timedOut) {
+        append(`TIMEOUT: npm run ${script} exceeded ${gateTimeoutMs}ms`);
+      }
       return false;
     }
   }
