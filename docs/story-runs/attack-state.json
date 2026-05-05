@@ -8,71 +8,6 @@
   ],
   "failed": [
     {
-      "storyName": "1.4.5.finance-reconciliation-worker-api-ui.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:27:01.943Z"
-    },
-    {
-      "storyName": "1.4.6.finance-forecast-calendar.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:33:19.789Z"
-    },
-    {
-      "storyName": "1.4.7.finance-audit-reports-anomaly-alerts.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:40:03.056Z"
-    },
-    {
-      "storyName": "1.5.fbr-leads-outbound-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:46:48.999Z"
-    },
-    {
-      "storyName": "1.6.fbr-mkt-intelligence-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:50:57.871Z"
-    },
-    {
-      "storyName": "1.7.fbr-redacao-newsroom-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:50:58.294Z"
-    },
-    {
-      "storyName": "1.8.fbr-sales-revenue-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:50:58.781Z"
-    },
-    {
-      "storyName": "1.9.fbr-social-visual-production-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:50:59.192Z"
-    },
-    {
-      "storyName": "1.10.videoflow-production-agent-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:50:59.618Z"
-    },
-    {
-      "storyName": "1.11.fbr-design-graphic-agent-completion.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:51:00.095Z"
-    },
-    {
-      "storyName": "1.12.portal-ui-shell-navigation.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:51:00.528Z"
-    },
-    {
-      "storyName": "1.13.portal-ui-embedding-notifications.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:51:00.946Z"
-    },
-    {
-      "storyName": "1.14.portal-ui-admin-settings-security.md",
-      "message": "PO validation did not promote story to Ready. Current status: Draft",
-      "at": "2026-05-05T00:51:01.366Z"
-    },
-    {
       "storyName": "1.4.1.finance-shell-agents-governance.md",
       "message": "QA loop exhausted without green gates.",
       "at": "2026-05-05T13:35:00.031Z"
@@ -91,15 +26,76 @@
       "storyName": "1.4.4.finance-payables-approvals-costcenters-pl-events.md",
       "message": "PO validation did not promote story to Ready. Current status: Draft",
       "at": "2026-05-05T13:50:21.266Z"
+    },
+    {
+      "storyName": "1.4.5.finance-reconciliation-worker-api-ui.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T13:58:54.180Z"
+    },
+    {
+      "storyName": "1.4.6.finance-forecast-calendar.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:05:40.511Z"
+    },
+    {
+      "storyName": "1.4.7.finance-audit-reports-anomaly-alerts.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:12:33.100Z"
+    },
+    {
+      "storyName": "1.5.fbr-leads-outbound-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:18:42.867Z"
+    },
+    {
+      "storyName": "1.6.fbr-mkt-intelligence-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:26:12.145Z"
+    },
+    {
+      "storyName": "1.7.fbr-redacao-newsroom-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:12.519Z"
+    },
+    {
+      "storyName": "1.8.fbr-sales-revenue-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:13.039Z"
+    },
+    {
+      "storyName": "1.9.fbr-social-visual-production-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:13.456Z"
+    },
+    {
+      "storyName": "1.10.videoflow-production-agent-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:13.843Z"
+    },
+    {
+      "storyName": "1.11.fbr-design-graphic-agent-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:14.261Z"
+    },
+    {
+      "storyName": "1.12.portal-ui-shell-navigation.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:14.678Z"
+    },
+    {
+      "storyName": "1.13.portal-ui-embedding-notifications.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:15.085Z"
+    },
+    {
+      "storyName": "1.14.portal-ui-admin-settings-security.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-05T14:32:15.484Z"
     }
   ],
-  "current": {
-    "name": "1.4.5.finance-reconciliation-worker-api-ui.md",
-    "number": "1.4.5",
-    "stage": "po-validation-attempt-2"
-  },
+  "current": null,
   "interrupted": false,
-  "updatedAt": "2026-05-05T13:56:16.609Z",
+  "updatedAt": "2026-05-05T14:32:15.485Z",
   "dryRun": false,
   "continueOnFail": true,
   "codexBin": "C:\\Users\\OEM\\AppData\\Roaming\\npm\\codex.ps1"
