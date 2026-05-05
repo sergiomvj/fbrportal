@@ -217,8 +217,16 @@ function AgentCard({
   return (
     <article className={`fbr-agent-picker__${linked ? 'linked-card' : 'card'} fbr-card`}>
       <div className="fbr-agent-picker__agent-row">
-        <div aria-hidden="true" className="fbr-agent-picker__avatar">
-          {initials(agent.name)}
+        <div className="fbr-agent-picker__avatar">
+          {agent.avatarUrl ? (
+            <img
+              alt={`Avatar de ${agent.name}`}
+              className="fbr-agent-picker__avatar-img"
+              src={agent.avatarUrl}
+            />
+          ) : (
+            initials(agent.name)
+          )}
         </div>
         <div>
           <p className="fbr-agent-picker__name">{agent.name}</p>

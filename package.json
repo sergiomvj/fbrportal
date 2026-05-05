@@ -15,6 +15,7 @@
     "test": "turbo test",
     "stories:auto": "node scripts/stories-auto.mjs",
     "stories:attack": "node scripts/stories-attack.mjs",
+    "stories:gemini": "node scripts/aiox-gemini-attack.mjs",
     "stories:open": "node scripts/stories-attack.mjs --all-open --continue --allow-dirty"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "eslint-config-prettier": "^10.1.2",
     "jsdom": "^26.1.0",
     "prettier": "^3.5.3",
+    "supabase": "^2.98.2",
     "turbo": "^2.5.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.31.1",

@@ -10,6 +10,7 @@ const agents: ArvaAgent[] = [
     role: 'comercial',
     tags: ['comercial', 'sales'],
     status: 'active',
+    avatarUrl: 'https://example.com/avatar.png',
   },
   {
     id: 'agent-finance',
@@ -30,10 +31,18 @@ describe('AgentPicker', () => {
     const dialog = screen.getByRole('dialog', { name: 'Incluir Agente' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(within(dialog).getByText('Arva Sales')).toBeInTheDocument();
+    
+    // Verify avatar rendering (AC2)
+    const salesAvatar = within(dialog).getByRole('img', { name: 'Avatar de Arva Sales' });
+    expect(salesAvatar).toHaveAttribute('src', 'https://example.com/avatar.png');
+
     expect(within(dialog).queryByText('Arva Finance')).not.toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'todos' }));
     expect(within(dialog).getByText('Arva Finance')).toBeInTheDocument();
+    
+    // Verify initials fallback (AC2)
+    expect(within(dialog).getByText('AF')).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Vincular agente' })[0]!);
     expect(onSelect).toHaveBeenCalledWith({ agent: agents[0], moduleId: 'sales' });

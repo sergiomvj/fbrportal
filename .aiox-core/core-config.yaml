@@ -1,28 +1,34 @@
 version: '2.1.0'
 markdownExploder: true
 project:
-  type: greenfield
+  type: brownfield
   installedAt: '2026-05-02T20:54:44.785Z'
   version: 2.1.0
-user_profile: bob
+user_profile: sergiomvj
 ide:
   selected:
     - claude-code
     - codex
+    - vscode
+    - gemini
+    - opencode
   configs:
-    vscode: false
+    vscode: true
     codex: true
-    gemini: false
+    gemini: true
     cursor: false
     github-copilot: false
     antigravity: false
     zed: false
     claude-desktop: false
     claude-code: true
+    opencode: true
 mcp:
-  enabled: false
+  enabled: true
   configLocation: .claude/mcp.json
-  servers: []
+  servers:
+    - github
+    - supabase
 qa:
   qaLocation: docs/qa
 prd:
