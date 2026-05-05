@@ -2,15 +2,15 @@ schema: 1
 story: '1.2'
 story_title: 'Shared Design System and Arva Agent Integration'
 gate: CONCERNS
-status_reason: 'Automated gates pass, but AC2 is only partially satisfied because AgentPicker accepts avatarUrl in the ArvaAgent type yet renders initials instead of the Arva agent avatar.'
+status_reason: 'Automated gates still pass, but AC2 remains partially unsatisfied because AgentPicker accepts avatarUrl in the ArvaAgent type yet renders initials instead of the Arva agent avatar.'
 reviewer: 'Quinn (Test Architect)'
-updated: '2026-05-04T14:13:24.2562346-03:00'
+updated: '2026-05-05T23:40:00-03:00'
 
 top_issues:
   - id: QA-1.2-20260504-001
     severity: medium
     category: requirements
-    summary: 'AgentPicker does not render the Arva agent avatar URL required by AC2.'
+    summary: 'AgentPicker still does not render the Arva agent avatar URL required by AC2.'
     refs:
       - 'packages/ui/src/agent-picker/AgentPicker.tsx:220'
       - 'packages/ui/src/agent-picker/AgentPicker.tsx:221'

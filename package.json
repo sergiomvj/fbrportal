@@ -14,7 +14,8 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "stories:auto": "node scripts/stories-auto.mjs",
-    "stories:attack": "node scripts/stories-attack.mjs"
+    "stories:attack": "node scripts/stories-attack.mjs",
+    "stories:open": "node scripts/stories-attack.mjs --all-open --continue --allow-dirty"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

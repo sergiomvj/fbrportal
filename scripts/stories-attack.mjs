@@ -12,8 +12,9 @@ import path from 'node:path';
 
 const root = process.cwd();
 const args = parseArgs(process.argv.slice(2));
-const from = args.from ?? '1.2';
-const to = args.to ?? '1.14';
+const allOpen = Boolean(args['all-open']);
+const from = args.from ?? (allOpen ? '0' : '1.2');
+const to = args.to ?? (allOpen ? '999' : '1.14');
 const max = args.max ? Number(args.max) : Number.POSITIVE_INFINITY;
 const dryRun = Boolean(args['dry-run']);
 const continueOnFail = Boolean(args['continue']);
@@ -39,6 +40,7 @@ const reportPath = path.join(runDir, `attack-${runId}.md`);
 const report = [
   `# Story Attack Run ${runId}`,
   '',
+  `mode: ${allOpen ? 'all-open' : 'range'}`,
   `range: ${from}..${to}`,
   `dry_run: ${dryRun}`,
   `continue: ${continueOnFail}`,
@@ -164,7 +166,11 @@ function interrupt(signal) {
   append('');
   append('State saved. Resume command:');
   append('```powershell');
-  append(`npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --resume --codex-bin "${codexBin}"`);
+  append(
+    allOpen
+      ? `npm run stories:attack -- --all-open --allow-dirty --continue --resume --codex-bin "${codexBin}"`
+      : `npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --resume --codex-bin "${codexBin}"`,
+  );
   append('```');
   append(`state: ${path.relative(root, statePath).replaceAll(path.sep, '/')}`);
   append(`report: ${path.relative(root, reportPath).replaceAll(path.sep, '/')}`);
@@ -270,7 +276,7 @@ function ensureRunnableWorktree() {
   append('');
   append('Resume command:');
   append('```powershell');
-  append(`npm run stories:attack -- --from ${from} --to ${to} --allow-dirty`);
+  append(allOpen ? 'npm run stories:attack -- --all-open --allow-dirty --continue' : `npm run stories:attack -- --from ${from} --to ${to} --allow-dirty`);
   append('```');
   process.exit(2);
 }
@@ -322,7 +328,11 @@ function ensureCodexAvailable() {
     append('Find the real executable in the shell where Codex works, then resume with:');
     append('');
     append('```powershell');
-    append(`npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --resume --codex-bin "C:\\real\\path\\to\\codex.cmd"`);
+    append(
+      allOpen
+        ? 'npm run stories:attack -- --all-open --allow-dirty --continue --resume --codex-bin "C:\\real\\path\\to\\codex.cmd"'
+        : `npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --resume --codex-bin "C:\\real\\path\\to\\codex.cmd"`,
+    );
     append('```');
     saveState({ interrupted: true });
     process.exit(2);
@@ -339,11 +349,19 @@ function ensureCodexAvailable() {
   append('Resume with one of these forms after exposing the executable:');
   append('');
   append('```powershell');
-  append(`$env:CODEX_BIN="C:\\path\\to\\codex.cmd"; npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue`);
+  append(
+    allOpen
+      ? '$env:CODEX_BIN="C:\\path\\to\\codex.cmd"; npm run stories:attack -- --all-open --allow-dirty --continue'
+      : `$env:CODEX_BIN="C:\\path\\to\\codex.cmd"; npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue`,
+  );
   append('```');
   append('');
   append('```powershell');
-  append(`npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --codex-bin "C:\\path\\to\\codex.cmd"`);
+  append(
+    allOpen
+      ? 'npm run stories:attack -- --all-open --allow-dirty --continue --codex-bin "C:\\path\\to\\codex.cmd"'
+      : `npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue --codex-bin "C:\\path\\to\\codex.cmd"`,
+  );
   append('```');
   saveState({ interrupted: true });
   process.exit(2);
@@ -510,7 +528,7 @@ function failStory(storyName, message) {
     append('');
     append('Resume command:');
     append('```powershell');
-    append(`npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue`);
+    append(allOpen ? 'npm run stories:attack -- --all-open --allow-dirty --continue --resume' : `npm run stories:attack -- --from ${from} --to ${to} --allow-dirty --continue`);
     append('```');
     process.exit(1);
   }
@@ -546,6 +564,7 @@ saveState({
   runId,
   from,
   to,
+  allOpen,
   dryRun,
   continueOnFail,
   codexBin,
