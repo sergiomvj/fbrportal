@@ -1,7 +1,7 @@
 {
-  "runId": "2026-05-05T23-30-20Z",
-  "from": "0",
-  "to": "999",
+  "runId": "2026-05-06T00-01-13Z",
+  "from": "1.2",
+  "to": "1.14",
   "completed": [
     "1.4.2.finance-domain-model-rls-audit.md"
   ],
@@ -9,17 +9,108 @@
     {
       "storyName": "1.4.1.finance-shell-agents-governance.md",
       "message": "QA loop exhausted without green gates.",
-      "at": "2026-05-05T23:48:45.934Z"
+      "at": "2026-05-06T00:22:09.992Z"
+    },
+    {
+      "storyName": "1.4.3.finance-receivables-dashboard-sales-events.md",
+      "message": "Dev implementation command failed.",
+      "at": "2026-05-06T00:22:17.256Z"
+    },
+    {
+      "storyName": "1.4.4.finance-payables-approvals-costcenters-pl-events.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:24.692Z"
+    },
+    {
+      "storyName": "1.4.5.finance-reconciliation-worker-api-ui.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:31.261Z"
+    },
+    {
+      "storyName": "1.4.6.finance-forecast-calendar.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:37.786Z"
+    },
+    {
+      "storyName": "1.4.7.finance-audit-reports-anomaly-alerts.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:44.792Z"
+    },
+    {
+      "storyName": "1.5.fbr-leads-outbound-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:52.445Z"
+    },
+    {
+      "storyName": "1.6.fbr-mkt-intelligence-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:22:59.244Z"
+    },
+    {
+      "storyName": "1.7.fbr-redacao-newsroom-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:09.081Z"
+    },
+    {
+      "storyName": "1.7.1.redacao-backend-data-foundation.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:16.860Z"
+    },
+    {
+      "storyName": "1.7.2.redacao-worker-orchestration-foundation.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:23.857Z"
+    },
+    {
+      "storyName": "1.7.3.redacao-ugc-publication-event-integration.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:29.910Z"
+    },
+    {
+      "storyName": "1.7.4.redacao-frontend-observability-surfaces.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:37.070Z"
+    },
+    {
+      "storyName": "1.8.fbr-sales-revenue-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:44.503Z"
+    },
+    {
+      "storyName": "1.9.fbr-social-visual-production-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:52.096Z"
+    },
+    {
+      "storyName": "1.10.videoflow-production-agent-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:23:59.151Z"
+    },
+    {
+      "storyName": "1.11.fbr-design-graphic-agent-completion.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:24:06.694Z"
+    },
+    {
+      "storyName": "1.12.portal-ui-shell-navigation.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:24:13.571Z"
+    },
+    {
+      "storyName": "1.13.portal-ui-embedding-notifications.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:24:20.819Z"
+    },
+    {
+      "storyName": "1.14.portal-ui-admin-settings-security.md",
+      "message": "PO validation did not promote story to Ready. Current status: Draft",
+      "at": "2026-05-06T00:24:29.830Z"
     }
   ],
-  "current": {
-    "name": "1.4.3.finance-receivables-dashboard-sales-events.md",
-    "number": "1.4.3",
-    "stage": "dev-implementation"
-  },
+  "current": null,
   "interrupted": false,
-  "updatedAt": "2026-05-05T23:55:19.716Z",
-  "allOpen": true,
+  "updatedAt": "2026-05-06T00:24:29.833Z",
+  "allOpen": false,
   "dryRun": false,
   "continueOnFail": true,
   "codexBin": "codex"

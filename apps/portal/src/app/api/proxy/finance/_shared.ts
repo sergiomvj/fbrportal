@@ -1,11 +1,15 @@
 import { ZodError } from 'zod';
-import { contextFromHeaders } from '@/lib/finance/store';
+import { contextFromHeaders, FinanceValidationError } from '@/lib/finance/store';
 
 export function contextOrResponse(request: Request) {
   return contextFromHeaders(request.headers);
 }
 
 export function jsonError(error: unknown) {
+  if (error instanceof FinanceValidationError) {
+    return Response.json({ code: error.status === 400 ? 'BAD_REQUEST' : 'VALIDATION_ERROR', message: error.message, issues: error.issues }, { status: error.status });
+  }
+
   if (error instanceof ZodError) {
     return Response.json({ code: 'VALIDATION_ERROR', issues: error.issues }, { status: 400 });
   }

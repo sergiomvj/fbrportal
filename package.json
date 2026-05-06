@@ -16,7 +16,8 @@
     "stories:auto": "node scripts/stories-auto.mjs",
     "stories:attack": "node scripts/stories-attack.mjs",
     "stories:gemini": "node scripts/aiox-gemini-attack.mjs",
-    "stories:open": "node scripts/stories-attack.mjs --all-open --continue --allow-dirty"
+    "stories:open": "node scripts/stories-attack.mjs --all-open --continue --allow-dirty",
+    "stories:implement": "node scripts/implement-stories.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
