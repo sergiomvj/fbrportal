@@ -46,6 +46,8 @@ describe('Click components', () => {
     render(
       <DealDetail
         deal={clickDeals[0]!}
+        documents={[{ id: 'doc-1', name: 'diagnostico.pdf', mimeType: 'application/pdf', createdAt: new Date().toISOString() }]}
+        dispositionLabel="Em andamento"
         history={clickHistory}
         messages={clickMessages}
         onMessage={vi.fn()}
@@ -58,6 +60,8 @@ describe('Click components', () => {
     expect(screen.getByLabelText('Mensagens do deal')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Tasks' }));
     expect(screen.getByText(/Enviar diagnostico/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Docs' }));
+    expect(screen.getByLabelText('Documentos do deal')).toBeInTheDocument();
   });
 
   it('supports Enter-to-send and mention autocomplete in messages', () => {

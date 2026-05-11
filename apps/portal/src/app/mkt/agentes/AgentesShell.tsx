@@ -1,35 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { AgentPicker } from '@fbr/ui';
+import type { MktAgent, MktAgentActionLog } from '@/lib/mkt/types';
 
-const agentes = [
-  { id: 'ag-extrator', name: 'Extrator Bot', role: 'Extrai SWOT, persona, UVP do documento enviado', status: 'online', trigger: 'Upload PDF/DOCX', queue: 'mkt:upload' },
-  { id: 'ag-estrategista', name: 'Estrategista Bot', role: 'Gera posicionamento, canal mix, KPIs e campanhas prioritarias', status: 'online', trigger: 'Diagnostico aprovado', queue: 'mkt:estrategia' },
-  { id: 'ag-redator', name: 'Redator Bot', role: 'Cria headlines, CTAs, body copy, landing pages e sequencias de email', status: 'online', trigger: 'Estrategia gerada', queue: 'mkt:copy' },
-  { id: 'ag-calendario', name: 'Calendario Bot', role: 'Propoe grade editorial 90 dias com districao organica vs paga', status: 'offline', trigger: 'Redacao pronta', queue: 'mkt:calendario' },
-  { id: 'ag-exportador', name: 'Exportador Bot', role: 'Gera PDF executivo (15-30 pag) e PPTX (10-15 slides) com branding', status: 'offline', trigger: 'Aprovacao do cliente', queue: 'mkt:export' },
-  { id: 'ag-onboarding', name: 'Onboarding Bot', role: 'Guia o usuario pela primeira estrategia com prompts contextuais', status: 'online', trigger: 'Primeiro acesso', queue: 'mkt:upload' },
-];
-
-const arvaMktAgents = [
-  { id: 'arva-extrator', name: 'Extrator Bot', role: 'Extracao de documentos', tags: ['mkt', 'documentos'], status: 'active' as const },
-  { id: 'arva-estrategista', name: 'Estrategista Bot', role: 'Geracao de estrategia', tags: ['mkt', 'estrategia'], status: 'active' as const },
-  { id: 'arva-redator', name: 'Redator Bot', role: 'Copywriting', tags: ['mkt', 'copy'], status: 'active' as const },
-  { id: 'arva-calendario', name: 'Calendario Bot', role: 'Grade editorial', tags: ['mkt'], status: 'inactive' as const },
+const agentSlots = [
+  { slot: 'extrator', icon: '📥', name: 'Extrator', queue: 'mkt:upload', description: 'Extrai SWOT, persona, UVP e score de viabilidade do documento' },
+  { slot: 'estrategista', icon: '🧠', name: 'Estrategista', queue: 'mkt:estrategia', description: 'Gera posicionamento, canal mix, KPIs e campanhas priorizadas' },
+  { slot: 'redator', icon: '✍️', name: 'Redator', queue: 'mkt:copy', description: 'Headlines, CTAs, body copy, landing pages e sequencias de email' },
+  { slot: 'calendario', icon: '📅', name: 'Calendario', queue: 'mkt:calendario', description: 'Propoe 90 dias de pauta editorial com orgânico vs pago' },
+  { slot: 'exportador', icon: '📦', name: 'Exportador', queue: 'mkt:export', description: 'Gera PDF executivo e PPTX com branding da empresa' },
+  { slot: 'onboarding', icon: '🎓', name: 'Onboarding', queue: 'mkt:onboarding', description: 'Guia o usuario na primeira estrategia com prompts contextuais' },
 ];
 
 export function AgentesShell() {
-  const [linked, setLinked] = useState(arvaMktAgents.slice(0, 2));
+  const [agents, setAgents] = useState<MktAgent[]>([]);
+  const [logs, setLogs] = useState<MktAgentActionLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [queueStatus, setQueueStatus] = useState<Record<string, { pending: number; processing: number; done: number; failed: number }>>({});
+
+  const headers = {
+    'x-user-id': '33333333-3333-4333-8333-333333333333',
+    'x-company-id': '11111111-1111-4111-8111-111111111111',
+  };
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [agentsRes, logsRes, queueRes] = await Promise.all([
+        fetch('/api/proxy/mkt/agents', { headers }),
+        fetch('/api/proxy/mkt/agent-logs?limit=20', { headers }),
+        fetch('/api/proxy/mkt/queue-status', { headers }),
+      ]);
+
+      if (agentsRes.ok) {
+        const d = await agentsRes.json();
+        setAgents(d.agents ?? []);
+      }
+      if (logsRes.ok) {
+        const d = await logsRes.json();
+        setLogs(d.logs ?? []);
+      }
+      if (queueRes.ok) {
+        const d = await queueRes.json();
+        setQueueStatus(d.queues ?? {});
+      }
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (loading) return <main className="mkt-shell fbr-shared-theme"><p>Carregando agentes...</p></main>;
 
   return (
     <main className="mkt-shell fbr-shared-theme">
       <nav className="mkt-breadcrumb">
-        <Link href="/">Portal</Link>
-        <span>/</span>
-        <Link href="/mkt">MKT</Link>
-        <span>/</span>
+        <Link href="/">Portal</Link><span>/</span>
+        <Link href="/mkt">MKT</Link><span>/</span>
         <span>Agentes</span>
       </nav>
 
@@ -37,58 +64,93 @@ export function AgentesShell() {
         <div>
           <p>FBR-MKT</p>
           <h1>Agentes OpenClaw</h1>
-          <span>6 agentes especializados em marketing com LLM cascade e filas BullMQ.</span>
+          <span>6 agentes especializados em marketing intelligence</span>
         </div>
       </section>
 
       <section className="mkt-agents" aria-label="Agentes MKT">
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
-          <div>
-            <p>OpenClaw</p>
-            <h2>Agentes de Marketing</h2>
-          </div>
-          <AgentPicker
-            agents={arvaMktAgents}
-            companyId="empresa-1"
-            linkedAgents={linked}
-            moduleId="mkt"
-            moduleTags={['mkt']}
-            onSelect={({ agent }) => setLinked((current) => (current.some((item) => item.id === agent.id) ? current : [...current, agent]))}
-          />
+        <header>
+          <p>Slots</p>
+          <h2>6 Agentes Operacionais</h2>
         </header>
         <div className="mkt-agents__grid">
-          {agentes.map((agent) => (
-            <article className="mkt-agent-card" key={agent.id} style={{ position: 'relative' }}>
-              <h3>{agent.name}</h3>
-              <p>{agent.role}</p>
-              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <span>{agent.queue}</span>
-                <span style={{ background: agent.status === 'online' ? 'rgba(34,197,94,0.18)' : 'rgba(142,164,199,0.12)', color: agent.status === 'online' ? '#86efac' : 'var(--mkt-slate)' }}>
-                  {agent.status}
-                </span>
-              </div>
-              <small style={{ display: 'block', marginTop: 8, color: 'var(--mkt-slate)' }}>
-                Trigger: {agent.trigger}
-              </small>
-            </article>
-          ))}
+          {agentSlots.map((slot) => {
+            const agent = agents.find((a) => a.slot === slot.slot);
+            const queue = queueStatus[slot.queue];
+            return (
+              <article key={slot.slot} className={`mkt-agent-card ${agent?.ativo ? '' : 'mkt-agent-card--inactive'}`}>
+                <h3>{slot.icon} {slot.name}</h3>
+                <p>{slot.description}</p>
+                <div className="mkt-agent-meta">
+                  <span className="mkt-agent-queue">{slot.queue}</span>
+                  {agent?.ativo !== false && <span className="mkt-badge mkt-badge--ativa">Ativo</span>}
+                </div>
+                {queue && (
+                  <div className="mkt-agent-queue-stats">
+                    <small>Pending: {queue.pending} | Processing: {queue.processing} | Done: {queue.done} | Failed: {queue.failed}</small>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <section className="mkt-architecture">
-        <h2>LLM Cascade</h2>
-        <div className="mkt-architecture__grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-          {[
-            { name: 'Ollama (L1)', desc: 'Primario local, baixa latencia, custo zero' },
-            { name: 'Claude API (L2)', desc: 'Secundario cloud, alta capacidade de raciocinio' },
-            { name: 'GPT-4o (L3)', desc: 'Reserva, ultima camada de fallback automatico' },
-          ].map((item) => (
-            <article key={item.name}>
-              <h3>{item.name}</h3>
-              <p>{item.desc}</p>
-            </article>
-          ))}
+      <section className="mkt-section">
+        <header>
+          <p>Filas</p>
+          <h2>Status das Filas BullMQ</h2>
+        </header>
+        <div className="mkt-table-wrap">
+          <table className="mkt-table">
+            <thead>
+              <tr>
+                <th>Fila</th><th>Pending</th><th>Processing</th><th>Done</th><th>Failed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(queueStatus).map(([name, status]) => (
+                <tr key={name}>
+                  <th>{name}</th>
+                  <td>{status.pending}</td>
+                  <td>{status.processing}</td>
+                  <td>{status.done}</td>
+                  <td className={status.failed > 0 ? 'mkt-alert-text' : ''}>{status.failed}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      </section>
+
+      <section className="mkt-section">
+        <header>
+          <p>Logs</p>
+          <h2>Atividade Recente dos Agentes</h2>
+        </header>
+        {logs.length === 0 ? (
+          <p>Nenhuma atividade registrada.</p>
+        ) : (
+          <div className="mkt-table-wrap">
+            <table className="mkt-table">
+              <thead>
+                <tr>
+                  <th>Slot</th><th>Acao</th><th>Entidade</th><th>Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id}>
+                    <td><span className="mkt-badge mkt-badge--planejada">{log.slot}</span></td>
+                    <td>{log.acao}</td>
+                    <td>{log.entidade_tipo}:{log.entidade_id?.slice(0, 8)}</td>
+                    <td>{new Date(log.created_at ?? '').toLocaleString('pt-BR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );

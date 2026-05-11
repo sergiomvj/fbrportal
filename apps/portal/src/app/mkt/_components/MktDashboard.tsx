@@ -2,28 +2,51 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { MktDashboardKpis, Campaign } from '@/lib/mkt/types';
+import type { MktDashboardKpis, MktEstrategia } from '@/lib/mkt/types';
 
-function formatBRL(value: number) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString('pt-BR');
-}
+const mktModules = [
+  { icon: '🔐', name: 'Auth', desc: 'Autenticacao e gestao de acesso', href: '/mkt' },
+  { icon: '📤', name: 'Diagnostico', desc: 'Upload e extracao de dados', href: '/mkt/novo' },
+  { icon: '🔬', name: 'Extracao', desc: 'SWOT, persona, UVP e score', href: '/mkt/novo' },
+  { icon: '🧠', name: 'Estrategia', desc: 'Posicionamento e canal mix', href: '/mkt/estrategias' },
+  { icon: '📋', name: 'Campanhas', desc: 'Campanhas priorizadas', href: '/mkt/estrategias' },
+  { icon: '📅', name: 'Calendario', desc: '90 dias de pauta editorial', href: '/mkt/estrategias' },
+  { icon: '🎯', name: 'Lead Magnets', desc: 'Captacao e funil', href: '/mkt/estrategias' },
+  { icon: '🗺️', name: 'Roadmap', desc: 'Execucao por fase', href: '/mkt/estrategias' },
+  { icon: '📦', name: 'Outputs', desc: 'PDF e PPTX', href: '/mkt/estrategias' },
+];
 
 const mktAgents = [
-  { name: 'Extrator Bot', role: 'Extrai SWOT, persona, UVP do documento', trigger: 'Upload PDF/DOCX' },
-  { name: 'Estrategista Bot', role: 'Gera posicionamento, canal mix, KPIs', trigger: 'Diagnostico aprovado' },
-  { name: 'Redator Bot', role: 'Headlines, CTAs, copy, landing pages', trigger: 'Estrategia gerada' },
-  { name: 'Calendario Bot', role: 'Propoe grade editorial 90 dias', trigger: 'Redacao pronta' },
-  { name: 'Exportador Bot', role: 'Gera PDF executivo e PPTX', trigger: 'Aprovacao do cliente' },
-  { name: 'Onboarding Bot', role: 'Guia o usuario na primeira estrategia', trigger: 'Primeiro acesso' },
+  { icon: '📥', name: 'Extrator', role: 'Extrai SWOT, persona, UVP do documento', queue: 'mkt:upload' },
+  { icon: '🧠', name: 'Estrategista', role: 'Gera posicionamento, canal mix, KPIs', queue: 'mkt:estrategia' },
+  { icon: '✍️', name: 'Redator', role: 'Headlines, CTAs, copy, landing pages', queue: 'mkt:copy' },
+  { icon: '📅', name: 'Calendario', role: 'Propoe grade editorial 90 dias', queue: 'mkt:calendario' },
+  { icon: '📦', name: 'Exportador', role: 'Gera PDF executivo e PPTX', queue: 'mkt:export' },
+  { icon: '🎓', name: 'Onboarding', role: 'Guia o usuario na primeira estrategia', queue: 'mkt:onboarding' },
+];
+
+const serviceLoop = [
+  { title: 'Diagnostico', desc: 'Extracao inteligente de dados do negocio' },
+  { title: 'Estrategia', desc: 'Geracao de posicionamento e canal mix' },
+  { title: 'Copywriting', desc: 'Headlines, CTAs e copy por campanha' },
+  { title: 'Calendario', desc: '90 dias de pauta organica e paga' },
+  { title: 'Exportacao', desc: 'PDF e PPTX com branding da empresa' },
+  { title: 'Iteracao', desc: 'Refinamento via chat contextual' },
+];
+
+const pillars = [
+  { name: 'Brand Identity', color: '#0EA5E9' },
+  { name: 'Target Audience', color: '#8B5CF6' },
+  { name: 'Channel Strategy', color: '#F59E0B' },
+  { name: 'Conversion Funnel', color: '#10B981' },
+  { name: 'KPIs', color: '#EF4444' },
+  { name: 'Editorial Calendar', color: '#EC4899' },
+  { name: 'Lead Magnets', color: '#14B8A6' },
 ];
 
 interface DashboardData {
   kpis: MktDashboardKpis;
-  campanhas: Campaign[];
+  estrategias: MktEstrategia[];
 }
 
 export function MktDashboard() {
@@ -39,16 +62,15 @@ export function MktDashboard() {
         'x-company-id': '11111111-1111-4111-8111-111111111111',
       };
 
-      const [dashRes, campRes] = await Promise.all([
+      const [dashRes, estrRes] = await Promise.all([
         fetch('/api/proxy/mkt/dashboard', { headers }),
-        fetch('/api/proxy/mkt/campaigns?page_size=50', { headers }),
+        fetch('/api/proxy/mkt/estrategias?page_size=5', { headers }),
       ]);
 
-      if (!dashRes.ok || !campRes.ok) throw new Error('Erro ao carregar dados');
+      if (!dashRes.ok || !estrRes.ok) throw new Error('Erro ao carregar dados');
 
-      const [dashJson, campJson] = await Promise.all([dashRes.json(), campRes.json()]);
-
-      setData({ kpis: dashJson.kpis, campanhas: campJson.campanhas });
+      const [dashJson, estrJson] = await Promise.all([dashRes.json(), estrRes.json()]);
+      setData({ kpis: dashJson.kpis, estrategias: estrJson.estrategias });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
@@ -56,14 +78,12 @@ export function MktDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) {
     return (
       <main className="mkt-shell fbr-shared-theme">
-        <p>Carregando...</p>
+        <div className="mkt-loading">Carregando MKT Intelligence Platform...</div>
       </main>
     );
   }
@@ -71,12 +91,12 @@ export function MktDashboard() {
   if (error || !data) {
     return (
       <main className="mkt-shell fbr-shared-theme">
-        <p>Erro: {error ?? 'Dados nao disponiveis'}</p>
+        <div className="mkt-error">Erro: {error ?? 'Dados nao disponiveis'}</div>
       </main>
     );
   }
 
-  const { kpis, campanhas } = data;
+  const { kpis, estrategias } = data;
 
   return (
     <main className="mkt-shell fbr-shared-theme">
@@ -98,107 +118,87 @@ export function MktDashboard() {
             <span>Calendario 90 dias</span>
           </div>
         </div>
+        <Link href="/mkt/novo" className="mkt-cta-btn">
+          Nova Estrategia
+        </Link>
       </section>
 
       <section aria-label="KPIs Marketing" className="mkt-kpis">
         <article>
-          <span>Campanhas Ativas</span>
-          <strong>{kpis.campanhas_ativas}</strong>
-          <small>de {kpis.campanhas_por_status.reduce((s, c) => s + c.value, 0)} total</small>
+          <span>Estrategias Ativas</span>
+          <strong>{kpis.estrategias_ativas}</strong>
+          <small>{kpis.estrategias_processando} processando</small>
         </article>
         <article>
-          <span>ROI Medio</span>
-          <strong>{kpis.roi_medio}x</strong>
-          <small>retorno sobre investimento</small>
+          <span>Diagnosticos</span>
+          <strong>{kpis.total_diagnosticos}</strong>
+          <small>{kpis.taxa_aprovacao}% aprovacao</small>
         </article>
         <article>
-          <span>Budget Total</span>
-          <strong>{formatBRL(kpis.budget_total)}</strong>
-          <small>{formatBRL(kpis.budget_gasto)} gastos</small>
+          <span>Exportacoes</span>
+          <strong>{kpis.total_exportacoes}</strong>
+          <small>PDF e PPTX gerados</small>
         </article>
         <article>
-          <span>CAC Medio</span>
-          <strong>{formatBRL(kpis.cac_medio)}</strong>
-          <small>custo por aquisicao</small>
+          <span>Tempo Medio</span>
+          <strong>&lt;{kpis.tempo_medio_geracao}s</strong>
+          <small>geracao de estrategia</small>
         </article>
         <article>
-          <span>LTV Medio</span>
-          <strong>{formatBRL(kpis.ltv_medio)}</strong>
-          <small>lifetime value</small>
+          <span>Agentes Ativos</span>
+          <strong>{kpis.agentes_ativos}</strong>
+          <small>de 6 slots</small>
         </article>
         <article>
-          <span>Total Leads</span>
-          <strong>{formatNumber(kpis.total_leads)}</strong>
-          <small>conversoes acumuladas</small>
+          <span>Jobs com Falha</span>
+          <strong>{kpis.jobs_falha}</strong>
+          <small>requerem atencao</small>
         </article>
         <article>
-          <span>Impressoes</span>
-          <strong>{formatNumber(kpis.impressoes_total)}</strong>
-          <small>{kpis.ctr_medio}% CTR</small>
+          <span>Docs/mes Meta</span>
+          <strong>1.000</strong>
+          <small>processamentos/mes</small>
         </article>
         <article>
-          <span>Cliques</span>
-          <strong>{formatNumber(kpis.cliques_total)}</strong>
-          <small>{formatNumber(kpis.conversoes_total)} conversoes</small>
+          <span>Retencao Meta</span>
+          <strong>60%</strong>
+          <small>semanal</small>
         </article>
       </section>
 
-      <div className="mkt-nav-links">
+      <section className="mkt-nav-links">
+        <Link href="/mkt/novo">Nova Estrategia</Link>
         <Link href="/mkt/estrategias">Estrategias</Link>
-        <Link href="/mkt/calendario">Calendario 90 dias</Link>
         <Link href="/mkt/agentes">Agentes</Link>
-      </div>
+      </section>
 
-      <section aria-label="Campanhas" className="mkt-section">
+      <section aria-label="Modulos MKT" className="mkt-section">
         <header>
-          <p>Campanhas</p>
-          <h2>Campanhas ativas e recentes</h2>
+          <p>Modulos</p>
+          <h2>9 Modulos da Plataforma</h2>
         </header>
-        <div className="mkt-table-wrap">
-          <table className="mkt-table">
-            <thead>
-              <tr>
-                <th scope="col">Nome</th>
-                <th scope="col">Status</th>
-                <th scope="col">Tipo</th>
-                <th scope="col">Canal</th>
-                <th scope="col">Budget</th>
-                <th scope="col">Gasto</th>
-                <th scope="col">ROI</th>
-                <th scope="col">Responsavel</th>
-              </tr>
-            </thead>
-            <tbody>
-              {campanhas.map((camp) => (
-                <tr key={camp.id}>
-                  <th scope="row">{camp.nome}</th>
-                  <td>
-                    <span className={`mkt-badge mkt-badge--${camp.status}`}>{camp.status}</span>
-                  </td>
-                  <td>{camp.tipo}</td>
-                  <td>{camp.canal}</td>
-                  <td>{formatBRL(camp.budget)}</td>
-                  <td>{formatBRL(camp.gasto)}</td>
-                  <td>{camp.roi > 0 ? `${camp.roi}x` : '-'}</td>
-                  <td>{camp.responsavel}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mkt-modules-grid">
+          {mktModules.map((mod) => (
+            <Link key={mod.name} href={mod.href} className="mkt-module-card">
+              <span className="mkt-module-icon">{mod.icon}</span>
+              <h3>{mod.name}</h3>
+              <p>{mod.desc}</p>
+            </Link>
+          ))}
         </div>
       </section>
 
-      <section aria-label="Campanhas por Status" className="mkt-section">
+      <section aria-label="Pilares" className="mkt-section">
         <header>
-          <p>Distribuicao</p>
-          <h2>Campanhas por status e canal</h2>
+          <p>Pilares</p>
+          <h2>7 Pilares Estrategicos</h2>
         </header>
-        <div className="mkt-status-grid">
-          {kpis.campanhas_por_status.map((item) => (
-            <article key={item.name} className="mkt-status-card">
-              <span className={`mkt-badge mkt-badge--${item.name}`}>{item.name}</span>
-              <strong>{item.value}</strong>
-            </article>
+        <div className="mkt-pillars-grid">
+          {pillars.map((p) => (
+            <div key={p.name} className="mkt-pillar-card" style={{ borderColor: p.color }}>
+              <div className="mkt-pillar-dot" style={{ background: p.color }} />
+              <span>{p.name}</span>
+            </div>
           ))}
         </div>
       </section>
@@ -211,61 +211,60 @@ export function MktDashboard() {
         <div className="mkt-agents__grid">
           {mktAgents.map((agent) => (
             <article className="mkt-agent-card" key={agent.name}>
-              <h3>{agent.name}</h3>
+              <h3>{agent.icon} {agent.name}</h3>
               <p>{agent.role}</p>
-              <span>{agent.trigger}</span>
+              <span>{agent.queue}</span>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="mkt-architecture" aria-label="Arquitetura MKT">
-        <h2>Arquitetura de Processamento</h2>
-        <div className="mkt-architecture__grid">
-          {[
-            { name: 'Upload & Validacao', desc: 'PDF/DOCX ate 20MB com MIME check' },
-            { name: 'BullMQ Orchestration', desc: '5 filas com retry e dead-letter' },
-            { name: 'LLM Cascade', desc: 'Ollama L1 -> Claude L2 -> GPT-4o L3' },
-            { name: 'SSE Progress Stream', desc: '4 estagios: extracao, analise, geracao, pronto' },
-          ].map((item) => (
-            <article key={item.name}>
-              <h3>{item.name}</h3>
-              <p>{item.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section aria-label="Evolucao" className="mkt-section">
+      <section aria-label="Service Loop" className="mkt-section">
         <header>
-          <p>Performance</p>
-          <h2>Evolucao dos ultimos 6 meses</h2>
+          <p>Ciclo</p>
+          <h2>Ciclo de Capacidades</h2>
         </header>
-        <div className="mkt-table-wrap">
-          <table className="mkt-table">
-            <thead>
-              <tr>
-                <th scope="col">Mes</th>
-                <th scope="col">Impressoes</th>
-                <th scope="col">Cliques</th>
-                <th scope="col">Conversoes</th>
-                <th scope="col">Gasto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {kpis.evolucao_6m.map((item) => (
-                <tr key={item.mes}>
-                  <th scope="row">{item.mes}</th>
-                  <td>{formatNumber(item.impressoes)}</td>
-                  <td>{formatNumber(item.cliques)}</td>
-                  <td>{formatNumber(item.conversoes)}</td>
-                  <td>{formatBRL(item.gasto)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mkt-service-loop">
+          {serviceLoop.map((item, i) => (
+            <div key={item.title} className="mkt-service-card">
+              <div className="mkt-service-num">{String(i + 1).padStart(2, '0')}</div>
+              <h3>{item.title}</h3>
+              <p>{item.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
+
+      {estrategias.length > 0 && (
+        <section aria-label="Estrategias Recentes" className="mkt-section">
+          <header>
+            <p>Recentes</p>
+            <h2>Estrategias</h2>
+          </header>
+          <div className="mkt-table-wrap">
+            <table className="mkt-table">
+              <thead>
+                <tr>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Versao</th>
+                  <th scope="col">Nicho</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estrategias.map((e) => (
+                  <tr key={e.id}>
+                    <th scope="row"><Link href={`/mkt/estrategias/${e.id}`}>{e.nome}</Link></th>
+                    <td><span className={`mkt-badge mkt-badge--${e.status}`}>{e.status}</span></td>
+                    <td>v{e.versao}</td>
+                    <td>{e.nicho ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

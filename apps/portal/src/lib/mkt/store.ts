@@ -1,13 +1,29 @@
 import { z } from 'zod';
-import {
-  Campaign,
-  CampaignSchema,
-  CampaignsQuery,
-  CampaignsQuerySchema,
-  Strategy,
-  ContentCalendar,
-  AnalyticsSnapshot,
+import type {
+  MktEstrategia,
+  MktDiagnostico,
+  MktEstrategiaVersao,
+  MktCopyVariant,
+  MktLeadMagnet,
+  MktCalendarItem,
+  MktRoadmapTask,
+  MktChatMessage,
+  MktExport,
+  MktAgent,
+  MktAgentActionLog,
+  MktProcessingJob,
+  MktBranding,
   MktDashboardKpis,
+  MktEstrategiasQuery,
+  MktEstrategiaStatus,
+  Campaign,
+  CampaignsQuery,
+} from './types';
+import {
+  MktEstrategiaSchema,
+  MktEstrategiasQuerySchema,
+  CampaignSchema,
+  CampaignsQuerySchema,
 } from './types';
 
 export interface MktRequestContext {
@@ -30,296 +46,40 @@ const COMPANY_ALPHA = '11111111-1111-4111-8111-111111111111';
 const COMPANY_BETA = '22222222-2222-4222-8222-222222222222';
 const USER_SYSTEM = '33333333-3333-4333-8333-333333333333';
 
-const initialCampaigns: Campaign[] = [
+let estrategias: MktEstrategia[] = [];
+let diagnosticos: MktDiagnostico[] = [];
+let versoes: MktEstrategiaVersao[] = [];
+let copyVariants: MktCopyVariant[] = [];
+let leadMagnets: MktLeadMagnet[] = [];
+let calendarItems: MktCalendarItem[] = [];
+let roadmapTasks: MktRoadmapTask[] = [];
+let chatMessages: MktChatMessage[] = [];
+let exportsList: MktExport[] = [];
+let agents: MktAgent[] = [];
+let agentLogs: MktAgentActionLog[] = [];
+let processingJobs: MktProcessingJob[] = [];
+let brandings: MktBranding[] = [];
+
+const defaultBranding: MktBranding[] = [
   {
-    id: 'mkt-camp-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    company_id: COMPANY_ALPHA,
-    nome: 'Lancamento Produto X',
-    status: 'ativa',
-    tipo: 'produto',
-    budget: 25000,
-    gasto: 18500,
-    roi: 3.2,
-    data_inicio: '2026-03-01',
-    data_fim: '2026-06-30',
-    canal: 'Google Ads',
-    responsavel: 'Maria Silva',
-    created_at: '2026-02-15T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0002-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-    company_id: COMPANY_ALPHA,
-    nome: 'Awareness Marca Q2',
-    status: 'ativa',
-    tipo: 'awareness',
-    budget: 40000,
-    gasto: 32000,
-    roi: 1.8,
-    data_inicio: '2026-04-01',
-    data_fim: '2026-06-30',
-    canal: 'Instagram',
-    responsavel: 'Joao Santos',
-    created_at: '2026-03-20T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0003-aaaa-4aaa-8aaa-aaaaaaaaaaa3',
-    company_id: COMPANY_ALPHA,
-    nome: 'Captacao Leads B2B',
-    status: 'ativa',
-    tipo: 'leads',
-    budget: 15000,
-    gasto: 12000,
-    roi: 4.5,
-    data_inicio: '2026-04-15',
-    data_fim: '2026-07-15',
-    canal: 'LinkedIn',
-    responsavel: 'Ana Costa',
-    created_at: '2026-04-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0004-aaaa-4aaa-8aaa-aaaaaaaaaaa4',
-    company_id: COMPANY_ALPHA,
-    nome: 'Remarketing Carrinho Abandonado',
-    status: 'pausada',
-    tipo: 'remarketing',
-    budget: 8000,
-    gasto: 6500,
-    roi: 5.1,
-    data_inicio: '2026-02-01',
-    canal: 'Google Ads',
-    responsavel: 'Carlos Lima',
-    created_at: '2026-01-20T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0005-aaaa-4aaa-8aaa-aaaaaaaaaaa5',
-    company_id: COMPANY_ALPHA,
-    nome: 'Institucional Empresa',
-    status: 'concluida',
-    tipo: 'institucional',
-    budget: 20000,
-    gasto: 20000,
-    roi: 1.2,
-    data_inicio: '2026-01-01',
-    data_fim: '2026-03-31',
-    canal: 'YouTube',
-    responsavel: 'Maria Silva',
-    created_at: '2025-12-15T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0006-aaaa-4aaa-8aaa-aaaaaaaaaaa6',
-    company_id: COMPANY_ALPHA,
-    nome: 'Campanha Dia das Maes',
-    status: 'concluida',
-    tipo: 'conversao',
-    budget: 30000,
-    gasto: 28000,
-    roi: 2.9,
-    data_inicio: '2026-04-20',
-    data_fim: '2026-05-10',
-    canal: 'Meta Ads',
-    responsavel: 'Joao Santos',
-    created_at: '2026-04-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0007-aaaa-4aaa-8aaa-aaaaaaaaaaa7',
-    company_id: COMPANY_ALPHA,
-    nome: 'Black Friday 2026',
-    status: 'rascunho',
-    tipo: 'conversao',
-    budget: 60000,
-    gasto: 0,
-    roi: 0,
-    data_inicio: '2026-11-15',
-    data_fim: '2026-11-30',
-    canal: 'Multi-canal',
-    responsavel: 'Ana Costa',
-    created_at: '2026-05-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-camp-0008-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
-    company_id: COMPANY_BETA,
-    nome: 'Beta Launch Campaign',
-    status: 'ativa',
-    tipo: 'produto',
-    budget: 18000,
-    gasto: 10000,
-    roi: 2.1,
-    data_inicio: '2026-04-01',
-    data_fim: '2026-07-01',
-    canal: 'Google Ads',
-    responsavel: 'Pedro Alves',
-    created_at: '2026-03-15T10:00:00.000Z',
+    empresa_id: COMPANY_ALPHA,
+    cor_primaria: '#0EA5E9',
+    cor_secundaria: '#8B5CF6',
+    fonte_principal: 'Inter',
+    nome_empresa: 'Facebrasil Alpha',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
-const initialStrategies: Strategy[] = [
-  {
-    id: 'mkt-str-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    company_id: COMPANY_ALPHA,
-    nome: 'Crescimento Organico 2026',
-    descricao: 'Estrategia focada em crescimento organico via SEO e conteudo de valor para aumentar autoridade no mercado B2B.',
-    pilares: ['seo', 'conteudo', 'social_media'],
-    ativa: true,
-    created_at: '2026-01-10T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-str-0002-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-    company_id: COMPANY_ALPHA,
-    nome: 'Performance Digital Q2',
-    descricao: 'Foco em midia paga e remarketing para maximizar conversoes no segundo trimestre.',
-    pilares: ['midia_paga', 'email', 'conteudo'],
-    ativa: true,
-    created_at: '2026-03-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-str-0003-aaaa-4aaa-8aaa-aaaaaaaaaaa3',
-    company_id: COMPANY_ALPHA,
-    nome: 'Influenciadores Nordeste',
-    descricao: 'Parcerias com macro e micro influenciadores da regiao Nordeste para expandir alcance regional.',
-    pilares: ['influenciadores', 'social_media'],
-    ativa: true,
-    created_at: '2026-02-15T10:00:00.000Z',
-  },
+const defaultAgents: MktAgent[] = [
+  { empresa_id: COMPANY_ALPHA, slot: 'extrator', nome: 'Extrator Bot', descricao: 'Extrai SWOT, persona, UVP do documento', ativo: true },
+  { empresa_id: COMPANY_ALPHA, slot: 'estrategista', nome: 'Estrategista Bot', descricao: 'Gera posicionamento, canal mix, KPIs', ativo: true },
+  { empresa_id: COMPANY_ALPHA, slot: 'redator', nome: 'Redator Bot', descricao: 'Headlines, CTAs, copy, landing pages', ativo: true },
+  { empresa_id: COMPANY_ALPHA, slot: 'calendario', nome: 'Calendario Bot', descricao: 'Propoe grade editorial 90 dias', ativo: true },
+  { empresa_id: COMPANY_ALPHA, slot: 'exportador', nome: 'Exportador Bot', descricao: 'Gera PDF executivo e PPTX', ativo: true },
+  { empresa_id: COMPANY_ALPHA, slot: 'onboarding', nome: 'Onboarding Bot', descricao: 'Guia o usuario na primeira estrategia', ativo: true },
 ];
-
-const initialCalendar: ContentCalendar[] = [
-  {
-    id: 'mkt-cal-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-07',
-    tipo: 'post',
-    plataforma: 'instagram',
-    titulo: 'Lancamento Produto X - Carrossel',
-    status: 'aprovado',
-    responsavel: 'Maria Silva',
-    campanha_id: 'mkt-camp-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    created_at: '2026-05-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-cal-0002-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-08',
-    tipo: 'reels',
-    plataforma: 'instagram',
-    titulo: 'Bastidores da equipe',
-    status: 'em_producao',
-    responsavel: 'Joao Santos',
-    created_at: '2026-05-02T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-cal-0003-aaaa-4aaa-8aaa-aaaaaaaaaaa3',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-09',
-    tipo: 'blog',
-    plataforma: 'blog',
-    titulo: 'Como aumentar a produtividade em 2026',
-    status: 'planejado',
-    responsavel: 'Ana Costa',
-    created_at: '2026-05-03T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-cal-0004-aaaa-4aaa-8aaa-aaaaaaaaaaa4',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-10',
-    tipo: 'email',
-    plataforma: 'email',
-    titulo: 'Newsletter semanal - Edicao 18',
-    status: 'publicado',
-    responsavel: 'Carlos Lima',
-    created_at: '2026-05-04T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-cal-0005-aaaa-4aaa-8aaa-aaaaaaaaaaa5',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-12',
-    tipo: 'video',
-    plataforma: 'youtube',
-    titulo: 'Tutorial Produto X',
-    status: 'em_producao',
-    responsavel: 'Maria Silva',
-    campanha_id: 'mkt-camp-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    created_at: '2026-05-05T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-cal-0006-aaaa-4aaa-8aaa-aaaaaaaaaaa6',
-    company_id: COMPANY_ALPHA,
-    data: '2026-05-14',
-    tipo: 'story',
-    plataforma: 'instagram',
-    titulo: 'Enquete - Proximo conteudo',
-    status: 'planejado',
-    responsavel: 'Joao Santos',
-    created_at: '2026-05-06T10:00:00.000Z',
-  },
-];
-
-const initialAnalytics: AnalyticsSnapshot[] = [
-  {
-    id: 'mkt-anx-0001-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-    company_id: COMPANY_ALPHA,
-    periodo: '2025-12',
-    impressions: 285000,
-    clicks: 14200,
-    ctr: 4.98,
-    conversions: 420,
-    cac: 45.5,
-    ltv: 890,
-    created_at: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-anx-0002-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-    company_id: COMPANY_ALPHA,
-    periodo: '2026-01',
-    impressions: 310000,
-    clicks: 15500,
-    ctr: 5.0,
-    conversions: 480,
-    cac: 42.0,
-    ltv: 920,
-    created_at: '2026-02-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-anx-0003-aaaa-4aaa-8aaa-aaaaaaaaaaa3',
-    company_id: COMPANY_ALPHA,
-    periodo: '2026-02',
-    impressions: 340000,
-    clicks: 17800,
-    ctr: 5.24,
-    conversions: 530,
-    cac: 39.8,
-    ltv: 950,
-    created_at: '2026-03-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-anx-0004-aaaa-4aaa-8aaa-aaaaaaaaaaa4',
-    company_id: COMPANY_ALPHA,
-    periodo: '2026-03',
-    impressions: 380000,
-    clicks: 19200,
-    ctr: 5.05,
-    conversions: 590,
-    cac: 37.2,
-    ltv: 980,
-    created_at: '2026-04-01T10:00:00.000Z',
-  },
-  {
-    id: 'mkt-anx-0005-aaaa-4aaa-8aaa-aaaaaaaaaaa5',
-    company_id: COMPANY_ALPHA,
-    periodo: '2026-04',
-    impressions: 420000,
-    clicks: 21500,
-    ctr: 5.12,
-    conversions: 650,
-    cac: 35.5,
-    ltv: 1020,
-    created_at: '2026-05-01T10:00:00.000Z',
-  },
-];
-
-let campaigns: Campaign[] = [];
-let strategies: Strategy[] = [];
-let calendar: ContentCalendar[] = [];
-let analytics: AnalyticsSnapshot[] = [];
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -342,10 +102,19 @@ function normalizeZodError(error: z.ZodError) {
 }
 
 export function resetMktStoreForTests() {
-  campaigns = clone(initialCampaigns);
-  strategies = clone(initialStrategies);
-  calendar = clone(initialCalendar);
-  analytics = clone(initialAnalytics);
+  estrategias = [];
+  diagnosticos = [];
+  versoes = [];
+  copyVariants = [];
+  leadMagnets = [];
+  calendarItems = [];
+  roadmapTasks = [];
+  chatMessages = [];
+  exportsList = [];
+  agents = clone(defaultAgents);
+  agentLogs = [];
+  processingJobs = [];
+  brandings = clone(defaultBranding);
 }
 
 resetMktStoreForTests();
@@ -371,6 +140,274 @@ export function contextFromHeaders(headers: Headers): MktRequestContext | Respon
   return { userId, companyId, moduleSource };
 }
 
+export function parseEstrategiasQuery(url: string): MktEstrategiasQuery {
+  const params = new URL(url).searchParams;
+  const rawStatus = params.getAll('status').flatMap((item) => item.split(',')).filter(Boolean);
+
+  try {
+    return MktEstrategiasQuerySchema.parse({
+      status: rawStatus.length > 0 ? rawStatus : undefined,
+      page: params.get('page') ?? undefined,
+      page_size: params.get('page_size') ?? undefined,
+      sort_by: params.get('sort_by') ?? undefined,
+      sort_dir: params.get('sort_dir') ?? undefined,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
+}
+
+export function createEstrategia(context: MktRequestContext, data: unknown): MktEstrategia {
+  const input = parseJsonObject(data);
+  const validated = MktEstrategiaSchema.parse({
+    ...input,
+    id: crypto.randomUUID(),
+    user_id: context.userId,
+    empresa_id: context.companyId,
+    versao: 0,
+    status: 'processando',
+    created_at: now(),
+    updated_at: now(),
+  });
+  estrategias.push(validated);
+  return validated;
+}
+
+export function listEstrategias(context: MktRequestContext, query: Partial<MktEstrategiasQuery> = {}) {
+  const parsed = MktEstrategiasQuerySchema.parse(query);
+  const filtered = estrategias.filter((e) => {
+    if (e.empresa_id !== context.companyId) return false;
+    if (parsed.status && !parsed.status.includes(e.status)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const dir = parsed.sort_dir === 'asc' ? 1 : -1;
+    const av = a[parsed.sort_by] ?? '';
+    const bv = b[parsed.sort_by] ?? '';
+    return av > bv ? dir : av < bv ? -dir : 0;
+  });
+
+  const start = (parsed.page - 1) * parsed.page_size;
+  return {
+    items: filtered.slice(start, start + parsed.page_size),
+    pagination: {
+      page: parsed.page,
+      page_size: parsed.page_size,
+      total: filtered.length,
+      total_pages: Math.ceil(filtered.length / parsed.page_size),
+    },
+  };
+}
+
+export function getEstrategia(estrategiaId: string, context: MktRequestContext): MktEstrategia {
+  const e = estrategias.find((s) => s.id === estrategiaId && s.empresa_id === context.companyId);
+  if (!e) throw new Error('Estrategia not found');
+  return e;
+}
+
+export function updateEstrategiaStatus(estrategiaId: string, status: MktEstrategiaStatus, context: MktRequestContext): MktEstrategia {
+  const e = getEstrategia(estrategiaId, context);
+  e.status = status;
+  e.updated_at = now();
+  return e;
+}
+
+export function saveDiagnostico(diagnostico: Omit<MktDiagnostico, 'id' | 'created_at'>): MktDiagnostico {
+  const existing = diagnosticos.find((d) => d.estrategia_id === diagnostico.estrategia_id);
+  if (existing) {
+    Object.assign(existing, diagnostico);
+    return existing;
+  }
+  const full: MktDiagnostico = { ...diagnostico, id: crypto.randomUUID(), created_at: now() };
+  diagnosticos.push(full);
+  return full;
+}
+
+export function getDiagnosticoByEstrategia(estrategiaId: string, context: MktRequestContext): MktDiagnostico | null {
+  getEstrategia(estrategiaId, context);
+  return diagnosticos.find((d) => d.estrategia_id === estrategiaId) ?? null;
+}
+
+export function approveDiagnostico(estrategiaId: string, userId: string, context: MktRequestContext): MktDiagnostico {
+  const diag = diagnosticos.find((d) => d.estrategia_id === estrategiaId);
+  if (!diag) throw new Error('Diagnostico not found');
+  getEstrategia(estrategiaId, context);
+  diag.aprovado = true;
+  diag.aprovado_por = userId;
+  diag.aprovado_em = now();
+  return diag;
+}
+
+export function saveVersao(versao: Omit<MktEstrategiaVersao, 'id' | 'created_at'>): MktEstrategiaVersao {
+  const full: MktEstrategiaVersao = { ...versao, id: crypto.randomUUID(), created_at: now() };
+  versoes.push(full);
+  const e = estrategias.find((s) => s.id === versao.estrategia_id);
+  if (e) {
+    e.versao = versao.versao;
+    e.status = 'ativa';
+    e.updated_at = now();
+  }
+  return full;
+}
+
+export function listVersoes(estrategiaId: string, context: MktRequestContext): MktEstrategiaVersao[] {
+  getEstrategia(estrategiaId, context);
+  return versoes.filter((v) => v.estrategia_id === estrategiaId).sort((a, b) => b.versao - a.versao);
+}
+
+export function getVersao(estrategiaId: string, versao: number, context: MktRequestContext): MktEstrategiaVersao {
+  getEstrategia(estrategiaId, context);
+  const v = versoes.find((vv) => vv.estrategia_id === estrategiaId && vv.versao === versao);
+  if (!v) throw new Error('Versao not found');
+  return v;
+}
+
+export function saveCopyVariants(variants: Omit<MktCopyVariant, 'id' | 'created_at'>[]): MktCopyVariant[] {
+  const results: MktCopyVariant[] = [];
+  for (const v of variants) {
+    const full: MktCopyVariant = { ...v, id: crypto.randomUUID(), created_at: now() };
+    copyVariants.push(full);
+    results.push(full);
+  }
+  return results;
+}
+
+export function listCopyByEstrategia(estrategiaId: string, context: MktRequestContext): MktCopyVariant[] {
+  getEstrategia(estrategiaId, context);
+  return copyVariants.filter((c) => c.estrategia_id === estrategiaId);
+}
+
+export function saveLeadMagnets(magnets: Omit<MktLeadMagnet, 'id' | 'created_at'>[]): MktLeadMagnet[] {
+  const results: MktLeadMagnet[] = [];
+  for (const m of magnets) {
+    const full: MktLeadMagnet = { ...m, id: crypto.randomUUID(), created_at: now() };
+    leadMagnets.push(full);
+    results.push(full);
+  }
+  return results;
+}
+
+export function listLeadMagnetsByEstrategia(estrategiaId: string, context: MktRequestContext): MktLeadMagnet[] {
+  getEstrategia(estrategiaId, context);
+  return leadMagnets.filter((l) => l.estrategia_id === estrategiaId);
+}
+
+export function saveCalendarItems(items: Omit<MktCalendarItem, 'id' | 'created_at'>[]): MktCalendarItem[] {
+  const results: MktCalendarItem[] = [];
+  for (const item of items) {
+    const full: MktCalendarItem = { ...item, id: crypto.randomUUID(), created_at: now() };
+    calendarItems.push(full);
+    results.push(full);
+  }
+  return results;
+}
+
+export function listCalendarByEstrategia(estrategiaId: string, context: MktRequestContext): MktCalendarItem[] {
+  getEstrategia(estrategiaId, context);
+  return calendarItems.filter((c) => c.estrategia_id === estrategiaId).sort((a, b) => a.data.localeCompare(b.data));
+}
+
+export function saveRoadmapTasks(tasks: Omit<MktRoadmapTask, 'id' | 'created_at'>[]): MktRoadmapTask[] {
+  const results: MktRoadmapTask[] = [];
+  for (const t of tasks) {
+    const full: MktRoadmapTask = { ...t, id: crypto.randomUUID(), created_at: now() };
+    roadmapTasks.push(full);
+    results.push(full);
+  }
+  return results;
+}
+
+export function listRoadmapByEstrategia(estrategiaId: string, context: MktRequestContext): MktRoadmapTask[] {
+  getEstrategia(estrategiaId, context);
+  return roadmapTasks.filter((r) => r.estrategia_id === estrategiaId);
+}
+
+export function saveChatMessage(msg: Omit<MktChatMessage, 'id' | 'created_at'>): MktChatMessage {
+  const full: MktChatMessage = { ...msg, id: crypto.randomUUID(), created_at: now() };
+  chatMessages.push(full);
+  return full;
+}
+
+export function listChatByEstrategia(estrategiaId: string, context: MktRequestContext, limit = 50): MktChatMessage[] {
+  getEstrategia(estrategiaId, context);
+  return chatMessages
+    .filter((m) => m.estrategia_id === estrategiaId)
+    .sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''))
+    .slice(-limit);
+}
+
+export function saveExport(exp: Omit<MktExport, 'id' | 'created_at'>): MktExport {
+  const full: MktExport = { ...exp, id: crypto.randomUUID(), created_at: now() };
+  exportsList.push(full);
+  return full;
+}
+
+export function listExportsByEstrategia(estrategiaId: string, context: MktRequestContext): MktExport[] {
+  getEstrategia(estrategiaId, context);
+  return exportsList.filter((e) => e.estrategia_id === estrategiaId);
+}
+
+export function getAgentsByEmpresa(context: MktRequestContext): MktAgent[] {
+  return agents.filter((a) => a.empresa_id === context.companyId);
+}
+
+export function saveAgentActionLog(log: Omit<MktAgentActionLog, 'id' | 'created_at'>): MktAgentActionLog {
+  const full: MktAgentActionLog = { ...log, id: crypto.randomUUID(), created_at: now() };
+  agentLogs.push(full);
+  return full;
+}
+
+export function listAgentLogs(context: MktRequestContext, limit = 50): MktAgentActionLog[] {
+  return agentLogs
+    .filter((l) => l.empresa_id === context.companyId)
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+    .slice(0, limit);
+}
+
+export function saveProcessingJob(job: Omit<MktProcessingJob, 'id' | 'created_at' | 'updated_at'>): MktProcessingJob {
+  const full: MktProcessingJob = { ...job, id: crypto.randomUUID(), created_at: now(), updated_at: now() };
+  processingJobs.push(full);
+  return full;
+}
+
+export function getBranding(context: MktRequestContext): MktBranding | null {
+  return brandings.find((b) => b.empresa_id === context.companyId) ?? null;
+}
+
+export function getDashboardKpis(context: MktRequestContext): MktDashboardKpis {
+  const companyEstrategias = estrategias.filter((e) => e.empresa_id === context.companyId);
+  const companyDiags = diagnosticos.filter((d) => {
+    return companyEstrategias.some((e) => e.id === d.estrategia_id);
+  });
+  const companyExports = exportsList.filter((ex) => {
+    return companyEstrategias.some((e) => e.id === ex.estrategia_id);
+  });
+  const companyJobs = processingJobs.filter((j) => j.empresa_id === context.companyId);
+  const companyAgents = agents.filter((a) => a.empresa_id === context.companyId && a.ativo);
+
+  const ativas = companyEstrategias.filter((e) => e.status === 'ativa').length;
+  const processando = companyEstrategias.filter((e) => e.status === 'processando').length;
+  const aprovados = companyDiags.filter((d) => d.aprovado).length;
+  const taxaAprovacao = companyDiags.length > 0 ? (aprovados / companyDiags.length) * 100 : 0;
+  const jobsFailed = companyJobs.filter((j) => j.status === 'failed').length;
+
+  return {
+    estrategias_ativas: ativas,
+    estrategias_processando: processando,
+    total_diagnosticos: companyDiags.length,
+    total_exportacoes: companyExports.length,
+    taxa_aprovacao: Number(taxaAprovacao.toFixed(1)),
+    tempo_medio_geracao: 45,
+    agentes_ativos: companyAgents.length,
+    jobs_falha: jobsFailed,
+  };
+}
+
+// Legacy campaigns store for backward compatibility
+const campaigns: Campaign[] = [];
+
 export function parseCampaignsQuery(url: string): CampaignsQuery {
   const params = new URL(url).searchParams;
   const rawStatus = params.getAll('status').flatMap((item) => item.split(',')).filter(Boolean);
@@ -394,27 +431,24 @@ export function parseCampaignsQuery(url: string): CampaignsQuery {
 
 export function listCampaigns(context: MktRequestContext, query: Partial<CampaignsQuery> = {}) {
   const parsed = CampaignsQuerySchema.parse(query);
-
-  const filtered = campaigns.filter((campaign) => {
-    if (campaign.company_id !== context.companyId) return false;
-    if (parsed.status && !parsed.status.includes(campaign.status)) return false;
-    if (parsed.tipo && !parsed.tipo.includes(campaign.tipo)) return false;
-    if (parsed.canal && !campaign.canal.toLowerCase().includes(parsed.canal.toLowerCase())) return false;
+  const filtered = campaigns.filter((c) => {
+    if (c.company_id !== context.companyId) return false;
+    if (parsed.status && !parsed.status.includes(c.status)) return false;
+    if (parsed.tipo && !parsed.tipo.includes(c.tipo)) return false;
+    if (parsed.canal && !c.canal.toLowerCase().includes(parsed.canal.toLowerCase())) return false;
     return true;
   });
 
-  filtered.sort((left, right) => {
-    const direction = parsed.sort_dir === 'asc' ? 1 : -1;
-    const leftValue = left[parsed.sort_by];
-    const rightValue = right[parsed.sort_by];
-    return leftValue > rightValue ? direction : leftValue < rightValue ? -direction : 0;
+  filtered.sort((a, b) => {
+    const dir = parsed.sort_dir === 'asc' ? 1 : -1;
+    const av = a[parsed.sort_by];
+    const bv = b[parsed.sort_by];
+    return av > bv ? dir : av < bv ? -dir : 0;
   });
 
   const start = (parsed.page - 1) * parsed.page_size;
-  const items = filtered.slice(start, start + parsed.page_size);
-
   return {
-    items,
+    items: filtered.slice(start, start + parsed.page_size),
     pagination: {
       page: parsed.page,
       page_size: parsed.page_size,
@@ -426,7 +460,6 @@ export function listCampaigns(context: MktRequestContext, query: Partial<Campaig
 
 export function createCampaign(context: MktRequestContext, data: unknown) {
   const input = parseJsonObject(data);
-
   try {
     const validated = CampaignSchema.parse({
       ...input,
@@ -434,84 +467,10 @@ export function createCampaign(context: MktRequestContext, data: unknown) {
       created_at: now(),
       id: crypto.randomUUID(),
     });
-
     campaigns.push(validated);
     return validated;
   } catch (error) {
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;
   }
-}
-
-export function listStrategies(context: MktRequestContext): Strategy[] {
-  return strategies.filter((s) => s.company_id === context.companyId);
-}
-
-export function listCalendar(context: MktRequestContext, month?: string): ContentCalendar[] {
-  return calendar.filter((item) => {
-    if (item.company_id !== context.companyId) return false;
-    if (month && !item.data.startsWith(month)) return false;
-    return true;
-  });
-}
-
-export function listAnalytics(context: MktRequestContext): AnalyticsSnapshot[] {
-  return analytics.filter((a) => a.company_id === context.companyId);
-}
-
-export function getDashboardKpis(context: MktRequestContext): MktDashboardKpis {
-  const companyCampaigns = campaigns.filter((c) => c.company_id === context.companyId);
-  const companyAnalytics = analytics.filter((a) => a.company_id === context.companyId);
-  const activeCampaigns = companyCampaigns.filter((c) => c.status === 'ativa');
-
-  const budgetTotal = companyCampaigns.reduce((sum, c) => sum + c.budget, 0);
-  const budgetGasto = companyCampaigns.reduce((sum, c) => sum + c.gasto, 0);
-  const roiMedio = activeCampaigns.length > 0
-    ? Number((activeCampaigns.reduce((sum, c) => sum + c.roi, 0) / activeCampaigns.length).toFixed(2))
-    : 0;
-
-  const latestAnalytics = companyAnalytics.length > 0
-    ? companyAnalytics[companyAnalytics.length - 1]
-    : null;
-
-  const totalImpressions = companyAnalytics.reduce((sum, a) => sum + a.impressions, 0);
-  const totalClicks = companyAnalytics.reduce((sum, a) => sum + a.clicks, 0);
-  const totalConversions = companyAnalytics.reduce((sum, a) => sum + a.conversions, 0);
-  const ctrMedio = totalImpressions > 0 ? Number(((totalClicks / totalImpressions) * 100).toFixed(2)) : 0;
-  const cacMedio = latestAnalytics?.cac ?? 0;
-  const ltvMedio = latestAnalytics?.ltv ?? 0;
-  const totalLeads = totalConversions;
-
-  const statusMap = new Map<string, number>();
-  for (const c of companyCampaigns) statusMap.set(c.status, (statusMap.get(c.status) ?? 0) + 1);
-
-  const canalMap = new Map<string, number>();
-  for (const c of companyCampaigns) canalMap.set(c.canal, (canalMap.get(c.canal) ?? 0) + 1);
-
-  const evolucao6m = companyAnalytics.slice(-6).map((a) => ({
-    mes: a.periodo,
-    impressoes: a.impressions,
-    cliques: a.clicks,
-    conversoes: a.conversions,
-    gasto: companyCampaigns
-      .filter((c) => c.data_inicio.slice(0, 7) <= a.periodo && (c.data_fim ?? '9999-12') >= a.periodo)
-      .reduce((sum, c) => sum + c.gasto, 0),
-  }));
-
-  return {
-    campanhas_ativas: activeCampaigns.length,
-    total_leads: totalLeads,
-    cac_medio: cacMedio,
-    ltv_medio: ltvMedio,
-    roi_medio: roiMedio,
-    budget_total: budgetTotal,
-    budget_gasto: budgetGasto,
-    impressoes_total: totalImpressions,
-    cliques_total: totalClicks,
-    ctr_medio: ctrMedio,
-    conversoes_total: totalConversions,
-    campanhas_por_status: [...statusMap].map(([name, value]) => ({ name, value })),
-    campanhas_por_canal: [...canalMap].map(([name, value]) => ({ name, value })),
-    evolucao_6m: evolucao6m,
-  };
 }

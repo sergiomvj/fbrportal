@@ -364,3 +364,1098 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ========== Story 2.5.2: Module Cards ========== */
+
+.mkt-cta-btn {
+  border: 1px solid var(--mkt-brand);
+  border-radius: 8px;
+  padding: 10px 24px;
+  background: rgba(249, 115, 22, 0.2);
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mkt-cta-btn:hover {
+  background: rgba(249, 115, 22, 0.35);
+}
+
+.mkt-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mkt-module-card {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(13, 22, 38, 0.82);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s;
+}
+
+.mkt-module-card:hover {
+  border-color: var(--mkt-brand);
+}
+
+.mkt-module-icon {
+  font-size: 1.6rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.mkt-module-card h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.mkt-module-card p {
+  margin: 0;
+  color: var(--mkt-slate);
+  font-size: 0.82rem;
+}
+
+.mkt-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mkt-pillar-card {
+  border: 1px solid var(--mkt-border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 12px;
+  background: rgba(13, 22, 38, 0.82);
+  text-align: center;
+}
+
+.mkt-pillar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+}
+
+.mkt-pillar-card span {
+  font-size: 0.78rem;
+  color: var(--mkt-light);
+}
+
+.mkt-service-loop {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mkt-service-card {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-service-num {
+  color: var(--mkt-brand);
+  font-family: var(--fbr-font-code);
+  font-weight: 800;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.mkt-service-card h3 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+}
+
+.mkt-service-card p {
+  margin: 0;
+  color: var(--mkt-slate);
+  font-size: 0.78rem;
+}
+
+/* ========== Story 2.5.3: Intake ========== */
+
+.mkt-intake-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mkt-tab {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--mkt-slate);
+  cursor: pointer;
+}
+
+.mkt-tab--active {
+  border-color: var(--mkt-brand);
+  color: var(--mkt-white);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.mkt-intake-form {
+  display: grid;
+  gap: 16px;
+  max-width: 600px;
+}
+
+.mkt-field {
+  display: grid;
+  gap: 6px;
+}
+
+.mkt-field label {
+  font-size: 0.88rem;
+  color: var(--mkt-light);
+  font-weight: 600;
+}
+
+.mkt-field input,
+.mkt-field textarea,
+.mkt-field select {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--mkt-dark-2);
+  color: var(--mkt-white);
+  font-size: 0.92rem;
+}
+
+.mkt-field input:focus,
+.mkt-field textarea:focus {
+  outline: none;
+  border-color: var(--mkt-sky);
+}
+
+.mkt-dropzone {
+  border: 2px dashed var(--mkt-border);
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.mkt-dropzone--active {
+  border-color: var(--mkt-sky);
+  background: rgba(14, 165, 233, 0.05);
+}
+
+.mkt-dropzone--filled {
+  border-color: var(--mkt-brand);
+  border-style: solid;
+}
+
+.mkt-dropzone p {
+  margin: 0 0 8px;
+}
+
+.mkt-dropzone small {
+  color: var(--mkt-slate);
+}
+
+.mkt-file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.mkt-file-icon {
+  font-size: 1.6rem;
+}
+
+.mkt-upload-btn,
+.mkt-link-btn {
+  display: inline-block;
+  border: 1px solid var(--mkt-sky);
+  border-radius: 6px;
+  padding: 8px 16px;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--mkt-sky);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+.mkt-submit-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  background: var(--mkt-brand);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mkt-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mkt-alert {
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+}
+
+.mkt-alert--error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.mkt-alert--warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.mkt-alert-text {
+  color: #fca5a5;
+}
+
+.mkt-loading,
+.mkt-error {
+  max-width: 1200px;
+  margin: 100px auto;
+  text-align: center;
+}
+
+/* ========== Story 2.5.4: Diagnostico ========== */
+
+.mkt-diagnostico-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+}
+
+.mkt-diagnostico-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+}
+
+.mkt-swot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mkt-swot-quadrant {
+  border: 1px solid var(--mkt-border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 12px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-swot-quadrant h3 {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+}
+
+.mkt-swot-quadrant ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mkt-swot-quadrant li {
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: var(--mkt-light);
+}
+
+.mkt-swot-quadrant li::before {
+  content: '•';
+  margin-right: 6px;
+  color: var(--mkt-slate);
+}
+
+.mkt-swot-warning {
+  color: var(--mkt-brand);
+  font-size: 0.75rem;
+  display: block;
+  margin-top: 6px;
+}
+
+.mkt-persona-card {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-persona-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mkt-persona-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--mkt-sky);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.mkt-persona-header h3 {
+  margin: 0;
+}
+
+.mkt-persona-header span {
+  color: var(--mkt-slate);
+  font-size: 0.85rem;
+}
+
+.mkt-persona-section {
+  margin-bottom: 12px;
+}
+
+.mkt-persona-section h4 {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  color: var(--mkt-sky);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mkt-persona-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mkt-persona-section li {
+  padding: 3px 0;
+  font-size: 0.85rem;
+  color: var(--mkt-light);
+}
+
+.mkt-persona-section li::before {
+  content: '•';
+  margin-right: 6px;
+  color: var(--mkt-violet);
+}
+
+.mkt-persona-section p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mkt-light);
+}
+
+.mkt-persona-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mkt-score-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.mkt-score-justificativa p {
+  margin: 0;
+  color: var(--mkt-light);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.mkt-uvp-display {
+  border: 1px solid var(--mkt-border);
+  border-left: 3px solid var(--mkt-sky);
+  border-radius: 6px;
+  padding: 16px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-uvp-display p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.mkt-actions {
+  max-width: 1200px;
+  margin: 24px auto;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* ========== Story 2.5.5: Strategy ========== */
+
+.mkt-version-selector {
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mkt-version-selector label {
+  font-size: 0.88rem;
+  color: var(--mkt-slate);
+}
+
+.mkt-version-selector select {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: var(--mkt-dark-2);
+  color: var(--mkt-white);
+}
+
+.mkt-strategy-nav {
+  display: flex;
+  gap: 8px;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+}
+
+.mkt-strategy-nav a {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  color: var(--mkt-light);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.mkt-strategy-nav a:hover {
+  border-color: var(--mkt-sky);
+  color: var(--mkt-white);
+}
+
+.mkt-collapsible-header {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mkt-collapsible-header h2 {
+  font-size: 1.1rem;
+  color: var(--mkt-white);
+}
+
+.mkt-collapsible-content {
+  padding: 16px 0;
+}
+
+.mkt-strategy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mkt-strategy-item {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 12px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-strategy-item h4 {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  color: var(--mkt-sky);
+  text-transform: uppercase;
+}
+
+.mkt-strategy-item p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--mkt-light);
+}
+
+.mkt-channels-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mkt-channel-item {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 12px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-channel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mkt-channel-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mkt-light);
+}
+
+.mkt-campaigns-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mkt-campaign-card {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-campaign-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mkt-campaign-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mkt-campaign-objetivo {
+  font-size: 0.85rem;
+  color: var(--mkt-light);
+  margin: 0 0 8px;
+}
+
+.mkt-campaign-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--mkt-slate);
+  margin-bottom: 8px;
+}
+
+.mkt-campaign-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mkt-tag {
+  border: 1px solid var(--mkt-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--mkt-slate);
+}
+
+/* ========== Story 2.5.6: Copy ========== */
+
+.mkt-copy-filters {
+  display: flex;
+  gap: 6px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  flex-wrap: wrap;
+}
+
+.mkt-copy-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mkt-copy-card {
+  border: 1px solid var(--mkt-border);
+  border-left: 3px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 12px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-copy-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mkt-copy-canal {
+  font-size: 0.78rem;
+  color: var(--mkt-slate);
+}
+
+.mkt-copy-content {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--mkt-light);
+  line-height: 1.5;
+}
+
+/* ========== Story 2.5.7: Calendar ========== */
+
+.mkt-calendar-filters {
+  display: flex;
+  gap: 6px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  flex-wrap: wrap;
+}
+
+.mkt-calendar-weeks {
+  display: grid;
+  gap: 20px;
+}
+
+.mkt-calendar-week h3 {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: var(--mkt-slate);
+}
+
+.mkt-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mkt-calendar-day {
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 8px;
+  background: rgba(13, 22, 38, 0.82);
+  min-height: 80px;
+  font-size: 0.78rem;
+}
+
+.mkt-calendar-day--qw {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.mkt-calendar-day--pago {
+  border-left: 3px solid var(--mkt-violet);
+}
+
+.mkt-calendar-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.mkt-calendar-day strong {
+  display: block;
+  font-size: 0.78rem;
+  margin-bottom: 2px;
+}
+
+.mkt-calendar-day p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mkt-light);
+}
+
+.mkt-calendar-day small {
+  font-size: 0.7rem;
+  color: var(--mkt-slate);
+}
+
+.mkt-qw-badge {
+  display: inline-block;
+  margin-top: 4px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* ========== Roadmap ========== */
+
+.mkt-roadmap-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mkt-roadmap-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.mkt-roadmap-item--concluido {
+  opacity: 0.6;
+}
+
+.mkt-roadmap-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mkt-sky);
+}
+
+.mkt-roadmap-content {
+  flex: 1;
+}
+
+.mkt-roadmap-content strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.mkt-roadmap-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--mkt-slate);
+  margin-top: 4px;
+}
+
+/* ========== Story 2.5.8: Chat ========== */
+
+.mkt-chat-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--mkt-border);
+  background: var(--mkt-dark-2);
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+}
+
+.mkt-chat-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  border-left: 1px solid var(--mkt-border);
+  background: var(--mkt-dark);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  z-index: 100;
+}
+
+.mkt-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--mkt-border);
+}
+
+.mkt-chat-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mkt-chat-close {
+  border: none;
+  background: none;
+  color: var(--mkt-slate);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.mkt-chat-messages {
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.mkt-chat-msg {
+  margin-bottom: 12px;
+}
+
+.mkt-chat-msg-header {
+  font-size: 0.75rem;
+  color: var(--mkt-slate);
+  margin-bottom: 4px;
+}
+
+.mkt-chat-msg p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.mkt-chat-msg--assistant p {
+  color: var(--mkt-light);
+}
+
+.mkt-chat-msg--user p {
+  color: var(--mkt-white);
+}
+
+.mkt-chat-typing {
+  color: var(--mkt-slate) !important;
+  font-style: italic;
+}
+
+.mkt-chat-loading,
+.mkt-chat-empty {
+  color: var(--mkt-slate);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.mkt-chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--mkt-border);
+}
+
+.mkt-chat-chip {
+  border: 1px solid var(--mkt-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--mkt-slate);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.mkt-chat-chip:hover {
+  border-color: var(--mkt-sky);
+  color: var(--mkt-sky);
+}
+
+.mkt-chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--mkt-border);
+}
+
+.mkt-chat-input-area textarea {
+  flex: 1;
+  border: 1px solid var(--mkt-border);
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--mkt-dark-2);
+  color: var(--mkt-white);
+  resize: none;
+  font-size: 0.85rem;
+}
+
+.mkt-chat-input-area button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: var(--mkt-sky);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mkt-chat-input-area button:disabled {
+  opacity: 0.5;
+}
+
+/* ========== Story 2.5.9: Export ========== */
+
+.mkt-export-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mkt-export-btn {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 16px 24px;
+  background: rgba(13, 22, 38, 0.82);
+  color: var(--mkt-white);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.mkt-export-btn:hover {
+  border-color: var(--mkt-sky);
+}
+
+.mkt-export-btn:disabled {
+  opacity: 0.5;
+}
+
+.mkt-captacao-pack {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mkt-captacao-item {
+  border: 1px solid var(--mkt-border);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(13, 22, 38, 0.82);
+  text-align: center;
+}
+
+.mkt-captacao-item span:first-child {
+  font-size: 1.4rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.mkt-captacao-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.mkt-captacao-item small {
+  color: var(--mkt-slate);
+  font-size: 0.78rem;
+}
+
+/* ========== Story 2.5.10: Agent Operations ========== */
+
+.mkt-agent-card--inactive {
+  opacity: 0.5;
+}
+
+.mkt-agent-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mkt-agent-queue {
+  font-family: var(--fbr-font-code);
+  font-size: 0.75rem;
+  color: var(--mkt-violet);
+}
+
+.mkt-agent-queue-stats {
+  margin-top: 6px;
+}
+
+.mkt-agent-queue-stats small {
+  font-size: 0.72rem;
+  color: var(--mkt-slate);
+}
+
+.mkt-progress {
+  max-width: 600px;
+  margin: 20px 0;
+}
+
+.mkt-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--mkt-dark-3);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.mkt-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--mkt-sky), var(--mkt-brand));
+  transition: width 0.5s ease;
+}
+
+/* ========== Responsive ========== */
+
+@media (max-width: 1180px) {
+  .mkt-modules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mkt-pillars-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mkt-service-loop {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mkt-diagnostico-grid,
+  .mkt-diagnostico-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-campaigns-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-calendar-days {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mkt-captacao-pack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .mkt-modules-grid,
+  .mkt-strategy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-pillars-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mkt-service-loop {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mkt-swot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-calendar-days {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-chat-sidebar {
+    width: 100%;
+  }
+
+  .mkt-export-actions {
+    flex-direction: column;
+  }
+
+  .mkt-captacao-pack {
+    grid-template-columns: 1fr;
+  }
+}

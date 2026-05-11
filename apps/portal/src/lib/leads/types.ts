@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const LeadEtapaSchema = z.enum([
+export const SYSTEM_LEAD_STAGE_IDS = [
   'captado',
   'email_validado',
   'icp_matching',
@@ -9,7 +9,9 @@ export const LeadEtapaSchema = z.enum([
   'cadencia',
   'sql_entregue',
   'descartado',
-]);
+] as const;
+
+export const LeadEtapaSchema = z.string().min(1);
 export type LeadEtapa = z.infer<typeof LeadEtapaSchema>;
 
 export const LeadFonteSchema = z.enum(['linkedin', 'cnpj_biz', 'google_maps', 'site', 'manual']);
@@ -94,6 +96,16 @@ export const LeadsQuerySchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).default('desc'),
 });
 export type LeadsQuery = z.infer<typeof LeadsQuerySchema>;
+
+export const PipelineStageSchema = z.object({
+  id: z.string().min(1),
+  nome: z.string().min(1),
+  descricao: z.string().optional(),
+  cor: z.string().default('sky'),
+  ordem: z.number().int().min(0).default(0),
+  sistema: z.boolean().default(false),
+});
+export type PipelineStage = z.infer<typeof PipelineStageSchema>;
 
 export const ICPSchema = z.object({
   id: z.string().uuid().optional(),
@@ -228,6 +240,10 @@ export const CampaignSchema = z.object({
   taxa_resposta: z.number().default(0),
   bounce_rate: z.number().default(0),
   dominio_id: z.string().uuid().optional(),
+  mkt_campaign_id: z.string().min(1).optional(),
+  mkt_campaign_nome: z.string().optional(),
+  mkt_responsavel: z.string().optional(),
+  mkt_canal: z.string().optional(),
   cadencia_config: z.array(z.object({
     toque: z.number().int(),
     dia: z.number().int(),
@@ -299,6 +315,7 @@ export const DashboardKpisSchema = z.object({
   leads_por_fonte: z.array(z.object({ fonte: z.string(), count: z.number().int() })),
   leads_por_icp: z.array(z.object({ icp: z.string(), count: z.number().int() })),
   saude_dominios: z.array(z.object({
+    id: z.string(),
     dominio: z.string(),
     status: z.string(),
     bounce_rate: z.number(),

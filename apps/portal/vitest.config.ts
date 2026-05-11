@@ -7,6 +7,7 @@ export default defineConfig({
     environment: 'jsdom',
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     globals: true,
+    pool: 'threads',
     setupFiles: ['./src/test/setup.ts'],
   },
   resolve: {

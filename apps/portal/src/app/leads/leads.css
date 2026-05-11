@@ -31,7 +31,8 @@
 
 .leads-shell button,
 .leads-shell input,
-.leads-shell select {
+.leads-shell select,
+.leads-shell textarea {
   font: inherit;
   color: inherit;
 }
@@ -193,6 +194,12 @@
   transition: opacity 0.15s;
 }
 
+.leads-inline-link {
+  color: var(--sky);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
 .leads-section > header button:hover,
 .leads-hero > button:hover {
   opacity: 0.85;
@@ -211,6 +218,29 @@
   border-radius: 8px;
   padding: 0 14px;
   background: var(--leads-panel);
+}
+
+.leads-inline-select,
+.leads-form-grid input,
+.leads-form-grid select,
+.leads-form-grid textarea {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid var(--leads-line);
+  border-radius: 8px;
+  padding: 0 14px;
+  background: var(--leads-panel);
+}
+
+.leads-form-grid textarea {
+  min-height: 104px;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+.leads-inline-select {
+  min-height: 36px;
+  padding-inline: 10px;
 }
 
 .leads-filters input::placeholder {
@@ -343,6 +373,190 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
+}
+
+.leads-stage-grid,
+.leads-domain-health-cards,
+.leads-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.leads-mini-grid--wide {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.leads-mini-card,
+.leads-stage-card,
+.leads-domain-health-card {
+  border: 1px solid var(--leads-line);
+  border-radius: 12px;
+  background: var(--leads-panel);
+  padding: 1rem 1.1rem;
+}
+
+.leads-domain-health-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.leads-domain-health-card__top,
+.leads-stage-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.leads-domain-health-card__metrics,
+.leads-domain-health-card__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--leads-muted);
+}
+
+.leads-domain-health-card__footer span:last-child {
+  color: var(--sky);
+}
+
+.leads-stage-card h3,
+.leads-mini-card strong {
+  margin: 12px 0 6px;
+  font-size: 1rem;
+}
+
+.leads-stage-card p,
+.leads-mini-card small,
+.leads-mini-card span {
+  color: var(--leads-muted);
+  line-height: 1.5;
+}
+
+.leads-stage-card strong {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--sky);
+}
+
+.leads-stage-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 30px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-family: var(--fbr-font-code, monospace);
+}
+
+.leads-stage-chip--blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+.leads-stage-chip--sky { background: rgba(14, 165, 233, 0.18); color: #7dd3fc; }
+.leads-stage-chip--violet { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+.leads-stage-chip--amber { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+.leads-stage-chip--orange { background: rgba(249, 115, 22, 0.18); color: #fdba74; }
+.leads-stage-chip--teal { background: rgba(20, 184, 166, 0.18); color: #5eead4; }
+.leads-stage-chip--green { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+.leads-stage-chip--slate { background: rgba(100, 116, 139, 0.18); color: #cbd5e1; }
+
+.leads-form-card {
+  margin: 18px 0 22px;
+  border: 1px solid var(--leads-line);
+  border-radius: 12px;
+  background: var(--leads-panel-strong);
+  padding: 1.2rem;
+}
+
+.leads-form-card__header,
+.leads-section-header-with-action,
+.leads-card-actions,
+.leads-checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.leads-form-card__header {
+  margin-bottom: 16px;
+}
+
+.leads-form-card__header h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.leads-form-card__header p,
+.leads-subtitle {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--leads-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.leads-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.leads-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--leads-muted-light);
+}
+
+.leads-form-grid__full {
+  grid-column: 1 / -1;
+}
+
+.leads-checkbox-row {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+
+.leads-checkbox-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--leads-muted-light);
+}
+
+.leads-card-actions {
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.leads-ghost-button,
+.leads-danger-button {
+  border: 1px solid var(--leads-line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.leads-ghost-button {
+  color: var(--sky);
+}
+
+.leads-danger-button {
+  color: #fda4af;
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.leads-form-error {
+  margin: 12px 0;
+  color: #fda4af;
+  font-size: 0.82rem;
 }
 
 .leads-domain-card h3 {
@@ -592,6 +806,15 @@
   gap: 12px;
 }
 
+.leads-campaign-linkages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.76rem;
+  color: var(--leads-muted);
+}
+
 .leads-campaign-card h3 {
   margin: 0 0 4px;
   font-size: 1rem;
@@ -732,6 +955,11 @@
   gap: 8px;
 }
 
+.leads-funnel--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
 .leads-funnel-stage {
   display: grid;
   grid-template-columns: 40px 1fr 2fr 120px;
@@ -798,7 +1026,6 @@
   gap: 8px;
   margin-bottom: 24px;
 }
-
 .leads-domain-health-item {
   display: flex;
   align-items: center;
@@ -808,6 +1035,12 @@
   border-radius: 8px;
   background: var(--leads-panel);
   font-size: 0.82rem;
+}
+
+.leads-agent-strategy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 
 .leads-domain-health-item strong {
@@ -853,6 +1086,8 @@
   .leads-funnel-stage { grid-template-columns: 32px 1fr; }
   .leads-funnel-stage-desc, .leads-funnel-stage-agent { display: none; }
   .leads-domain-grid, .leads-icp-grid, .leads-agent-grid { grid-template-columns: 1fr; }
+  .leads-form-grid { grid-template-columns: 1fr; }
+  .leads-domain-health-cards, .leads-stage-grid, .leads-mini-grid, .leads-agent-strategy { grid-template-columns: 1fr; }
   .leads-campaign-metrics { grid-template-columns: repeat(2, 1fr); }
   .leads-nav-tabs { gap: 4px; }
   .leads-nav-tabs a { padding: 6px 10px; font-size: 0.72rem; }

@@ -1,26 +1,30 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { AgentPicker } from '@fbr/ui';
+import type { ArvaAgent } from '@fbr/arva-integration';
 import type { Agent, AgentLog } from '@/lib/leads/types';
+import { requestJson } from './api';
 
 const teamOrder = [1, 2, 3, 4, 5, 6];
 
 const teamDescriptions: Record<number, string> = {
   1: 'Proteger e maximizar a reputacao de cada dominio. Fundacao de toda a operacao.',
   2: 'Captar dados brutos de multiplas fontes e transformar em registros estruturados.',
-  3: 'Enriquecer, validar e qualificar leads. Pipeline rigido de 3 etapas obrigatorias.',
-  4: 'Criar mensagens altamente personalizadas. Personalizacao e o que separa prospeccao de spam.',
+  3: 'Enriquecer, validar e qualificar leads sem quebrar a cadencia comercial.',
+  4: 'Criar mensagens altamente personalizadas para evitar spam e aumentar resposta.',
   5: 'Controlar timing e sequencia de envio respeitando limites de cada dominio.',
-  6: 'Retroalimentar os cinco times com aprendizados. Cerebro estrategico do sistema.',
+  6: 'Retroalimentar os outros times com padroes, analises e ajustes de estrategia.',
 };
 
 const teamEmojis: Record<number, string> = {
-  1: '🛡️',
-  2: '⛏️',
-  3: '🔍',
-  4: '✍️',
-  5: '📬',
-  6: '🧠',
+  1: 'Shield',
+  2: 'Source',
+  3: 'Match',
+  4: 'Copy',
+  5: 'Send',
+  6: 'Intel',
 };
 
 const typeLabels: Record<string, string> = {
@@ -41,13 +45,49 @@ const navItems = [
   { href: '/leads/reports', label: 'Relatorios' },
 ];
 
+function nativeAgentsToArva(agents: Agent[]): ArvaAgent[] {
+  return agents.slice(0, 6).map((agent) => ({
+    id: `native-${agent.id}`,
+    name: agent.nome,
+    role: agent.role,
+    tags: ['leads', 'openclaw', `time-${agent.time_numero}`],
+    status: agent.status === 'offline' ? 'inactive' : 'active',
+  }));
+}
+
 export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs: AgentLog[] }) {
+  const [arvaAgents, setArvaAgents] = useState<ArvaAgent[]>([]);
+  const [linkedAgents, setLinkedAgents] = useState<ArvaAgent[]>([]);
+  const [loadingArva, setLoadingArva] = useState(true);
+  const [arvaError, setArvaError] = useState<string | null>(null);
+
+  const nativeFallback = useMemo(() => nativeAgentsToArva(agents), [agents]);
+
+  useEffect(() => {
+    async function loadArvaAgents() {
+      try {
+        setLoadingArva(true);
+        const payload = await requestJson<{ agents: ArvaAgent[] }>('/api/arva/agents?company_id=11111111-1111-4111-8111-111111111111');
+        setArvaAgents(payload.agents);
+        setLinkedAgents(payload.agents.slice(0, 2));
+      } catch (requestError) {
+        setArvaError(requestError instanceof Error ? requestError.message : 'Nao foi possivel carregar agentes do Arva.');
+        setArvaAgents(nativeFallback);
+        setLinkedAgents(nativeFallback.slice(0, 2));
+      } finally {
+        setLoadingArva(false);
+      }
+    }
+
+    loadArvaAgents();
+  }, [nativeFallback]);
+
   const teams = teamOrder.map((num) => ({
     numero: num,
-    nome: agents.find((a) => a.time_numero === num)?.time_nome ?? `Time ${num}`,
+    nome: agents.find((agent) => agent.time_numero === num)?.time_nome ?? `Time ${num}`,
     emoji: teamEmojis[num],
     descricao: teamDescriptions[num],
-    agents: agents.filter((a) => a.time_numero === num),
+    agents: agents.filter((agent) => agent.time_numero === num),
   }));
 
   return (
@@ -56,7 +96,7 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
         <div>
           <p>FBR-Leads</p>
           <h1>Status dos Agentes</h1>
-          <span>6 times de agentes OpenClaw — monitoramento em tempo real.</span>
+          <span>Operacao no FBRLeads, provisionamento e governanca centralizados no Arva Platform.</span>
         </div>
       </section>
 
@@ -67,6 +107,45 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
           </Link>
         ))}
       </nav>
+
+      <section className="leads-section" aria-label="Provisionamento Arva">
+        <header className="leads-section-header-with-action">
+          <div>
+            <p>Arva Platform</p>
+            <h2>Provisionamento e Gestao</h2>
+          </div>
+          <AgentPicker
+            agents={arvaAgents}
+            companyId="11111111-1111-4111-8111-111111111111"
+            linkedAgents={linkedAgents}
+            loading={loadingArva}
+            moduleId="leads"
+            moduleTags={['leads', 'openclaw', 'comercial']}
+            onSelect={({ agent }) =>
+              setLinkedAgents((current) => (current.some((item) => item.id === agent.id) ? current : [...current, agent]))
+            }
+            {...(arvaError ? { error: arvaError } : {})}
+          />
+        </header>
+
+        <div className="leads-agent-strategy">
+          <article className="leads-mini-card">
+            <strong>Melhor arquitetura</strong>
+            <span>Arva como source of truth</span>
+            <small>Provisionar, pausar e governar agentes no Arva; operar filas, logs e desempenho no FBRLeads.</small>
+          </article>
+          <article className="leads-mini-card">
+            <strong>Agentes nativos</strong>
+            <span>Continuam validos</span>
+            <small>Se ja existem no codigo, o ideal e mapealos para slots do Arva em vez de manter duas gestoes paralelas.</small>
+          </article>
+          <article className="leads-mini-card">
+            <strong>OpenClaw</strong>
+            <span>Camada de execucao</span>
+            <small>O OpenClaw continua como runtime integrado ao servidor; Arva governa identidade, acesso e provisionamento.</small>
+          </article>
+        </div>
+      </section>
 
       <section className="leads-section" aria-label="Times de agentes">
         <header>
@@ -79,8 +158,8 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
         <div className="leads-agent-grid">
           {teams.map((team) => (
             <div key={team.numero} className="leads-agent-team">
-              <div className="team-label">Time {team.numero}</div>
-              <h3>{team.emoji} {team.nome}</h3>
+              <div className="team-label">Time {team.numero} · {team.emoji}</div>
+              <h3>{team.nome}</h3>
               <p className="team-mission">{team.descricao}</p>
               <ul className="leads-agent-list">
                 {team.agents.map((agent) => (

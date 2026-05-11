@@ -1,18 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { DashboardKpis } from '@/lib/leads/types';
-
-const etapaLabels: Record<string, string> = {
-  captado: 'Captado',
-  email_validado: 'E-mail Validado',
-  icp_matching: 'Aderencia ICP',
-  scoring: 'Scoring',
-  redacao: 'Redacao',
-  cadencia: 'Cadencia',
-  sql_entregue: 'SQL Entregue',
-  descartado: 'Descartado',
-};
+import type { DashboardKpis, PipelineStage } from '@/lib/leads/types';
 
 const navItems = [
   { href: '/leads', label: 'Overview' },
@@ -24,14 +13,20 @@ const navItems = [
   { href: '/leads/reports', label: 'Relatorios' },
 ];
 
-export function LeadsShell({ kpis }: { kpis: DashboardKpis }) {
+function stageNameMap(stages: PipelineStage[]) {
+  return new Map(stages.map((stage) => [stage.id, stage.nome]));
+}
+
+export function LeadsShell({ kpis, stages }: { kpis: DashboardKpis; stages: PipelineStage[] }) {
+  const labels = stageNameMap(stages);
+
   return (
     <main className="leads-shell">
       <section className="leads-hero">
         <div>
           <p><span className="leads-pulse" /> FBR-Leads</p>
           <h1>Inteligencia Comercial</h1>
-          <span>Outbound, qualificacao e distribuicao de leads.</span>
+          <span>Pipeline operacional, gestao de dominios, ICPs, agentes e campanhas em uma unica superficie.</span>
         </div>
       </section>
 
@@ -61,17 +56,25 @@ export function LeadsShell({ kpis }: { kpis: DashboardKpis }) {
               <p>Dominios</p>
               <h2>Saude dos Dominios</h2>
             </div>
-            <Link href="/leads/domains" style={{ color: 'var(--sky)', fontSize: '0.82rem' }}>Ver detalhes</Link>
+            <Link href="/leads/domains" className="leads-inline-link">Abrir painel completo</Link>
           </header>
-          <div className="leads-domain-health-grid">
-            {kpis.saude_dominios.map((d) => (
-              <div key={d.dominio} className="leads-domain-health-item">
-                <strong>{d.dominio}</strong>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span className={`leads-badge leads-badge--${d.status}`}>{d.status}</span>
-                  <span>{d.envios_hoje}/{d.limite_diario}</span>
+
+          <div className="leads-domain-health-cards">
+            {kpis.saude_dominios.map((domain) => (
+              <Link key={domain.id} className="leads-domain-health-card" href={`/leads/domains#${domain.id}`}>
+                <div className="leads-domain-health-card__top">
+                  <strong>{domain.dominio}</strong>
+                  <span className={`leads-badge leads-badge--${domain.status}`}>{domain.status}</span>
                 </div>
-              </div>
+                <div className="leads-domain-health-card__metrics">
+                  <span>Bounce {domain.bounce_rate}%</span>
+                  <span>{domain.envios_hoje}/{domain.limite_diario} envios</span>
+                </div>
+                <div className="leads-domain-health-card__footer">
+                  <span>{domain.percentual_utilizado}% da capacidade diaria</span>
+                  <span>Ver detalhes</span>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -81,17 +84,17 @@ export function LeadsShell({ kpis }: { kpis: DashboardKpis }) {
         <header>
           <div>
             <p>Pipeline</p>
-            <h2>Funnel de Leads</h2>
+            <h2>Mapa Operacional</h2>
           </div>
-          <Link href="/leads/pipeline" style={{ color: 'var(--sky)', fontSize: '0.82rem' }}>Ver pipeline completo</Link>
+          <Link href="/leads/pipeline" className="leads-inline-link">Editar etapas e mover leads</Link>
         </header>
-        <div className="leads-funnel">
-          {kpis.leads_por_etapa.map((item, i) => (
+        <div className="leads-funnel leads-funnel--grid">
+          {kpis.leads_por_etapa.map((item, index) => (
             <div key={item.etapa} className="leads-funnel-stage">
-              <span className="leads-funnel-stage-num">{String(i + 1).padStart(2, '0')}</span>
-              <span className="leads-funnel-stage-name">{etapaLabels[item.etapa] ?? item.etapa}</span>
+              <span className="leads-funnel-stage-num">{String(index + 1).padStart(2, '0')}</span>
+              <span className="leads-funnel-stage-name">{labels.get(item.etapa) ?? item.etapa}</span>
               <span className="leads-funnel-stage-desc">{item.count} leads nesta etapa</span>
-              <span className="leads-funnel-stage-agent">{item.count}</span>
+              <span className="leads-funnel-stage-agent">Gerenciar</span>
             </div>
           ))}
         </div>
@@ -131,9 +134,9 @@ export function LeadsShell({ kpis }: { kpis: DashboardKpis }) {
               <h2>Leads por Fonte</h2>
             </div>
           </header>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="leads-mini-grid">
             {kpis.leads_por_fonte.map((item) => (
-              <div key={item.fonte} className="leads-domain-health-item" style={{ minWidth: '140px' }}>
+              <div key={item.fonte} className="leads-domain-health-item">
                 <strong style={{ fontSize: '0.82rem', color: 'var(--leads)' }}>{item.fonte}</strong>
                 <span>{item.count}</span>
               </div>

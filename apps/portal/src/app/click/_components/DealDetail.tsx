@@ -12,6 +12,8 @@ export function DealDetail({
   history,
   messages,
   tasks,
+  documents,
+  dispositionLabel,
   onMove,
   onMessage,
 }: {
@@ -19,10 +21,12 @@ export function DealDetail({
   history: ClickDealHistory[];
   messages: ClickMessage[];
   tasks: ClickTask[];
+  documents: Array<{ id: string; name: string; mimeType: string; createdAt: string }>;
+  dispositionLabel?: string | undefined;
   onMove: (dealId: string, stage: ClickStage) => void;
   onMessage: (dealId: string, body: string) => void;
 }) {
-  const [tab, setTab] = useState<'timeline' | 'messages' | 'tasks'>('timeline');
+  const [tab, setTab] = useState<'timeline' | 'messages' | 'tasks' | 'docs'>('timeline');
 
   return (
     <aside className="click-detail" aria-label="Detalhe do deal">
@@ -36,6 +40,24 @@ export function DealDetail({
         <span>{deal.source}</span>
         <span>{deal.priority}</span>
       </div>
+      <dl className="click-detail__meta">
+        <div>
+          <dt>Empresa</dt>
+          <dd>{deal.companyName}</dd>
+        </div>
+        <div>
+          <dt>Contato</dt>
+          <dd>{deal.contactName || deal.contactEmail || 'Pendente'}</dd>
+        </div>
+        <div>
+          <dt>Agente atual</dt>
+          <dd>{deal.activeAgentSlot || 'Sem agente ativo'}</dd>
+        </div>
+        <div>
+          <dt>Status do fluxo</dt>
+          <dd>{dispositionLabel || 'Em andamento'}</dd>
+        </div>
+      </dl>
       <label className="click-detail__stage">
         Estagio
         <select value={deal.stage} onChange={(event) => onMove(deal.id, event.target.value as ClickStage)}>
@@ -56,6 +78,9 @@ export function DealDetail({
         <button aria-pressed={tab === 'tasks'} onClick={() => setTab('tasks')} type="button">
           Tasks
         </button>
+        <button aria-pressed={tab === 'docs'} onClick={() => setTab('docs')} type="button">
+          Docs
+        </button>
       </nav>
       {tab === 'timeline' && <Timeline events={history.filter((event) => event.dealId === deal.id)} />}
       {tab === 'messages' && (
@@ -69,11 +94,25 @@ export function DealDetail({
               <p key={task.id}>
                 <span>{task.status === 'done' ? '[x]' : '[ ]'}</span> {task.title}
               </p>
-            ))}
+          ))}
           <small>Atualizado em {formatDate(deal.updatedAt)}</small>
+        </div>
+      )}
+      {tab === 'docs' && (
+        <div className="click-doc-list" aria-label="Documentos do deal">
+          {documents.length ? (
+            documents.map((document) => (
+              <article key={document.id}>
+                <strong>{document.name}</strong>
+                <span>{document.mimeType}</span>
+                <small>Upload em {formatDate(document.createdAt)}</small>
+              </article>
+            ))
+          ) : (
+            <p>Nenhum documento anexado ainda.</p>
+          )}
         </div>
       )}
     </aside>
   );
 }
-

@@ -32,6 +32,10 @@
   padding: 36px 0 10px;
 }
 
+.click-hero--compact {
+  align-items: start;
+}
+
 .click-hero p,
 .click-detail header p {
   margin: 0 0 8px;
@@ -65,6 +69,12 @@
   cursor: pointer;
   font-weight: 900;
   box-shadow: var(--agent-glow);
+}
+
+.click-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .click-kpis {
@@ -113,6 +123,13 @@
   gap: 16px;
   max-width: 1480px;
   margin: 0 auto 24px;
+}
+
+.click-workspace-main,
+.click-workspace-side {
+  display: grid;
+  gap: 16px;
+  align-content: start;
 }
 
 .click-pipeline {
@@ -233,6 +250,32 @@
   color: var(--click-slate);
 }
 
+.click-detail__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.click-detail__meta div {
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(7, 11, 20, 0.58);
+}
+
+.click-detail__meta dt {
+  margin-bottom: 4px;
+  color: var(--click-slate);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.click-detail__meta dd {
+  margin: 0;
+  font-weight: 700;
+}
+
 .click-detail select,
 .click-modal input,
 .click-modal select,
@@ -247,7 +290,7 @@
 
 .click-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
@@ -270,20 +313,32 @@
 
 .click-timeline,
 .click-messages,
-.click-task-list {
+.click-task-list,
+.click-doc-list {
   display: grid;
   gap: 10px;
 }
 
 .click-timeline article,
 .click-message,
-.click-task-list p {
+.click-task-list p,
+.click-doc-list article,
+.click-doc-list p {
   display: flex;
   gap: 10px;
   margin: 0;
   border-radius: 8px;
   padding: 10px;
   background: rgba(7, 11, 20, 0.58);
+}
+
+.click-doc-list article {
+  display: grid;
+}
+
+.click-doc-list span,
+.click-doc-list small {
+  color: var(--click-slate);
 }
 
 .click-timeline article > span {
@@ -404,7 +459,9 @@
   .click-kpis,
   .click-agent-dashboard__grid,
   .click-architecture,
-  .click-security {
+  .click-security,
+  .click-entry-grid,
+  .click-operations-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -426,7 +483,11 @@
   .click-agent-dashboard__grid,
   .click-architecture,
   .click-security,
-  .click-modal__grid {
+  .click-modal__grid,
+  .click-entry-grid,
+  .click-operations-grid,
+  .click-disposition__actions,
+  .click-detail__meta {
     grid-template-columns: 1fr;
   }
 }
@@ -599,6 +660,120 @@
   gap: 12px;
   max-width: 1480px;
   margin: 0 auto 24px;
+}
+
+.click-entry-grid,
+.click-operations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1480px;
+  margin: 0 auto 24px;
+}
+
+.click-entry-card,
+.click-queue-card,
+.click-action-card,
+.click-secondary-panels {
+  border: 1px solid rgba(142, 164, 199, 0.2);
+  border-radius: 8px;
+  background: rgba(13, 22, 38, 0.82);
+}
+
+.click-entry-card,
+.click-queue-card,
+.click-action-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.click-entry-card span,
+.click-focus-summary p,
+.click-empty-state {
+  color: var(--click-slate);
+}
+
+.click-entry-card p,
+.click-focus-summary p,
+.click-empty-state {
+  margin: 0;
+}
+
+.click-entry-card strong,
+.click-queue-card h2,
+.click-action-card h2 {
+  font-size: 1.2rem;
+}
+
+.click-entry-card button,
+.click-action-card__body button,
+.click-disposition__actions button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--agent);
+  color: white;
+  cursor: pointer;
+  font-weight: 800;
+  box-shadow: var(--agent-glow);
+}
+
+.click-queue-list,
+.click-focus-summary,
+.click-action-card__body,
+.click-disposition {
+  display: grid;
+  gap: 10px;
+}
+
+.click-queue-item {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(142, 164, 199, 0.16);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(7, 11, 20, 0.58);
+  color: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+.click-queue-item span {
+  color: var(--click-slate);
+  font-size: 0.88rem;
+}
+
+.click-disposition label {
+  display: grid;
+  gap: 6px;
+  color: var(--click-slate);
+}
+
+.click-disposition select {
+  width: 100%;
+  border: 1px solid rgba(142, 164, 199, 0.22);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(7, 11, 20, 0.8);
+  color: white;
+}
+
+.click-disposition__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.click-secondary-panels {
+  max-width: 1480px;
+  margin: 0 auto 24px;
+}
+
+.click-secondary-panels summary {
+  cursor: pointer;
+  padding: 16px 18px;
+  font-weight: 700;
 }
 
 .click-audit-filters input,
@@ -781,4 +956,3 @@
     grid-template-columns: 1fr;
   }
 }
-

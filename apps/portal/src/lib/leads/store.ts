@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   Lead, LeadSchema, LeadsQuery, LeadsQuerySchema,
+  PipelineStage, PipelineStageSchema,
   ICP, ICPSchema,
   Domain, DomainSchema,
   EmailCadencia,
@@ -12,6 +13,7 @@ import {
   Report,
   DashboardKpis,
   LeadEtapaSchema,
+  SYSTEM_LEAD_STAGE_IDS,
 } from './types';
 
 export interface LeadsRequestContext {
@@ -45,11 +47,20 @@ function today() {
   return now().slice(0, 10);
 }
 
+function slugify(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
 function parseJsonObject(input: unknown) {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new LeadsValidationError('JSON object payload is required.', 400);
   }
-  return input;
+  return input as Record<string, unknown>;
 }
 
 function normalizeZodError(error: z.ZodError) {
@@ -66,6 +77,36 @@ const DOM_NOVO = 'dddddddd-dddd-4ddd-8ddd-ddddddddddd3';
 const DOM_WARMUP = 'dddddddd-dddd-4ddd-8ddd-ddddddddddd4';
 const CAMP_MKT_Q2 = 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1';
 const CAMP_ECOM = 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2';
+
+const initialPipelineStages: PipelineStage[] = SYSTEM_LEAD_STAGE_IDS.map((id, index) => ({
+  id,
+  nome:
+    id === 'captado' ? 'Captado' :
+      id === 'email_validado' ? 'E-mail Validado' :
+        id === 'icp_matching' ? 'Aderência ICP' :
+          id === 'scoring' ? 'Scoring' :
+            id === 'redacao' ? 'Redação' :
+              id === 'cadencia' ? 'Cadência' :
+                id === 'sql_entregue' ? 'SQL Entregue' : 'Descartado',
+  descricao:
+    id === 'captado' ? 'Lead entrou na operação e aguarda triagem.' :
+      id === 'email_validado' ? 'Contato com email validado para prospecção.' :
+        id === 'icp_matching' ? 'Lead em aderência comercial contra os ICPs ativos.' :
+          id === 'scoring' ? 'Priorização operacional e score de oportunidade.' :
+            id === 'redacao' ? 'Mensagens e contexto sendo personalizados.' :
+              id === 'cadencia' ? 'Cadência de outreach em execução.' :
+                id === 'sql_entregue' ? 'Lead repassado para FBR-Click.' : 'Lead fora do fluxo ativo.',
+  cor:
+    id === 'captado' ? 'blue' :
+      id === 'email_validado' ? 'sky' :
+        id === 'icp_matching' ? 'violet' :
+          id === 'scoring' ? 'amber' :
+            id === 'redacao' ? 'orange' :
+              id === 'cadencia' ? 'teal' :
+                id === 'sql_entregue' ? 'green' : 'slate',
+  ordem: index,
+  sistema: true,
+}));
 
 const initialICPs: ICP[] = [
   {
@@ -582,6 +623,7 @@ const initialReports: Report[] = [
 ];
 
 let leads: Lead[] = [];
+let pipelineStages: PipelineStage[] = [];
 let icps: ICP[] = [];
 let domains: Domain[] = [];
 let agents: Agent[] = [];
@@ -593,6 +635,7 @@ let reports: Report[] = [];
 
 export function resetLeadsStoreForTests() {
   leads = clone(initialLeads);
+  pipelineStages = clone(initialPipelineStages);
   icps = clone(initialICPs);
   domains = clone(initialDomains);
   agents = clone(initialAgents);
@@ -708,8 +751,13 @@ export function getLead(context: LeadsRequestContext, id: string) {
 export function createLead(context: LeadsRequestContext, data: unknown) {
   const input = parseJsonObject(data);
   try {
+    const etapa = typeof input.etapa === 'string' && input.etapa.length > 0 ? input.etapa : 'captado';
+    if (!pipelineStages.some((stage) => stage.id === etapa)) {
+      throw new LeadsValidationError('Etapa não encontrada.', 422);
+    }
     const validated = LeadSchema.parse({
       ...input,
+      etapa,
       company_id: context.companyId,
       created_by: context.userId,
       created_at: now(),
@@ -730,6 +778,9 @@ export function updateLead(context: LeadsRequestContext, id: string, data: unkno
   const input = parseJsonObject(data);
   try {
     const validated = LeadSchema.partial().parse(input);
+    if (validated.etapa && !pipelineStages.some((stage) => stage.id === validated.etapa)) {
+      throw new LeadsValidationError('Etapa não encontrada.', 422);
+    }
     Object.assign(lead, validated, { updated_at: now() });
     return lead;
   } catch (error) {
@@ -752,11 +803,59 @@ export function avancarEtapa(context: LeadsRequestContext, id: string, etapa: st
   const lead = leads.find((l) => l.id === id && l.company_id === context.companyId);
   if (!lead) throw new LeadsValidationError('Lead não encontrado.', 404);
   const parsedEtapa = LeadEtapaSchema.safeParse(etapa);
-  if (!parsedEtapa.success) throw new LeadsValidationError('Etapa inválida.', 422);
+  if (!parsedEtapa.success || !pipelineStages.some((stage) => stage.id === parsedEtapa.data)) {
+    throw new LeadsValidationError('Etapa inválida.', 422);
+  }
   if (lead.etapa === 'descartado') throw new LeadsValidationError('Lead descartado não pode avançar.', 422);
   lead.etapa = parsedEtapa.data;
   lead.updated_at = now();
   return lead;
+}
+
+export function listPipelineStages() {
+  return clone(pipelineStages).sort((left, right) => left.ordem - right.ordem);
+}
+
+export function createPipelineStage(data: unknown) {
+  const input = parseJsonObject(data);
+  try {
+    const nome = typeof input.nome === 'string' ? input.nome.trim() : '';
+    const baseId = slugify(nome);
+    let id = baseId || `etapa_${pipelineStages.length + 1}`;
+    while (pipelineStages.some((stage) => stage.id === id)) {
+      id = `${baseId || 'etapa'}_${pipelineStages.length + 1}`;
+    }
+
+    const validated = PipelineStageSchema.parse({
+      ...input,
+      id,
+      nome,
+      ordem: pipelineStages.length,
+      sistema: false,
+    });
+    pipelineStages.push(validated);
+    return validated;
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
+}
+
+export function updatePipelineStage(id: string, data: unknown) {
+  const stage = pipelineStages.find((item) => item.id === id);
+  if (!stage) throw new LeadsValidationError('Etapa não encontrada.', 404);
+  const input = parseJsonObject(data);
+  try {
+    const validated = PipelineStageSchema.partial().parse(input);
+    Object.assign(stage, validated, { id: stage.id });
+    pipelineStages = pipelineStages
+      .sort((left, right) => left.ordem - right.ordem)
+      .map((item, index) => ({ ...item, ordem: index }));
+    return stage;
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
 }
 
 export function listICPs(context: LeadsRequestContext) {
@@ -790,6 +889,10 @@ export function updateICP(context: LeadsRequestContext, id: string, data: unknow
   const input = parseJsonObject(data);
   try {
     const validated = ICPSchema.partial().parse(input);
+    const activeCount = icps.filter((item) => item.company_id === context.companyId && item.ativo && item.id !== id).length;
+    if (validated.ativo && activeCount >= 5) {
+      throw new LeadsValidationError('Limite de 5 ICPs ativos atingido.', 422);
+    }
     Object.assign(icp, validated);
     return icp;
   } catch (error) {
@@ -798,8 +901,39 @@ export function updateICP(context: LeadsRequestContext, id: string, data: unknow
   }
 }
 
+export function deleteICP(context: LeadsRequestContext, id: string) {
+  const icp = icps.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!icp) throw new LeadsValidationError('ICP não encontrado.', 404);
+
+  const hasLinkedLeads = leads.some((lead) => lead.company_id === context.companyId && lead.icp_id === id);
+  const hasLinkedCampaigns = campaigns.some((campaign) => campaign.company_id === context.companyId && campaign.icp_id === id);
+  if (hasLinkedLeads || hasLinkedCampaigns) {
+    throw new LeadsValidationError('ICP possui leads ou campanhas vinculadas e não pode ser excluído.', 409);
+  }
+
+  icps = icps.filter((item) => item.id !== id);
+  return icp;
+}
+
 export function listDomains(context: LeadsRequestContext) {
   return domains.filter((d) => d.company_id === context.companyId);
+}
+
+export function createDomain(context: LeadsRequestContext, data: unknown) {
+  const input = parseJsonObject(data);
+  try {
+    const validated = DomainSchema.parse({
+      ...input,
+      company_id: context.companyId,
+      created_at: now(),
+      id: crypto.randomUUID(),
+    });
+    domains.push(validated);
+    return validated;
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
 }
 
 export function getDomain(context: LeadsRequestContext, id: string) {
@@ -820,6 +954,19 @@ export function updateDomain(context: LeadsRequestContext, id: string, data: unk
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;
   }
+}
+
+export function deleteDomain(context: LeadsRequestContext, id: string) {
+  const domain = domains.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!domain) throw new LeadsValidationError('Domínio não encontrado.', 404);
+
+  const hasLinkedCampaigns = campaigns.some((campaign) => campaign.company_id === context.companyId && campaign.dominio_id === id);
+  if (hasLinkedCampaigns) {
+    throw new LeadsValidationError('Domínio está vinculado a campanhas e não pode ser excluído.', 409);
+  }
+
+  domains = domains.filter((item) => item.id !== id);
+  return domain;
 }
 
 export function listAgents(companyId?: string) {
@@ -859,6 +1006,27 @@ export function createCampaign(context: LeadsRequestContext, data: unknown) {
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;
   }
+}
+
+export function updateCampaign(context: LeadsRequestContext, id: string, data: unknown) {
+  const campaign = campaigns.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!campaign) throw new LeadsValidationError('Campanha não encontrada.', 404);
+  const input = parseJsonObject(data);
+  try {
+    const validated = CampaignSchema.partial().parse(input);
+    Object.assign(campaign, validated);
+    return campaign;
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
+}
+
+export function deleteCampaign(context: LeadsRequestContext, id: string) {
+  const campaign = campaigns.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!campaign) throw new LeadsValidationError('Campanha não encontrada.', 404);
+  campaigns = campaigns.filter((item) => item.id !== id);
+  return campaign;
 }
 
 export function listEmailCadencias(context: LeadsRequestContext, leadId?: string) {
@@ -961,6 +1129,7 @@ export function getDashboardKpis(context: LeadsRequestContext): DashboardKpis {
 
   const companyDomains = domains.filter((d) => d.company_id === context.companyId);
   const saudeDominios = companyDomains.map((d) => ({
+    id: d.id!,
     dominio: d.dominio,
     status: d.status,
     bounce_rate: d.bounce_rate,
