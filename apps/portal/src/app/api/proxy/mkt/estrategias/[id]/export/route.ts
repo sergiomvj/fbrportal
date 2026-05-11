@@ -13,7 +13,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const exportsData = listExportsByEstrategia(id, context);
+    const exportsData = await listExportsByEstrategia(id, context);
     return withSecurityHeaders(Response.json({ exports: exportsData }));
   } catch (error) {
     return jsonError(error);
@@ -32,7 +32,7 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const estrategia = getEstrategia(id, context);
+    const estrategia = await getEstrategia(id, context);
     const body = await request.json();
     const { formato } = body as { formato?: 'pdf' | 'pptx' };
 
@@ -40,13 +40,13 @@ export async function POST(
       return Response.json({ code: 'BAD_REQUEST', message: 'Formato must be pdf or pptx.' }, { status: 400 });
     }
 
-    const versoesData = listVersoes(id, context);
+    const versoesData = await listVersoes(id, context);
     const currentVersao = versoesData[0]?.versao ?? estrategia.versao;
 
     const filePath = buildExportPath(context.companyId, id, formato);
     const signed = createSignedDownload(filePath);
 
-    const exp = saveExport({
+    const exp = await saveExport({
       estrategia_id: id,
       versao: currentVersao,
       formato,

@@ -12,8 +12,8 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const diagnostico = approveDiagnostico(id, context.userId, context);
-    updateEstrategiaStatus(id, 'ativa', context);
+    const diagnostico = await approveDiagnostico(id, context.userId, context);
+    await updateEstrategiaStatus(id, 'ativa', context);
 
     await enqueueJob('geracao_estrategia', id, context.companyId, {
       diagnostico_id: diagnostico.id,

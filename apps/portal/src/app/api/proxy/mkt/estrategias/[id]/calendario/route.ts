@@ -11,7 +11,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const items = listCalendarByEstrategia(id, context);
+    const items = await listCalendarByEstrategia(id, context);
     return withSecurityHeaders(Response.json({ calendario: items }));
   } catch (error) {
     return jsonError(error);
@@ -27,7 +27,7 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const items = listCalendarByEstrategia(id, context);
+    const items = await listCalendarByEstrategia(id, context);
     const headers = ['Data', 'Canal', 'Tipo', 'Tema', 'Copy', 'Status', 'Quick Win'];
     const rows = items.map((i) => [
       i.data, i.canal, i.tipo, i.tema, i.copy_resumo, i.status, i.is_quick_win ? 'Sim' : 'Nao',

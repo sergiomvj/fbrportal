@@ -1,3 +1,4 @@
+import { createSupabaseServerClient } from '../supabase-admin';
 import type { MktJobCategory, MktProcessingJob, MktJobStatus } from './types';
 
 export interface MktQueueJob {
@@ -55,13 +56,7 @@ export function getQueueForCategory(category: MktJobCategory): MktQueueName {
 
 type JobProcessor = (job: MktQueueJob) => Promise<void>;
 
-const queues = new Map<MktQueueName, MktQueueJob[]>();
 const processors = new Map<MktQueueName, JobProcessor>();
-const processing = new Map<string, boolean>();
-
-for (const name of MKT_QUEUE_NAMES) {
-  queues.set(name, []);
-}
 
 export function registerProcessor(queueName: MktQueueName, processor: JobProcessor) {
   processors.set(queueName, processor);
@@ -73,111 +68,80 @@ export async function enqueueJob(
   empresaId: string,
   payload: Record<string, unknown> = {},
 ): Promise<MktQueueJob> {
-  const queueName = getQueueForCategory(category);
-  const job: MktQueueJob = {
-    id: crypto.randomUUID(),
-    category,
-    estrategiaId,
-    empresaId,
+  const supabase = createSupabaseServerClient();
+  
+  const insertPayload = {
+    categoria: category,
+    estrategia_id: estrategiaId,
+    empresa_id: empresaId,
     payload,
     status: 'pending',
+    max_tentativas: MKT_DEFAULT_JOB_CONFIG.attempts,
     tentativas: 0,
-    maxTentativas: MKT_DEFAULT_JOB_CONFIG.attempts,
-    erroMensagem: null,
-    createdAt: new Date().toISOString(),
-    startedAt: null,
-    completedAt: null,
-    failedAt: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
-  const queue = queues.get(queueName)!;
-  queue.push(job);
-
-  processQueue(queueName).catch(() => {});
-
-  return job;
+  const { data, error } = await supabase.from('mkt_processing_jobs').insert(insertPayload).select().single();
+  if (error) throw new Error(error.message);
+  
+  return convertToQueueJob(data as MktProcessingJob);
 }
 
-async function processQueue(queueName: MktQueueName) {
-  const queue = queues.get(queueName)!;
-  const processor = processors.get(queueName);
-
-  if (!processor) return;
-
-  const pendingJobs = queue.filter((j) => j.status === 'pending');
-
-  for (const job of pendingJobs) {
-    if (processing.get(job.id)) continue;
-    processing.set(job.id, true);
-
-    job.status = 'processing';
-    job.startedAt = new Date().toISOString();
-    job.tentativas += 1;
-
-    try {
-      await processor(job);
-      job.status = 'done';
-      job.completedAt = new Date().toISOString();
-    } catch (err) {
-      job.erroMensagem = err instanceof Error ? err.message : 'Unknown error';
-
-      if (job.tentativas < job.maxTentativas) {
-        const delay =
-          MKT_DEFAULT_JOB_CONFIG.backoff.delay *
-          Math.pow(2, job.tentativas - 1);
-        job.status = 'pending';
-        job.startedAt = null;
-        setTimeout(() => {
-          processing.delete(job.id);
-          processQueue(queueName).catch(() => {});
-        }, delay);
-        continue;
-      }
-
-      job.status = 'failed';
-      job.failedAt = new Date().toISOString();
-    }
-
-    processing.delete(job.id);
-  }
+export async function getJob(jobId: string): Promise<MktQueueJob | null> {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from('mkt_processing_jobs').select('*').eq('id', jobId).maybeSingle();
+  if (!data) return null;
+  return convertToQueueJob(data as MktProcessingJob);
 }
 
-export function getJob(jobId: string): MktQueueJob | null {
-  for (const queue of queues.values()) {
-    const found = queue.find((j) => j.id === jobId);
-    if (found) return found;
-  }
-  return null;
+export async function getJobsByEstrategia(estrategiaId: string): Promise<MktQueueJob[]> {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from('mkt_processing_jobs').select('*').eq('estrategia_id', estrategiaId);
+  if (!data) return [];
+  return data.map((d: any) => convertToQueueJob(d as MktProcessingJob));
 }
 
-export function getJobsByEstrategia(estrategiaId: string): MktQueueJob[] {
-  const results: MktQueueJob[] = [];
-  for (const queue of queues.values()) {
-    for (const job of queue) {
-      if (job.estrategiaId === estrategiaId) results.push(job);
-    }
-  }
-  return results;
-}
-
-export function getQueueStatus(): Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }> {
+export async function getQueueStatus(): Promise<Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>> {
   const status = {} as Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>;
-  for (const [name, queue] of queues.entries()) {
-    status[name] = {
-      pending: queue.filter((j) => j.status === 'pending').length,
-      processing: queue.filter((j) => j.status === 'processing').length,
-      done: queue.filter((j) => j.status === 'done').length,
-      failed: queue.filter((j) => j.status === 'failed').length,
-    };
+  for (const name of MKT_QUEUE_NAMES) {
+    status[name] = { pending: 0, processing: 0, done: 0, failed: 0 };
   }
+  
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from('mkt_processing_jobs').select('categoria, status');
+  if (data) {
+    for (const row of data) {
+      const qname = getQueueForCategory(row.categoria as MktJobCategory);
+      if (qname && status[qname] && status[qname][row.status as keyof typeof status[typeof qname]] !== undefined) {
+        status[qname][row.status as keyof typeof status[typeof qname]]++;
+      }
+    }
+  }
+  
   return status;
 }
 
 export function resetQueuesForTests() {
-  for (const name of MKT_QUEUE_NAMES) {
-    queues.set(name, []);
-  }
-  processing.clear();
+  // DB persistent
+}
+
+function convertToQueueJob(job: MktProcessingJob): MktQueueJob {
+  return {
+    id: job.id!,
+    category: job.categoria,
+    estrategiaId: job.estrategia_id!,
+    empresaId: job.empresa_id!,
+    payload: job.payload as Record<string, unknown>,
+    status: job.status,
+    tentativas: job.tentativas,
+    maxTentativas: job.max_tentativas,
+    erroMensagem: job.erro_mensagem ?? null,
+    createdAt: job.created_at ?? new Date().toISOString(),
+    startedAt: job.started_at ?? null,
+    completedAt: job.completed_at ?? null,
+    failedAt: job.failed_at ?? null,
+  };
 }
 
 export function convertToProcessingJob(job: MktQueueJob): MktProcessingJob {

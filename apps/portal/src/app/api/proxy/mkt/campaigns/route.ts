@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   if (context instanceof Response) return context;
 
   try {
-    const result = listCampaigns(context, parseCampaignsQuery(request.url));
+    const result = await listCampaigns(context, parseCampaignsQuery(request.url));
     return Response.json({ campanhas: result.items, pagination: result.pagination });
   } catch (error) {
     return jsonError(error);
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   if (context instanceof Response) return context;
 
   try {
-    return Response.json({ campanha: createCampaign(context, await request.json()) }, { status: 201 });
+    return Response.json({ campanha: await createCampaign(context, await request.json()) }, { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

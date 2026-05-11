@@ -64,24 +64,32 @@ export function IntakeWizard() {
     setError(null);
 
     try {
-      const headers = {
+      let bodyInit: BodyInit;
+      let headersInit: Record<string, string> = {
         'x-user-id': '33333333-3333-4333-8333-333333333333',
         'x-company-id': '11111111-1111-4111-8111-111111111111',
-        'Content-Type': 'application/json',
       };
 
-      const body = {
-        nome: wizard.nome,
-        nicho: wizard.nicho,
-        descricao: mode === 'wizard' ? wizard.descricao : undefined,
-        objetivos: mode === 'wizard' ? wizard.objetivos : undefined,
-        doc_path: file?.name ?? null,
-      };
+      if (mode === 'upload' && file) {
+        const formData = new FormData();
+        formData.append('nome', wizard.nome);
+        formData.append('nicho', wizard.nicho);
+        formData.append('file', file);
+        bodyInit = formData;
+      } else {
+        headersInit['Content-Type'] = 'application/json';
+        bodyInit = JSON.stringify({
+          nome: wizard.nome,
+          nicho: wizard.nicho,
+          descricao: wizard.descricao,
+          objetivos: wizard.objetivos,
+        });
+      }
 
       const res = await fetch('/api/proxy/mkt/estrategias', {
         method: 'POST',
-        headers,
-        body: JSON.stringify(body),
+        headers: headersInit,
+        body: bodyInit,
       });
 
       if (!res.ok) {

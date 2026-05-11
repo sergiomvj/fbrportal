@@ -11,7 +11,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const versoesData = listVersoes(id, context);
+    const versoesData = await listVersoes(id, context);
     const latest = versoesData[0] ?? null;
     return withSecurityHeaders(Response.json({ versao: latest, versoes: versoesData }));
   } catch (error) {

@@ -12,8 +12,8 @@ export async function POST(
 
   try {
     const { id } = await params;
-    getEstrategia(id, context);
-    const existingVersoes = listVersoes(id, context);
+    await getEstrategia(id, context);
+    const existingVersoes = await listVersoes(id, context);
     const nextVersao = (existingVersoes[0]?.versao ?? 0) + 1;
 
     await enqueueJob('geracao_estrategia', id, context.companyId, {
