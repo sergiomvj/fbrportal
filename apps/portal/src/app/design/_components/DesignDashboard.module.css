@@ -1,0 +1,499 @@
+.designShell {
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(249, 115, 22, 0.12), transparent 28rem),
+    radial-gradient(circle at 88% 18%, rgba(249, 115, 22, 0.08), transparent 22rem),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    #08111d;
+  background-size: auto, auto, 42px 42px, 42px 42px;
+  color: var(--fbr-white);
+}
+
+.hero,
+.kpiGrid,
+.section {
+  max-width: 1480px;
+  margin-inline: auto;
+}
+
+.hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 20px 0 8px;
+}
+
+.hero h1 {
+  margin: 0 0 12px;
+  max-width: 760px;
+  font-family: var(--fbr-font-display);
+  font-size: clamp(2.8rem, 7vw, 5.8rem);
+  line-height: 0.94;
+}
+
+.hero span,
+.heroNotes span,
+.sectionHeader small,
+.kpiCard small {
+  color: var(--fbr-slate-light);
+}
+
+.heroActions {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
+.heroNotes,
+.kpiCard,
+.formatCard,
+.pipelineCard,
+.brandKitCard,
+.jobsCard,
+.reviewCard,
+.agentCard,
+.logCard,
+.deliverableCard,
+.templateCard {
+  border: 1px solid rgba(168, 189, 216, 0.16);
+  border-radius: 20px;
+  background: rgba(8, 17, 29, 0.74);
+  box-shadow: 0 0 28px rgba(249, 115, 22, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.heroNotes {
+  max-width: 320px;
+  padding: 16px 18px;
+}
+
+.heroNotes strong,
+.section h2,
+.section h3 {
+  margin: 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #f97316;
+  font-family: var(--fbr-font-code);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpiCard {
+  display: grid;
+  gap: 8px;
+  min-height: 134px;
+  padding: 18px;
+}
+
+.kpiCard span {
+  color: #f6a66e;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kpiCard strong {
+  font-size: 1.5rem;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.formatGrid,
+.pipeline,
+.brandKitLayout,
+.jobsLayout,
+.pipelineLayout,
+.exportLayout,
+.agentsLayout {
+  display: grid;
+  gap: 14px;
+}
+
+.formatGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.formatCard {
+  padding: 18px;
+}
+
+.formatCard h3 {
+  margin-bottom: 14px;
+  color: #f8d8c0;
+}
+
+.formatCard ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.formatCard li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(168, 189, 216, 0.08);
+  font-size: 0.9rem;
+}
+
+.formatCard strong,
+.pipelineCard strong,
+.brandKitCard strong,
+.variantHeader strong,
+.reviewSummary strong,
+.deliverableCard strong,
+.templateCard strong {
+  color: var(--fbr-white);
+}
+
+.pipeline {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pipelineCard {
+  display: grid;
+  gap: 10px;
+  min-height: 220px;
+  padding: 18px;
+}
+
+.pipelineCard strong {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.14);
+  color: #f6a66e;
+  font-family: var(--fbr-font-code);
+}
+
+.brandKitLayout {
+  grid-template-columns: 1.35fr 1fr 0.9fr;
+}
+
+.brandKitCard,
+.jobsCard,
+.reviewCard,
+.logCard {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.colorToken {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.colorToken span {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.fontStack,
+.variantList,
+.templateList,
+.metaList {
+  display: grid;
+  gap: 10px;
+}
+
+.fontStack div,
+.templateCard,
+.variantCard {
+  display: grid;
+  gap: 4px;
+}
+
+.guidelines {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--fbr-slate-light);
+}
+
+.webhookCard {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.webhookCard code {
+  color: #f6a66e;
+  font-family: var(--fbr-font-code);
+}
+
+.logoTags,
+.linkedAgents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(249, 115, 22, 0.16);
+  color: #f6a66e;
+  font-family: var(--fbr-font-code);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.jobsLayout,
+.pipelineLayout,
+.exportLayout,
+.agentsLayout {
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(168, 189, 216, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--fbr-slate-light);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metaList {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metaList div,
+.deliverableCard,
+.ruleCard,
+.logLine {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metaList span,
+.templateCard span,
+.variantCard p,
+.ruleCard p,
+.logLine p {
+  color: var(--fbr-slate-light);
+}
+
+.variantHeader,
+.reviewSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progressBar {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progressBar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+
+.reviewSummary {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.ruleGrid,
+.deliverableGrid,
+.agentGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.ruleGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ruleCard {
+  display: grid;
+  gap: 8px;
+}
+
+.rule_pass {
+  color: #86efac;
+}
+
+.rule_warn {
+  color: #fcd34d;
+}
+
+.rule_fail {
+  color: #fca5a5;
+}
+
+.deliverableGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.deliverableCard,
+.templateCard {
+  display: grid;
+  gap: 6px;
+}
+
+.agentGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.agentCard {
+  display: grid;
+  gap: 10px;
+  min-height: 200px;
+  padding: 18px;
+}
+
+.logCard {
+  align-content: start;
+}
+
+.linkedAgent {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fbr-white);
+  font-size: 0.82rem;
+}
+
+.logList {
+  display: grid;
+  gap: 8px;
+}
+
+.logLine {
+  display: grid;
+  gap: 4px;
+}
+
+.logLine span {
+  color: #f6a66e;
+  font-family: var(--fbr-font-code);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.select {
+  min-height: 44px;
+  border: 1px solid rgba(168, 189, 216, 0.14);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: rgba(8, 17, 29, 0.72);
+  color: var(--fbr-white);
+}
+
+@media (max-width: 1200px) {
+  .kpiGrid,
+  .formatGrid,
+  .brandKitLayout,
+  .jobsLayout,
+  .pipelineLayout,
+  .exportLayout,
+  .agentsLayout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .agentGrid,
+  .deliverableGrid,
+  .ruleGrid,
+  .metaList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .designShell {
+    padding: 18px;
+  }
+
+  .hero,
+  .sectionHeader {
+    display: grid;
+  }
+
+  .heroActions {
+    justify-items: start;
+  }
+
+  .kpiGrid,
+  .formatGrid,
+  .pipeline,
+  .brandKitLayout,
+  .jobsLayout,
+  .pipelineLayout,
+  .exportLayout,
+  .agentsLayout,
+  .agentGrid,
+  .deliverableGrid,
+  .ruleGrid,
+  .metaList,
+  .colorGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { z } from 'zod';
 import { clickAgents, clickDeals, clickHistory, clickKpis, clickMessages, clickTasks } from '@/lib/click/fixtures';
 import { createDealSchema } from '@/lib/click/schemas';
@@ -20,6 +21,12 @@ export function ClickWorkspace() {
   const selectedDeal = deals.find((deal) => deal.id === selectedId) ?? deals[0];
 
   const totalValue = useMemo(() => deals.reduce((sum, deal) => sum + deal.valueCents, 0), [deals]);
+
+  const stageCounts = useMemo(() => {
+    const counts: Record<ClickStage, number> = { contato_inicial: 0, descoberta: 0, proposta: 0, negociacao: 0, fechamento: 0 };
+    for (const deal of deals) counts[deal.stage]++;
+    return counts;
+  }, [deals]);
 
   function moveDeal(dealId: string, stage: ClickStage) {
     setDeals((current) =>
@@ -70,11 +77,23 @@ export function ClickWorkspace() {
 
   return (
     <main className="click-shell fbr-shared-theme">
+      <nav className="click-breadcrumb">
+        <Link href="/">Portal</Link>
+        <span>/</span>
+        <span>Click</span>
+      </nav>
+
       <section className="click-hero">
-        <div>
-          <p>FBR-Click CRM</p>
-          <h1>Pipeline comercial assistido por agentes</h1>
-          <span>Deals, mensagens, tarefas, auditoria e handoff do FBR-Leads em um fluxo unico.</span>
+        <div className="click-hero__copy">
+          <p>FBR-Click</p>
+          <h1>CRM de Pre-Venda</h1>
+          <span>Pipeline assistido por 6 agentes com SLA de primeiro contato em ate 2 minutos.</span>
+          <div className="click-hero__chips" aria-label="Sinais operacionais Click">
+            <span>5 estagios</span>
+            <span>6 agentes</span>
+            <span>13 tabelas RLS</span>
+            <span>Audit infinito</span>
+          </div>
         </div>
         <button onClick={() => setModalOpen(true)} type="button">
           Criar deal
@@ -88,6 +107,15 @@ export function ClickWorkspace() {
             <strong>{kpi.name.includes('Receita') ? formatCurrency(totalValue) : kpi.value}</strong>
             <small>{kpi.trend > 0 ? '+' : ''}{kpi.trend}%</small>
           </article>
+        ))}
+      </section>
+
+      <section className="click-funnel" aria-label="Funil de estagios">
+        {(['contato_inicial', 'descoberta', 'proposta', 'negociacao', 'fechamento'] as ClickStage[]).map((stage) => (
+          <div className="click-funnel__step" key={stage}>
+            <strong>{stageCounts[stage]}</strong>
+            <small>{stage.replace('_', ' ')}</small>
+          </div>
         ))}
       </section>
 
@@ -107,16 +135,52 @@ export function ClickWorkspace() {
 
       <AgentDashboard agents={clickAgents} isAdmin />
 
+      <section className="click-nav-links" aria-label="Navegacao Click">
+        <Link href="/click/audit">Audit Log</Link>
+        <Link href="/click/kpis">KPIs & Metricas</Link>
+      </section>
+
       <section className="click-architecture" aria-label="Arquitetura Click">
-        {['Portal Proxy', 'Click Backend', 'Arva Gateway', 'Leads Bridge'].map((item) => (
-          <article key={item}>{item}</article>
-        ))}
+        <h2>Arquitetura de Microservicos</h2>
+        <div className="click-architecture__grid">
+          {[
+            { name: 'Portal Proxy', transport: 'REST', desc: 'Gateway de autenticacao e roteamento' },
+            { name: 'Click Backend', transport: 'REST', desc: 'Logica de deals, tarefas e pipeline' },
+            { name: 'Arva Gateway', transport: 'SSE', desc: 'Execucao e orquestracao de agentes' },
+            { name: 'Leads Bridge', transport: 'Webhook', desc: 'Recepcao de SQLs do FBR-Leads' },
+            { name: 'Message Broker', transport: 'SSE', desc: 'Canais de comunicacao em tempo real' },
+            { name: 'Audit Service', transport: 'REST', desc: 'Log imutavel append-only' },
+          ].map((item) => (
+            <article key={item.name}>
+              <h3>{item.name}</h3>
+              <p>{item.desc}</p>
+              <span>{item.transport}</span>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="click-security" aria-label="Grid de seguranca">
-        {['X-User-Id', 'Workspace isolation', 'RLS esperado', 'Audit append-only'].map((item) => (
-          <article key={item}>{item}</article>
-        ))}
+        <h2>10 Camadas de Seguranca</h2>
+        <div className="click-security__grid">
+          {[
+            { name: 'iron-session', desc: 'Sessao criptografada com cookie httpOnly' },
+            { name: 'JWT Agent Auth', desc: 'Token com escopo e expiracao' },
+            { name: 'Workspace Isolation', desc: 'Contexto x-workspace-id obrigatorio' },
+            { name: 'RLS', desc: 'Row Level Security no PostgreSQL' },
+            { name: 'Rate Limiting', desc: 'Protecao contra abuso de triggers' },
+            { name: 'Audit Append-Only', desc: 'Log imutavel de todas as acoes' },
+            { name: 'Approval Flow', desc: 'Acoes criticas exigem aprovacao' },
+            { name: 'HMAC Webhooks', desc: 'Assinatura de webhooks recebidos' },
+            { name: 'Zod Validation', desc: 'Validacao de entrada em todas as rotas' },
+            { name: 'Admin Kill Switch', desc: 'Controle total sobre agentes ativos' },
+          ].map((item) => (
+            <article key={item.name}>
+              <strong>{item.name}</strong>
+              <p>{item.desc}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       <CreateDealModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={createDeal} />

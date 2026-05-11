@@ -77,7 +77,7 @@ describe('Click components', () => {
     render(<Timeline events={clickHistory} />);
 
     expect(screen.getByLabelText('Timeline auditavel')).toHaveTextContent('Deal criado');
-    expect(screen.getByText(/human/)).toBeInTheDocument();
+    expect(screen.getAllByText(/human/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders six agent slots and keeps kill switch admin-only', () => {

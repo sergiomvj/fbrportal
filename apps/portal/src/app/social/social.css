@@ -1,0 +1,506 @@
+.social-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(236, 72, 153, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), transparent 30%),
+    #06111f;
+  color: #f7f9fc;
+  padding: 32px;
+}
+
+.social-breadcrumb,
+.social-section__header p,
+.social-kpi-card span,
+.social-network-card__header span,
+.social-job-card__meta,
+.social-template-card small,
+.social-brand-card span,
+.social-agent-card small,
+.social-event-card small,
+.social-pipeline__step span,
+.social-pill {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #97a7bb;
+}
+
+.social-breadcrumb {
+  display: flex;
+  gap: 8px;
+  margin: 0 auto 24px;
+  max-width: 1480px;
+}
+
+.social-breadcrumb a {
+  color: #f7f9fc;
+  text-decoration: none;
+}
+
+.social-hero,
+.social-section {
+  max-width: 1480px;
+  margin: 0 auto 24px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(7, 18, 33, 0.82);
+  backdrop-filter: blur(18px);
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.social-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.social-hero__copy p,
+.social-section__header p {
+  margin: 0 0 8px;
+}
+
+.social-hero__copy h1,
+.social-section__header h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3.5rem);
+  line-height: 1.02;
+}
+
+.social-section__header h2 {
+  font-size: clamp(1.45rem, 2vw, 2rem);
+}
+
+.social-hero__copy span,
+.social-section__header > div > span,
+.social-job-card p,
+.social-quality-card p,
+.social-gallery-card__meta p,
+.social-detail-card p,
+.social-template-card p,
+.social-brand-card small,
+.social-agent-card p,
+.social-event-card p,
+.social-network-card li span,
+.social-network-card li small {
+  color: #d2dbea;
+}
+
+.social-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.social-hero__chips span,
+.social-pill {
+  border: 1px solid rgba(236, 72, 153, 0.34);
+  background: rgba(236, 72, 153, 0.12);
+  color: #ffd0e8;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.social-kpis {
+  max-width: 1480px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.social-kpi-card,
+.social-network-card,
+.social-job-card,
+.social-template-card,
+.social-brand-card,
+.social-agent-card,
+.social-event-card,
+.social-detail-card,
+.social-quality-card,
+.social-gallery-card,
+.social-pipeline__step {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.86);
+  border-radius: 20px;
+}
+
+.social-kpi-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.social-kpi-card strong {
+  font-size: 1.8rem;
+}
+
+.social-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.social-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.social-filters button,
+.social-search,
+.social-job-card,
+.social-template-card,
+.social-network-card,
+.social-agent-card,
+.social-gallery-card {
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.social-filters button,
+.social-job-list button {
+  cursor: pointer;
+}
+
+.social-filters button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.84);
+  color: #f7f9fc;
+}
+
+.social-filters button[aria-pressed='true'] {
+  border-color: rgba(236, 72, 153, 0.5);
+  background: rgba(236, 72, 153, 0.18);
+}
+
+.social-network-grid,
+.social-template-grid,
+.social-brand-grid,
+.social-agent-grid,
+.social-gallery,
+.social-quality-summary {
+  display: grid;
+  gap: 16px;
+}
+
+.social-network-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.social-network-card {
+  padding: 18px;
+}
+
+.social-network-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.social-network-card ul,
+.social-detail-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.social-network-card li,
+.social-detail-card li {
+  display: grid;
+  gap: 3px;
+}
+
+.social-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 24px;
+}
+
+.social-layout__main,
+.social-layout__side,
+.social-side-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.social-search {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f7f9fc;
+}
+
+.social-job-list,
+.social-quality-list,
+.social-event-feed {
+  display: grid;
+  gap: 14px;
+}
+
+.social-job-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 20px;
+  padding: 18px;
+  text-align: left;
+}
+
+.social-job-card:hover,
+.social-job-card.is-active,
+.social-template-card:hover,
+.social-network-card:hover,
+.social-agent-card:hover,
+.social-gallery-card:hover {
+  border-color: rgba(236, 72, 153, 0.42);
+  transform: translateY(-2px);
+}
+
+.social-job-card__top,
+.social-template-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.social-job-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.social-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.social-status--pronta,
+.social-status--ready,
+.social-status--approved {
+  background: rgba(34, 197, 94, 0.14);
+  color: #b3f5c8;
+}
+
+.social-status--revisao,
+.social-status--quality_warning,
+.social-status--warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #ffd9a6;
+}
+
+.social-status--quality_check,
+.social-status--rendered,
+.social-status--render {
+  background: rgba(59, 130, 246, 0.14);
+  color: #bee1ff;
+}
+
+.social-status--fila,
+.social-status--brand_kit,
+.social-status--templates,
+.social-status--assets,
+.social-status--composicao,
+.social-status--storage,
+.social-status--pending {
+  background: rgba(148, 163, 184, 0.16);
+  color: #d2dbea;
+}
+
+.social-status--erro,
+.social-status--error,
+.social-status--rejected {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ffb7b7;
+}
+
+.social-render-table,
+.social-render-table table {
+  width: 100%;
+}
+
+.social-render-table {
+  overflow: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.social-render-table table {
+  border-collapse: collapse;
+}
+
+.social-render-table th,
+.social-render-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  text-align: left;
+}
+
+.social-quality-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.social-quality-card,
+.social-detail-card,
+.social-template-card,
+.social-brand-card,
+.social-agent-card,
+.social-event-card {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.social-quality-card--warning {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.social-quality-card--approved {
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.social-gallery {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.social-gallery-card__thumb {
+  min-height: 140px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(236, 72, 153, 0.22), rgba(99, 102, 241, 0.16)),
+    rgba(15, 23, 42, 0.92);
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 6px;
+  padding: 16px;
+}
+
+.social-gallery-card__meta {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.social-brand-grid {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.social-brand-card__swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.social-brand-card__swatches i {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.social-template-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.social-agent-grid,
+.social-event-feed {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.social-pipeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.social-pipeline__step {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+}
+
+.social-pipeline__step span {
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(236, 72, 153, 0.14);
+  color: #ffd0e8;
+}
+
+.social-pipeline__step--completed {
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.social-pipeline__step--active {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.social-pipeline__step--warning {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.social-pipeline__step--failed {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 1200px) {
+  .social-kpis,
+  .social-network-grid,
+  .social-template-grid,
+  .social-gallery,
+  .social-pipeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .social-shell {
+    padding: 20px;
+  }
+
+  .social-hero,
+  .social-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .social-kpis,
+  .social-network-grid,
+  .social-template-grid,
+  .social-gallery,
+  .social-quality-summary,
+  .social-pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .social-section,
+  .social-hero {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .social-section__header {
+    flex-direction: column;
+    align-items: start;
+  }
+}
