@@ -11,7 +11,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const diagnostico = getDiagnosticoByEstrategia(id, context);
+    const diagnostico = await getDiagnosticoByEstrategia(id, context);
     return withSecurityHeaders(Response.json({ diagnostico }));
   } catch (error) {
     return jsonError(error);

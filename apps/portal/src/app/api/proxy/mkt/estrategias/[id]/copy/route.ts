@@ -11,7 +11,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const copy = listCopyByEstrategia(id, context);
+    const copy = await listCopyByEstrategia(id, context);
     return withSecurityHeaders(Response.json({ copy }));
   } catch (error) {
     return jsonError(error);

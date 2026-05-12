@@ -5,6 +5,8 @@ import type { MktProcessingJob } from '@/lib/mkt/types';
 import { MKT_DEFAULT_JOB_CONFIG } from '@/lib/mkt/queue';
 import { processExtraction } from '@/lib/mkt/workers/extrator';
 import { processEstrategia } from '@/lib/mkt/workers/estrategista';
+import { processCopy } from '@/lib/mkt/workers/copy';
+import { processCalendario } from '@/lib/mkt/workers/calendario';
 
 export async function POST(request: Request) {
   // This endpoint can be triggered by a CRON job or manually to process pending jobs
@@ -82,6 +84,10 @@ export async function POST(request: Request) {
           await processExtraction(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
         } else if (typedJob.categoria === 'geracao_estrategia') {
           await processEstrategia(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
+        } else if (typedJob.categoria === 'copy') {
+          await processCopy(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
+        } else if (typedJob.categoria === 'calendario') {
+          await processCalendario(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
         } else {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }

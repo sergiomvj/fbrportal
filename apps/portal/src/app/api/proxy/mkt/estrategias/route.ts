@@ -26,7 +26,8 @@ export async function POST(request: Request) {
   try {
     const contentType = request.headers.get('content-type') || '';
     let body: any = {};
-    let docPath = null;
+    let fileToUpload: File | null = null;
+    let ext = '';
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
@@ -35,26 +36,36 @@ export async function POST(request: Request) {
       
       const file = formData.get('file') as File | null;
       if (file) {
-        const supabase = createSupabaseServerClient();
-        const ext = file.name.split('.').pop();
-        const filePath = `${context.companyId}/${crypto.randomUUID()}.${ext}`;
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        const { error: uploadError } = await supabase.storage.from('mkt_documents').upload(filePath, buffer, {
-          contentType: file.type,
-          upsert: true,
-        });
-        
-        if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`);
-        docPath = filePath;
-        body.doc_path = docPath;
+        fileToUpload = file;
+        ext = file.name.split('.').pop() || '';
       }
     } else {
       body = await request.json();
     }
 
+    // 1. Cria a estrategia primeiro para gerar o ID e garantir RLS
     const estrategia = await createEstrategia(context, body);
+
+    // 2. Se houver arquivo, faz upload no path correto do PRD e atualiza
+    if (fileToUpload) {
+      const { buildStoragePath } = await import('@/lib/mkt/storage');
+      const supabase = createSupabaseServerClient();
+      const filePath = buildStoragePath(context.companyId, estrategia.id!, `${crypto.randomUUID()}.${ext}`);
+      
+      const arrayBuffer = await fileToUpload.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      
+      const { error: uploadError } = await supabase.storage.from('mkt_documents').upload(filePath, buffer, {
+        contentType: fileToUpload.type,
+        upsert: true,
+      });
+      
+      if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`);
+      
+      // Atualiza o doc_path na estrategia recem criada
+      await supabase.from('mkt_estrategias').update({ doc_path: filePath }).eq('id', estrategia.id);
+      estrategia.doc_path = filePath;
+    }
 
     await enqueueJob('extracao', estrategia.id!, context.companyId, {
       nome: estrategia.nome,

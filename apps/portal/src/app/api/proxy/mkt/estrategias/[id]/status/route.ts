@@ -12,7 +12,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    getEstrategia(id, context);
+    await getEstrategia(id, context);
 
     const accept = request.headers.get('accept') ?? '';
     if (accept.includes('text/event-stream')) {

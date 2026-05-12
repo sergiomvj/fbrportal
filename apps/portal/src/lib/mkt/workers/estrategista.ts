@@ -2,6 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getDiagnosticoByEstrategia, saveVersao, updateEstrategiaStatus, MktRequestContext } from '../store';
+import { emitGeracao } from '../sse';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
@@ -11,6 +12,8 @@ const openai = createOpenAI({
 export async function processEstrategia(job: any, context: MktRequestContext) {
   const diagnostico = await getDiagnosticoByEstrategia(job.estrategia_id, context);
   if (!diagnostico) throw new Error('Diagnóstico não encontrado ou não aprovado.');
+
+  emitGeracao(job.estrategia_id, 10, 'Iniciando geração de estratégia');
 
   // LLM Call
   const { object } = await generateObject({
@@ -45,4 +48,5 @@ Retorne um posicionamento claro, os KPIs principais, canais sugeridos e as campa
   
   await saveVersao(versaoPayload);
   await updateEstrategiaStatus(job.estrategia_id, 'ativa', context);
+  emitGeracao(job.estrategia_id, 100, 'Estratégia gerada com sucesso');
 }

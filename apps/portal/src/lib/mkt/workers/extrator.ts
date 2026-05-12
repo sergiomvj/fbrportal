@@ -6,6 +6,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { saveDiagnostico, updateEstrategiaStatus } from '../store';
+import { emitExtracao } from '../sse';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
@@ -15,6 +16,8 @@ const openai = createOpenAI({
 export async function processExtraction(job: any, context: MktRequestContext) {
   const supabase = createSupabaseServerClient();
   const { doc_path, nome, nicho } = job.payload;
+  
+  emitExtracao(job.estrategia_id, 10, 'Iniciando extração do documento');
   
   let extractedText = '';
   
@@ -66,4 +69,5 @@ ${extractedText || 'Nenhum documento fornecido. Gere um diagnóstico inferido ba
   } as any);
 
   await updateEstrategiaStatus(job.estrategia_id, 'revisao', context);
+  emitExtracao(job.estrategia_id, 100, 'Diagnóstico gerado com sucesso');
 }

@@ -11,7 +11,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const tasks = listRoadmapByEstrategia(id, context);
+    const tasks = await listRoadmapByEstrategia(id, context);
     return withSecurityHeaders(Response.json({ roadmap: tasks }));
   } catch (error) {
     return jsonError(error);
