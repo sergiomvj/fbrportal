@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { MktChatMessage } from '@/lib/mkt/types';
 
@@ -54,15 +52,30 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
     setInput('');
     setSending(true);
 
+    const newAsstId = crypto.randomUUID();
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role: 'user', conteudo: msg, estrategia_id: estrategiaId, created_at: new Date().toISOString() },
+      { id: newAsstId, role: 'assistant', conteudo: '', estrategia_id: estrategiaId, created_at: new Date().toISOString() }
+    ]);
+
     try {
       const res = await fetch(`/api/proxy/mkt/estrategias/${estrategiaId}/chat`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ message: msg }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages((prev) => [...prev, data.user_message, data.assistant_message]);
+      if (res.ok && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantText = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          assistantText += chunk;
+          setMessages((prev) => prev.map(m => m.id === newAsstId ? { ...m, conteudo: assistantText } : m));
+        }
       }
     } catch { /* ignore */ }
     finally { setSending(false); }

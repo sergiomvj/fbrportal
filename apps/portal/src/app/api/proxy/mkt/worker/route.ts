@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-admin';
 import { withSecurityHeaders } from '@/lib/mkt/security';
 import type { MktProcessingJob } from '@/lib/mkt/types';
 import { MKT_DEFAULT_JOB_CONFIG } from '@/lib/mkt/queue';
+import { processExtraction } from '@/lib/mkt/workers/extrator';
+import { processEstrategia } from '@/lib/mkt/workers/estrategista';
 
 export async function POST(request: Request) {
   // This endpoint can be triggered by a CRON job or manually to process pending jobs
@@ -51,14 +53,35 @@ export async function POST(request: Request) {
 
           // Trigger FBR-Click webhook or event
           try {
+            const { data: estData } = await supabase.from('mkt_estrategias').select('nome, nicho, doc_path').eq('id', typedJob.estrategia_id).single();
+            const { data: diagData } = await supabase.from('mkt_diagnosticos').select('score_viabilidade').eq('estrategia_id', typedJob.estrategia_id).single();
+            const { data: verData } = await supabase.from('mkt_estrategia_versoes').select('plano_estrategico').eq('estrategia_id', typedJob.estrategia_id).order('versao', { ascending: false }).limit(1).single();
+            
+            const eventPayload = { 
+              event: 'strategy.exported', 
+              data: {
+                estrategia_id: typedJob.estrategia_id,
+                nome: estData?.nome || 'Estratégia sem nome',
+                nicho: estData?.nicho || 'Geral',
+                documento_original: estData?.doc_path || null,
+                score_viabilidade: diagData?.score_viabilidade || 0,
+                canais_sugeridos: verData?.plano_estrategico ? (verData.plano_estrategico as any).canais : []
+              },
+              company_id: typedJob.empresa_id 
+            };
+            
             await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/proxy/click/deals/events`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ event: 'strategy.exported', strategy_id: typedJob.estrategia_id, company_id: typedJob.empresa_id })
+              body: JSON.stringify(eventPayload)
             });
           } catch (e) {
             console.error('Failed to emit strategy.exported event', e);
           }
+        } else if (typedJob.categoria === 'extracao') {
+          await processExtraction(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
+        } else if (typedJob.categoria === 'geracao_estrategia') {
+          await processEstrategia(typedJob, { companyId: typedJob.empresa_id, userId: 'worker', moduleSource: 'worker' });
         } else {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }

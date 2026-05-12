@@ -375,7 +375,7 @@ export async function getDashboardKpis(context: MktRequestContext): Promise<MktD
   const aprovados = diags?.filter(d => d.aprovado).length || 0;
   const total_diags = diags?.length || 0;
   
-  const { count: exports } = await supabase.from('mkt_exports').select('*', { count: 'exact', head: true }).eq('mkt_estrategias.empresa_id', context.companyId); // Wait, this might need an inner join
+  const { count: exports } = await supabase.from('mkt_exports').select('mkt_estrategias!inner(empresa_id)', { count: 'exact', head: true }).eq('mkt_estrategias.empresa_id', context.companyId);
   
   const { count: jobsFalha } = await supabase.from('mkt_processing_jobs').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'failed');
   const { count: agentes } = await supabase.from('mkt_agents').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('ativo', true);

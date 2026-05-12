@@ -3,6 +3,7 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
+// TODO: Move to Upstash Redis or Vercel KV for Serverless production environments
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 export interface MktRateLimitConfig {
