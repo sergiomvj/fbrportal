@@ -1,5 +1,5 @@
 import { processSalesIntake } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../_shared';
 
 export async function POST(request: Request) {
   const context = contextOrResponse(request);
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
   try {
     const result = processSalesIntake(context, await request.json());
-    return Response.json({ created: result.created, recebimento: result.receivable }, { status: result.created ? 201 : 200 });
+    return jsonSuccess(result.receivable, { status: result.created ? 201 : 200 });
   } catch (error) {
     return jsonError(error);
   }

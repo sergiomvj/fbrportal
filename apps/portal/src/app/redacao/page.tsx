@@ -1,11 +1,9 @@
 import { RedacaoShell } from './_components/RedacaoShell';
-import { getRedacaoTestCompanyIds, getDashboardKpis } from '@/lib/redacao/store';
+import { getRedacaoDashboardFromPortal } from '@/lib/redacao/portal-api';
 import './redacao.css';
 
-export default function RedacaoPage() {
-  const { alpha, user } = getRedacaoTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
-  const kpis = getDashboardKpis(context);
+export default async function RedacaoPage() {
+  const kpis = await getRedacaoDashboardFromPortal();
 
   return <RedacaoShell kpis={kpis} />;
 }

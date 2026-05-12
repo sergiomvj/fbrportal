@@ -15,19 +15,28 @@ export function isValidPortalMessage(value: unknown): value is PortalMessage {
 
   switch (value.type) {
     case 'AUTH_TOKEN':
-      return hasString(value.payload, 'token') && hasString(value.payload, 'expiresAt');
+      return hasString(value.payload, 'userId') && hasString(value.payload, 'role');
     case 'NAVIGATE':
-      return hasString(value.payload, 'path');
+      return hasString(value.payload, 'module') && hasString(value.payload, 'path');
     case 'NOTIFICATION':
       return (
-        ['info', 'success', 'warning', 'error'].includes(
+        ['info', 'warn', 'error'].includes(
           String(value.payload.level),
-        ) && hasString(value.payload, 'message')
+        ) && hasString(value.payload, 'title') && hasString(value.payload, 'body')
       );
     case 'MODULE_READY':
-      return hasString(value.payload, 'moduleId');
+      return hasString(value.payload, 'module');
     case 'CROSS_MODULE_EVENT':
       return hasString(value.payload, 'event') && 'data' in value.payload;
+    case 'ORACULO_CONTEXT':
+      return (
+        hasString(value.payload, 'module') &&
+        hasString(value.payload, 'screen') &&
+        (!('entity' in value.payload) ||
+          (isRecord(value.payload.entity) &&
+            hasString(value.payload.entity, 'type') &&
+            hasString(value.payload.entity, 'id')))
+      );
     default:
       return false;
   }

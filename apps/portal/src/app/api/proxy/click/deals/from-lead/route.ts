@@ -2,7 +2,7 @@ import { createDealFromLead } from '@/lib/click/store';
 import { contextOrResponse, jsonError } from '../../_shared';
 
 export async function POST(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -12,4 +12,3 @@ export async function POST(request: Request) {
     return jsonError(error);
   }
 }
-

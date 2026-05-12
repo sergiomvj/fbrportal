@@ -1,18 +1,18 @@
 import {
   listPartners,
   createPartner,
+  ingestDealClosed,
   parsePartnersQuery,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonList, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
   if (contextOr instanceof Response) return contextOr;
-  const context = { ...contextOr, moduleSource: 'fbr-portal' };
 
   try {
-    const result = listPartners(context, parsePartnersQuery(request.url));
-    return Response.json({ parceiros: result.items, pagination: result.pagination });
+    const result = listPartners({ ...contextOr, moduleSource: 'fbr-portal' }, parsePartnersQuery(request.url));
+    return jsonList(result.items, result.pagination);
   } catch (error) {
     return jsonError(error);
   }
@@ -23,10 +23,17 @@ export async function POST(request: Request) {
   if (contextOr instanceof Response) return contextOr;
   const { userId } = contextOr;
   const companyId = contextOr.companyId;
-  const context = { companyId, userId, moduleSource: 'fbr-portal' };
 
   try {
-    return Response.json({ parceiro: createPartner(context, await request.json()) }, { status: 201 });
+    const body = await request.json();
+    const effectiveContext = { companyId, userId, moduleSource: contextOr.moduleSource };
+
+    if (effectiveContext.moduleSource === 'fbr-click') {
+      const result = ingestDealClosed(effectiveContext, body);
+      return jsonSuccess(result.partner, { status: result.created ? 201 : 200 });
+    }
+
+    return jsonSuccess(createPartner(effectiveContext, body), { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

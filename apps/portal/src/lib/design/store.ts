@@ -915,11 +915,16 @@ export function previewBrandKitWebhook(context: DesignRequestContext, brandKitId
     changed_fields: ['cores', 'fontes', 'guidelines'],
     alterado_por: context.userId,
   };
+  const body = {
+    event: 'brand_kit.updated' as const,
+    data: payload,
+  };
 
   return {
     event: 'brand_kit.updated',
-    signature: createHmac('sha256', WEBHOOK_SECRET).update(JSON.stringify(payload)).digest('hex'),
+    signature: createHmac('sha256', WEBHOOK_SECRET).update(JSON.stringify(body)).digest('hex'),
     payload,
+    body,
   };
 }
 

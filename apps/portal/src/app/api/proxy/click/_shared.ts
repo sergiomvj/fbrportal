@@ -1,8 +1,8 @@
 import { ZodError } from 'zod';
-import { contextFromHeaders } from '@/lib/click/store';
+import { getClickRequestContext } from '@/lib/click/context';
 
-export function contextOrResponse(request: Request) {
-  return contextFromHeaders(request.headers);
+export async function contextOrResponse(request: Request) {
+  return getClickRequestContext(request);
 }
 
 export function jsonError(error: unknown) {
@@ -12,4 +12,3 @@ export function jsonError(error: unknown) {
 
   return Response.json({ code: 'CLICK_PROXY_ERROR', message: 'Unexpected Click proxy error.' }, { status: 500 });
 }
-

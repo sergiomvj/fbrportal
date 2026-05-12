@@ -222,6 +222,12 @@ export const PackageManifestSchema = z.object({
 });
 export type PackageManifest = z.infer<typeof PackageManifestSchema>;
 
+export const SocialPackagePreviewSchema = z.object({
+  zip_name: z.string().min(1),
+  manifest: PackageManifestSchema,
+});
+export type SocialPackagePreview = z.infer<typeof SocialPackagePreviewSchema>;
+
 export const SocialAgentSlotSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -300,19 +306,22 @@ export const SocialDashboardSnapshotSchema = z.object({
   brand_kits: z.array(BrandKitCacheEntrySchema),
   agent_slots: z.array(SocialAgentSlotSchema),
   agent_events: z.array(SocialAgentEventSchema),
-  package_preview: PackageManifestSchema.nullable(),
+  package_preview: SocialPackagePreviewSchema.nullable(),
 });
 export type SocialDashboardSnapshot = z.infer<typeof SocialDashboardSnapshotSchema>;
 
 export const BrandKitWebhookPayloadSchema = z.object({
   brand_kit_id: z.string().uuid().optional(),
   updated_at: z.string().optional(),
-  event: z.literal('brand_kit.updated').optional(),
+  event: z.literal('brand_kit.updated'),
   data: z.object({
     brand_kit_id: z.string().uuid(),
+    empresa_id: z.string().uuid().optional(),
     versao: z.number().int().optional(),
+    updated_at: z.string().optional(),
+    changed_fields: z.array(z.string()).optional(),
     alteracoes: z.array(z.string()).optional(),
     alterado_por: z.string().optional(),
-  }).optional(),
+  }),
 });
 export type BrandKitWebhookPayload = z.infer<typeof BrandKitWebhookPayloadSchema>;

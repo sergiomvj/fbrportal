@@ -1,11 +1,11 @@
-import { LeadsCampaigns } from '../_components/LeadsCampaigns';
-import { getLeadsTestCompanyIds, listCampaigns, listDomains, listICPs } from '@/lib/leads/store';
+import { getLeadsPageContext } from '@/lib/leads/context';
 import { getMktTestCompanyIds, listCampaigns as listMktCampaigns } from '@/lib/mkt/store';
+import { listCampaigns, listDomains, listICPs } from '@/lib/leads/store';
+import { LeadsCampaigns } from '../_components/LeadsCampaigns';
 import '../leads.css';
 
 export default async function LeadsCampaignsPage() {
-  const { alpha, user } = getLeadsTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
+  const context = await getLeadsPageContext();
   const campaigns = listCampaigns(context);
   const domains = listDomains(context);
   const icps = listICPs(context);

@@ -5,7 +5,7 @@ import {
   transitionPartnerStage,
   listPartnerEvents,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../_shared';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const parceiro = getPartner(context, id);
     const eventos = listPartnerEvents(context, id);
-    return Response.json({ parceiro, eventos });
+    return jsonSuccess({ parceiro, eventos });
   } catch (error) {
     return jsonError(error);
   }
@@ -34,15 +34,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const body = await request.json();
-    const action = body.action;
-
-    if (action === 'transition_stage') {
+    if (body?.action === 'transition_stage' || Object.prototype.hasOwnProperty.call(body, 'para')) {
       const parceiro = transitionPartnerStage(context, id, body);
-      return Response.json({ parceiro });
+      return jsonSuccess(parceiro);
     }
 
     const parceiro = updatePartner(context, id, body);
-    return Response.json({ parceiro });
+    return jsonSuccess(parceiro);
   } catch (error) {
     return jsonError(error);
   }

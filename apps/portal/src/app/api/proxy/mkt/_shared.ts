@@ -1,9 +1,10 @@
 import { ZodError } from 'zod';
-import { contextFromHeaders, MktValidationError } from '@/lib/mkt/store';
+import { MktValidationError } from '@/lib/mkt/store';
 import { withSecurityHeaders } from '@/lib/mkt/security';
+import { getMktRequestContext } from '@/lib/mkt/context';
 
-export function contextOrResponse(request: Request) {
-  return contextFromHeaders(request.headers);
+export async function contextOrResponse(request: Request) {
+  return getMktRequestContext(request);
 }
 
 export function jsonError(error: unknown) {

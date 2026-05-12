@@ -30,7 +30,7 @@ describe('Click components', () => {
   });
 
   it('keeps create modal open with inline validation errors', () => {
-    render(<CreateDealModal open onClose={vi.fn()} onCreate={vi.fn()} />);
+    render(<CreateDealModal open onClose={vi.fn()} onCreate={vi.fn(async () => clickDeals[0]!)} />);
 
     expect(screen.getByLabelText('Origem')).toHaveValue('manual');
     fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'fbr_leads' } });
@@ -85,7 +85,7 @@ describe('Click components', () => {
   });
 
   it('renders six agent slots and keeps kill switch admin-only', () => {
-    render(<AgentDashboard agents={clickAgents} isAdmin={false} />);
+    render(<AgentDashboard agents={clickAgents} companyId="empresa-1" isAdmin={false} />);
 
     expect(screen.getAllByRole('article')).toHaveLength(9);
     expect(screen.getByText('sdr')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('Click components', () => {
 
   it('wires agent kill switch controls for admins', () => {
     const onAgentPausedChange = vi.fn();
-    render(<AgentDashboard agents={clickAgents} isAdmin onAgentPausedChange={onAgentPausedChange} />);
+    render(<AgentDashboard agents={clickAgents} companyId="empresa-1" isAdmin onAgentPausedChange={onAgentPausedChange} />);
 
     const button = screen.getAllByRole('button', { name: 'Kill switch' })[0]!;
     fireEvent.click(button);

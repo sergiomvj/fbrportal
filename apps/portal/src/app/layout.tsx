@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@fbr/ui/styles.css';
 import './styles.css';
+import { PortalOraculoShell } from './_components/PortalOraculoShell';
 
 export const metadata: Metadata = {
   title: 'FBR Portal',
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <PortalOraculoShell>{children}</PortalOraculoShell>
+      </body>
     </html>
   );
 }

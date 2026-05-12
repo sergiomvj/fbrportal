@@ -18,7 +18,7 @@ export function PipelineBoard({
   onOpen,
 }: {
   deals: ClickDeal[];
-  onMove: (dealId: string, stage: ClickStage) => void;
+  onMove: (dealId: string, stage: ClickStage) => Promise<void> | void;
   onOpen: (deal: ClickDeal) => void;
 }) {
   return (
@@ -31,7 +31,7 @@ export function PipelineBoard({
             className="click-pipeline__column"
             key={stage}
             onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => onMove(event.dataTransfer.getData('text/plain'), stage)}
+            onDrop={(event) => void onMove(event.dataTransfer.getData('text/plain'), stage)}
           >
             <header>
               <h3>{labels[stage]}</h3>
@@ -50,4 +50,3 @@ export function PipelineBoard({
     </section>
   );
 }
-

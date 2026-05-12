@@ -31,6 +31,11 @@ export const leadQualifiedSchema = z.object({
   total_respostas: z.number().int().min(0).optional(),
 });
 
+export const leadQualifiedEventSchema = z.object({
+  event: z.literal('lead.qualified'),
+  data: leadQualifiedSchema,
+});
+
 export const messageSchema = z.object({
   body: z.string().min(1),
   actorType: z.enum(['human', 'agent']).default('human'),
@@ -58,3 +63,6 @@ export function normalizeLeadQualified(input: unknown) {
   };
 }
 
+export function normalizeLeadQualifiedEvent(input: unknown) {
+  return normalizeLeadQualified(leadQualifiedEventSchema.parse(input).data);
+}

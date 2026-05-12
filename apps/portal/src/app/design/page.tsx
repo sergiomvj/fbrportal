@@ -1,22 +1,13 @@
 import { DesignDashboard } from './_components/DesignDashboard';
-import {
-  getDesignArvaAgents,
-  getDesignModuleSnapshot,
-  getDesignTestCompanyIds,
-  previewBrandKitWebhook,
-} from '@/lib/design/store';
+import { getDesignDashboardFromPortal } from '@/lib/design/portal-api';
 
-export default function DesignPage() {
-  const { alpha, user } = getDesignTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
-  const snapshot = getDesignModuleSnapshot(context);
-  const webhookPreviews = Object.fromEntries(
-    snapshot.brand_kits.map((brandKit) => [brandKit.id ?? '', previewBrandKitWebhook(context, brandKit.id ?? '')]),
-  );
+export default async function DesignPage() {
+  const payload = await getDesignDashboardFromPortal();
+  const { available_agents: availableAgents, snapshot, webhook_previews: webhookPreviews } = payload;
 
   return (
     <DesignDashboard
-      availableAgents={getDesignArvaAgents()}
+      availableAgents={availableAgents}
       initialAgentSlots={snapshot.agent_slots}
       initialBrandKits={snapshot.brand_kits}
       initialDeliverables={snapshot.deliverables}

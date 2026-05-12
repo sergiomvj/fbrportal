@@ -255,28 +255,36 @@ export const CampaignSchema = z.object({
 });
 export type Campaign = z.infer<typeof CampaignSchema>;
 
-export const HandoffPayloadSchema = z.object({
-  event: z.literal('sql_handoff'),
-  lead: z.object({
+export const LeadQualifiedEventSchema = z.object({
+  event: z.literal('lead.qualified'),
+  data: z.object({
     lead_id: z.string().uuid(),
-    name: z.string(),
-    role: z.string().optional(),
-    company: z.string(),
-    cnpj: z.string().optional(),
-    email: z.string().email(),
+    empresa_nome: z.string(),
+    contato_nome: z.string(),
+    contato_email: z.string().email(),
     score: z.number().int(),
-    source: LeadFonteSchema,
-    icp_match: z.string().optional(),
-    enrichment_notes: z.string().optional(),
-    interaction_summary: z.string().optional(),
-  }),
-  action: z.object({
-    create_deal: z.boolean(),
-    notify_user_id: z.string().optional(),
-    post_to_channel: z.string().optional(),
+    icp_origem: z.string().optional(),
+    historico_interacoes: z.array(
+      z.object({
+        tipo: z.enum(['email_enviado', 'email_respondido', 'email_aberto', 'email_bounce']),
+        data: z.string(),
+        conteudo: z.string(),
+        agente: z.string(),
+      }),
+    ),
+    dados_enriquecimento: z.object({
+      porte: z.string().optional(),
+      setor: z.string().optional(),
+      regiao: z.string().optional(),
+      funcionarios: z.number().int().optional(),
+      faturamento_estimado: z.number().optional(),
+      presenca_digital: z.string().optional(),
+    }),
+    cadencia_completa: z.boolean(),
+    total_respostas: z.number().int(),
   }),
 });
-export type HandoffPayload = z.infer<typeof HandoffPayloadSchema>;
+export type LeadQualifiedEvent = z.infer<typeof LeadQualifiedEventSchema>;
 
 export const ReportSchema = z.object({
   id: z.string().uuid().optional(),

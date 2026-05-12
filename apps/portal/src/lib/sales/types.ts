@@ -282,6 +282,49 @@ export const TransitionStageBodySchema = z.object({
 });
 export type TransitionStageBody = z.infer<typeof TransitionStageBodySchema>;
 
+export const DealClosedEventSchema = z.object({
+  event: z.literal('deal.closed'),
+  data: z.object({
+    deal_id: z.string().uuid(),
+    empresa_nome: z.string().min(1),
+    contato_nome: z.string().min(1),
+    contato_email: z.string().email(),
+    valor_estimado: z.number().positive(),
+    moeda: z.string().min(1),
+    produto_fechado: z.string().min(1),
+    historico_deal: z.array(z.object({
+      estagio: z.string(),
+      data_entrada: z.string(),
+      data_saida: z.string(),
+      responsavel: z.string(),
+    })).default([]),
+    dados_cliente: z.object({
+      cnpj: z.string().optional(),
+      telefone: z.string().optional(),
+      endereco: z.string().optional(),
+      site: z.string().url().optional(),
+    }).default({}),
+  }),
+});
+export type DealClosedEvent = z.infer<typeof DealClosedEventSchema>;
+
+export const PaymentReceivedForwardSchema = z.object({
+  event: z.literal('payment.received'),
+  data: z.object({
+    parceiro_id: z.string().uuid(),
+    parceiro_nome: z.string().min(1),
+    empresa_id: z.string().uuid(),
+    valor: z.number().positive(),
+    moeda: z.string().default('BRL'),
+    periodo_ref: z.string().regex(/^\d{4}-\d{2}$/),
+    data_recebimento: z.string(),
+    tipo_parceria: z.string().min(1),
+    comprovante_path: z.string().optional(),
+    notas: z.string().optional(),
+  }),
+});
+export type PaymentReceivedForward = z.infer<typeof PaymentReceivedForwardSchema>;
+
 export const ReconciliationResultSchema = z.object({
   processadas: z.number(),
   reconciliadas: z.number(),

@@ -1,21 +1,27 @@
 import { createSupabaseServerClient } from '../../supabase-admin';
 import { MktRequestContext } from '../store';
-// @ts-ignore
+// @ts-expect-error pdf-parse ships without a compatible default export declaration here.
 import pdfParse from 'pdf-parse';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { saveDiagnostico, updateEstrategiaStatus } from '../store';
 import { emitExtracao } from '../sse';
+import type { MktProcessingJob, MktSwot, MktPersona } from '../types';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
 });
 
-export async function processExtraction(job: any, context: MktRequestContext) {
+export async function processExtraction(job: MktProcessingJob, context: MktRequestContext) {
   const supabase = createSupabaseServerClient();
-  const { doc_path, nome, nicho } = job.payload;
+  const payload = (job as MktProcessingJob).payload as {
+    doc_path?: string;
+    nome?: string;
+    nicho?: string;
+  };
+  const { doc_path, nome, nicho } = payload;
   
   emitExtracao(job.estrategia_id, 10, 'Iniciando extração do documento');
   
@@ -51,7 +57,10 @@ export async function processExtraction(job: any, context: MktRequestContext) {
         nome: z.string(),
         dores: z.array(z.string()),
         desejos: z.array(z.string()),
-        comportamento: z.string()
+        comportamento: z.string(),
+        idade: z.string(),
+        profissao: z.string(),
+        canais_preferidos: z.array(z.string())
       }),
       score: z.number().min(0).max(100)
     }),
@@ -62,11 +71,22 @@ ${extractedText || 'Nenhum documento fornecido. Gere um diagnóstico inferido ba
 
   await saveDiagnostico({
     estrategia_id: job.estrategia_id,
-    swot: object.swot as any,
+    swot: object.swot as MktSwot,
     uvp: object.uvp,
-    persona: object.persona as any,
-    score_viabilidade: object.score
-  } as any);
+    persona: {
+      nome: object.persona.nome,
+      idade: object.persona.idade,
+      profissao: object.persona.profissao,
+      dores: object.persona.dores,
+      desejos: object.persona.desejos,
+      comportamento_digital: object.persona.comportamento,
+      canais_preferidos: object.persona.canais_preferidos,
+    } as MktPersona,
+    score_viab: object.score,
+    justificativa: `Diagnostico inicial inferido para ${nome || 'a estrategia'} com base no intake e no nicho ${nicho || 'informado'}.`,
+    nicho,
+    aprovado: false,
+  });
 
   await updateEstrategiaStatus(job.estrategia_id, 'revisao', context);
   emitExtracao(job.estrategia_id, 100, 'Diagnóstico gerado com sucesso');

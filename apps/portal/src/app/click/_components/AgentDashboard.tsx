@@ -8,12 +8,14 @@ import { clickAgentSlots } from '@/lib/click/types';
 
 export function AgentDashboard({
   agents,
+  companyId,
   isAdmin = false,
   onAgentPausedChange,
 }: {
   agents: ClickAgent[];
+  companyId: string;
   isAdmin?: boolean;
-  onAgentPausedChange?: (agent: ClickAgent, paused: boolean) => void;
+  onAgentPausedChange?: (agent: ClickAgent, paused: boolean) => Promise<void> | void;
 }) {
   const [linked, setLinked] = useState(arvaClickAgents.slice(0, 3));
   const [pausedByAgentId, setPausedByAgentId] = useState<Record<string, boolean>>({});
@@ -34,7 +36,7 @@ export function AgentDashboard({
         <h2>Agentes Click</h2>
         <AgentPicker
           agents={visibleAgents}
-          companyId="empresa-1"
+          companyId={companyId}
           linkedAgents={linked}
           moduleId="click"
           moduleTags={['comercial', 'vendas']}
@@ -53,7 +55,7 @@ export function AgentDashboard({
               <p>
                 <i className={`click-heartbeat click-heartbeat--${agent?.status ?? 'offline'}`} /> {agent?.status ?? 'offline'}
               </p>
-              <button disabled={!isAdmin || !agent} onClick={() => agent && toggleAgent(agent)} type="button">
+              <button disabled={!isAdmin || !agent} onClick={() => agent && void toggleAgent(agent)} type="button">
                 {paused ? 'Retomar' : 'Kill switch'}
               </button>
             </article>

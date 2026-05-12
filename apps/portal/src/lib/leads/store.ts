@@ -9,7 +9,7 @@ import {
   Agent,
   AgentLog,
   Campaign, CampaignSchema,
-  HandoffPayload, HandoffPayloadSchema,
+  LeadQualifiedEvent, LeadQualifiedEventSchema,
   Report,
   DashboardKpis,
   LeadEtapaSchema,
@@ -652,10 +652,13 @@ export function getLeadsTestCompanyIds() {
   return { alpha: COMPANY_ALPHA, user: USER_SYSTEM };
 }
 
-export function contextFromHeaders(headers: Headers): LeadsRequestContext | Response {
+export function contextFromHeaders(
+  headers: Headers,
+  fallbackModuleSource = 'leads',
+): LeadsRequestContext | Response {
   const userId = headers.get('x-user-id');
   const companyId = headers.get('x-company-id') ?? headers.get('x-workspace-id') ?? headers.get('x-empresa-id');
-  const moduleSource = headers.get('x-module-source') ?? 'fbr-portal';
+  const moduleSource = headers.get('x-module-source') ?? fallbackModuleSource;
 
   if (!userId || !companyId) {
     return Response.json({ code: 'UNAUTHORIZED_CONTEXT', message: 'X-User-Id and company headers are required.' }, { status: 401 });
@@ -969,8 +972,7 @@ export function deleteDomain(context: LeadsRequestContext, id: string) {
   return domain;
 }
 
-export function listAgents(companyId?: string) {
-  if (companyId) return agents.filter(() => true);
+export function listAgents() {
   return agents;
 }
 
@@ -1041,39 +1043,50 @@ export function listEmailTemplates(context: LeadsRequestContext, icpId?: string)
   return result;
 }
 
-export function handoffToClick(context: LeadsRequestContext, leadId: string): HandoffPayload {
+export function handoffToClick(context: LeadsRequestContext, leadId: string): LeadQualifiedEvent {
   const lead = leads.find((l) => l.id === leadId && l.company_id === context.companyId);
   if (!lead) throw new LeadsValidationError('Lead não encontrado.', 404);
 
   const cadenciaItems = emailCadencias.filter((ec) => ec.lead_id === leadId);
-  const enviados = cadenciaItems.filter((ec) => ec.status !== 'bounce').length;
-  const aberturas = cadenciaItems.filter((ec) => ec.status === 'aberto' || ec.status === 'respondido' || ec.status === 'clicou').length;
   const respostas = cadenciaItems.filter((ec) => ec.status === 'respondido').length;
 
-  const payload: HandoffPayload = {
-    event: 'sql_handoff',
-    lead: {
+  const payload: LeadQualifiedEvent = {
+    event: 'lead.qualified',
+    data: {
       lead_id: lead.id!,
-      name: lead.contato_nome,
-      role: lead.contato_cargo,
-      company: lead.empresa_nome,
-      cnpj: lead.empresa_cnpj,
-      email: lead.contato_email!,
+      empresa_nome: lead.empresa_nome,
+      contato_nome: lead.contato_nome,
+      contato_email: lead.contato_email!,
       score: lead.score,
-      source: lead.fonte,
-      icp_match: icps.find((i) => i.id === lead.icp_id)?.nome,
-      enrichment_notes: lead.notas,
-      interaction_summary: `${enviados} e-mails enviados. ${aberturas} aberturas. ${respostas} respostas.`,
-    },
-    action: {
-      create_deal: true,
-      notify_user_id: 'usr_julia_manager',
-      post_to_channel: 'chn_leads_qualificados',
+      ...(lead.icp_id ? { icp_origem: icps.find((i) => i.id === lead.icp_id)?.nome } : {}),
+      historico_interacoes: cadenciaItems.map((item) => ({
+        agente: item.agente ?? 'sistema',
+        conteudo: item.body ?? item.subject ?? '',
+        data: item.created_at ?? now(),
+        tipo:
+          item.status === 'respondido'
+            ? 'email_respondido'
+            : item.status === 'aberto'
+              ? 'email_aberto'
+              : item.status === 'bounce'
+                ? 'email_bounce'
+                : 'email_enviado',
+      })),
+      dados_enriquecimento: {
+        ...(lead.porte ? { porte: lead.porte } : {}),
+        ...(lead.setor ? { setor: lead.setor } : {}),
+        ...(lead.regiao ? { regiao: lead.regiao } : {}),
+        ...(typeof lead.funcionarios === 'number' ? { funcionarios: lead.funcionarios } : {}),
+        ...(typeof lead.faturamento === 'number' ? { faturamento_estimado: lead.faturamento } : {}),
+        ...(lead.presenca_digital ? { presenca_digital: lead.presenca_digital } : {}),
+      },
+      cadencia_completa: cadenciaItems.length >= 4,
+      total_respostas: respostas,
     },
   };
 
   try {
-    HandoffPayloadSchema.parse(payload);
+    LeadQualifiedEventSchema.parse(payload);
   } catch (error) {
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;

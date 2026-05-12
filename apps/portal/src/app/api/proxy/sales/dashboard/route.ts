@@ -1,5 +1,5 @@
 import { getDashboardKpis } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   try {
     const kpis = getDashboardKpis(context);
-    return Response.json({ kpis });
+    return jsonSuccess(kpis);
   } catch (error) {
     return jsonError(error);
   }

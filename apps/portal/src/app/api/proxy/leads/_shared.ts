@@ -1,16 +1,5 @@
 import { z } from 'zod';
-
-export function contextFromHeaders(headers: Headers) {
-  const userId = headers.get('x-user-id');
-  const companyId = headers.get('x-company-id') ?? headers.get('x-workspace-id');
-  const moduleSource = headers.get('x-module-source') ?? 'fbr-portal';
-
-  if (!userId || !companyId) {
-    return Response.json({ code: 'UNAUTHORIZED_CONTEXT', message: 'X-User-Id and company headers are required.' }, { status: 401 });
-  }
-
-  return { userId, companyId, moduleSource };
-}
+import { getLeadsRequestContext } from '@/lib/leads/context';
 
 export function jsonError(error: unknown) {
   if (error instanceof Response) return error;
@@ -31,6 +20,6 @@ export function jsonError(error: unknown) {
   return Response.json({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' }, { status: 500 });
 }
 
-export function contextOrResponse(request: Request) {
-  return contextFromHeaders(request.headers);
+export async function contextOrResponse(request: Request) {
+  return getLeadsRequestContext(request);
 }

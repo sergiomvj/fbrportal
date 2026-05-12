@@ -1,11 +1,12 @@
+import { getLeadsPageContext } from '@/lib/leads/context';
+import { listAgents, listAgentLogs } from '@/lib/leads/store';
 import { LeadsAgents } from '../_components/LeadsAgents';
-import { getLeadsTestCompanyIds, listAgents, listAgentLogs } from '@/lib/leads/store';
 import '../leads.css';
 
-export default function LeadsAgentsPage() {
-  getLeadsTestCompanyIds();
+export default async function LeadsAgentsPage() {
+  const context = await getLeadsPageContext();
   const agents = listAgents();
   const agentLogs = listAgentLogs(50);
 
-  return <LeadsAgents agents={agents} agentLogs={agentLogs} />;
+  return <LeadsAgents agents={agents} agentLogs={agentLogs} companyId={context.companyId} />;
 }

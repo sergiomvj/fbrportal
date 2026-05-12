@@ -32,7 +32,7 @@ export interface FinanceRequestContext {
 export class FinanceValidationError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 409 | 422,
+    readonly status: 400 | 403 | 404 | 409 | 422,
     readonly issues?: unknown,
   ) {
     super(message);
@@ -244,6 +244,15 @@ export function getFinanceTestCompanyIds() {
   return { alpha: COMPANY_ALPHA, beta: COMPANY_BETA, user: USER_SYSTEM };
 }
 
+export function getFinanceProxyHeaders(companyId: string = COMPANY_ALPHA, userId: string = USER_SYSTEM, moduleSource: string = 'fbr-portal') {
+  return {
+    'x-company-id': companyId,
+    'x-user-id': userId,
+    'x-module-source': moduleSource,
+    'content-type': 'application/json',
+  };
+}
+
 export function getAutomaticReconciliationCallCount() {
   return reconciliationCalls;
 }
@@ -254,12 +263,12 @@ export function contextFromHeaders(headers: Headers): FinanceRequestContext | Re
   const moduleSource = headers.get('x-module-source') ?? 'fbr-portal';
 
   if (!userId || !companyId) {
-    return Response.json({ code: 'UNAUTHORIZED_CONTEXT', message: 'X-User-Id and company headers are required.' }, { status: 401 });
+    return Response.json({ success: false, error: { code: 'UNAUTHORIZED_CONTEXT', message: 'X-User-Id and company headers are required.' } }, { status: 401 });
   }
 
   const companyCheck = z.string().uuid().safeParse(companyId);
   if (!companyCheck.success) {
-    return Response.json({ code: 'INVALID_COMPANY', message: 'Company header must be a valid UUID.' }, { status: 422 });
+    return Response.json({ success: false, error: { code: 'INVALID_COMPANY', message: 'Company header must be a valid UUID.' } }, { status: 422 });
   }
 
   return { userId, companyId, moduleSource };
@@ -292,7 +301,7 @@ export function listReceivables(context: FinanceRequestContext, query: Partial<R
   const targetCompany = parsed.empresa_id ?? context.companyId;
 
   if (targetCompany !== context.companyId) {
-    return { items: [], pagination: { page: parsed.page, page_size: parsed.page_size, total: 0, total_pages: 0 } };
+    throw new FinanceValidationError('Cannot query receivables for another company.', 403);
   }
 
   const partner = parsed.parceiro?.toLowerCase();
@@ -351,13 +360,13 @@ export function reconcileReceivable(context: FinanceRequestContext, id: string, 
   if (!payload.success) throw normalizeZodError(payload.error);
 
   const receivable = receivables.find((item) => item.id === id && item.company_id === context.companyId);
-  if (!receivable) throw new Error('Receivable not found');
+  if (!receivable) throw new FinanceValidationError('Receivable not found.', 404);
 
   if (receivable.status === 'recebido' || receivable.status === 'divergente') {
-    throw new Error('Already reconciled');
+    throw new FinanceValidationError('Already reconciled', 409);
   }
 
-  receivable.received_date = now();
+  receivable.received_date = now().slice(0, 10);
   receivable.status = calculateReconciliationStatus(receivable.amount, payload.data.amount_received);
   return receivable;
 }
@@ -366,11 +375,14 @@ export function getDashboardKpis(context: FinanceRequestContext): DashboardKpis 
   const companyReceivables = receivables.filter((receivable) => receivable.company_id === context.companyId);
   const received = companyReceivables.filter((receivable) => receivable.status === 'recebido');
   const pending = companyReceivables.filter((receivable) => receivable.status === 'pendente');
-  const today = '2026-05-05';
-  const inThirtyDays = '2026-06-04';
-  const currentPeriodStart = '2026-05-01';
-  const previousPeriodStart = '2026-04-01';
-  const previousPeriodEnd = '2026-04-30';
+  const nowDate = new Date();
+  const today = nowDate.toISOString().slice(0, 10);
+  const inThirtyDaysDate = new Date(nowDate);
+  inThirtyDaysDate.setDate(inThirtyDaysDate.getDate() + 30);
+  const inThirtyDays = inThirtyDaysDate.toISOString().slice(0, 10);
+  const currentPeriodStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1).toISOString().slice(0, 10);
+  const previousPeriodStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - 1, 1).toISOString().slice(0, 10);
+  const previousPeriodEnd = new Date(nowDate.getFullYear(), nowDate.getMonth(), 0).toISOString().slice(0, 10);
 
   const receitaTotal = sum(received);
   const previousRevenue = sum(received.filter((receivable) => receivable.received_date && receivable.received_date >= previousPeriodStart && receivable.received_date <= previousPeriodEnd));
@@ -483,7 +495,7 @@ export function listPayables(context: FinanceRequestContext, query: Partial<Paya
   const targetCompany = parsed.empresa_id ?? context.companyId;
 
   if (targetCompany !== context.companyId) {
-    return { items: [], pagination: { page: parsed.page, page_size: parsed.page_size, total: 0, total_pages: 0 } };
+    throw new FinanceValidationError('Cannot query payables for another company.', 403);
   }
 
   const fornecedor = parsed.fornecedor?.toLowerCase();
@@ -538,26 +550,44 @@ export function createPayable(context: FinanceRequestContext, data: unknown) {
 }
 
 export function approvePayable(context: FinanceRequestContext, id: string, data: unknown) {
-  const input = parseJsonObject(data);
-  const role = (input as { role?: string }).role;
+  const payable = payables.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!payable) throw new FinanceValidationError('Payable not found.', 404);
 
-  if (!role) {
-    throw new FinanceValidationError('Role is required for approval.', 400);
+  const input = z.object({
+    role: z.string().min(1),
+    decisao: z.enum(['aprovar', 'rejeitar']).default('aprovar'),
+    observacao: z.string().optional(),
+    created_by: z.string().uuid().optional(),
+  }).safeParse(parseJsonObject(data));
+
+  if (!input.success) {
+    throw normalizeZodError(input.error);
   }
 
-  const payable = payables.find((item) => item.id === id && item.company_id === context.companyId);
-  if (!payable) throw new Error('Payable not found');
-
   if (payable.status === 'aprovado' || payable.status === 'pago') {
-    return Response.json({ code: 'CONFLICT', message: 'Already approved' }, { status: 409 });
+    throw new FinanceValidationError('Already approved.', 409);
   }
 
   if (payable.status === 'rejeitado' || payable.status === 'cancelado') {
     throw new FinanceValidationError('Cannot approve a rejected or cancelled payable.', 422);
   }
 
+  if (payable.created_by && payable.created_by === context.userId) {
+    throw new FinanceValidationError('Approver cannot approve their own payable.', 403);
+  }
+
+  if (input.data.decisao === 'rejeitar') {
+    if (!input.data.observacao?.trim()) {
+      throw new FinanceValidationError('Observation is required to reject a payable.', 422);
+    }
+    payable.status = 'rejeitado';
+    payable.aprovado_por = context.userId;
+    payable.aprovado_em = now();
+    return payable;
+  }
+
   const threshold = approvalThresholds.find(
-    (t) => t.company_id === context.companyId && t.role === role && payable.amount >= t.valor_minimo && payable.amount <= t.valor_maximo,
+    (t) => t.company_id === context.companyId && t.role === input.data.role && payable.amount >= t.valor_minimo && payable.amount <= t.valor_maximo,
   );
 
   if (!threshold) {
@@ -655,6 +685,18 @@ export function processFinancialEvent(context: FinanceRequestContext, data: unkn
     throw new FinanceValidationError('Payload company must match request company context.', 422);
   }
 
+  if (context.moduleSource === 'fbr-portal') {
+    throw new FinanceValidationError('X-Module-Source must identify the originating module for financial.event.', 422);
+  }
+
+  if (payload.data.modulo_origem !== context.moduleSource) {
+    throw new FinanceValidationError('Payload source module must match X-Module-Source.', 422);
+  }
+
+  const defaultCostCenter = costCenters.find(
+    (center) => center.company_id === context.companyId && center.nome.toLowerCase() === 'financeiro'
+  );
+
   const payable: Payable = {
     id: crypto.randomUUID(),
     company_id: payload.data.empresa_id,
@@ -664,7 +706,7 @@ export function processFinancialEvent(context: FinanceRequestContext, data: unkn
     currency: 'BRL',
     data_vencimento: payload.data.data_referencia,
     status: 'pendente',
-    centro_custo_id: payload.data.centro_custo_id,
+    centro_custo_id: payload.data.centro_custo_id ?? defaultCostCenter?.id,
     recorrente: payload.data.recorrente,
     created_by: context.userId,
     created_at: now(),
@@ -674,7 +716,149 @@ export function processFinancialEvent(context: FinanceRequestContext, data: unkn
   return payable;
 }
 
-export function runReconciliation(context: FinanceRequestContext): ReconciliationJob {
+export function runReconciliation(context: FinanceRequestContext, data?: unknown): ReconciliationJob {
+  {
+    const payload = data === undefined
+      ? { empresa_id: context.companyId, extratos: [] as Array<{ banco: string; agencia?: string; conta?: string; movimentos: Array<{ data: string; descricao: string; valor: number; tipo: 'credito' | 'debito' }> }> }
+      : z.object({
+          empresa_id: z.string().uuid(),
+          extratos: z.array(z.object({
+            banco: z.string().min(1),
+            agencia: z.string().optional(),
+            conta: z.string().optional(),
+            movimentos: z.array(z.object({
+              data: z.string(),
+              descricao: z.string().min(1),
+              valor: z.number().positive(),
+              tipo: z.enum(['credito', 'debito']),
+            })).default([]),
+          })).default([]),
+        }).parse(parseJsonObject(data));
+
+    if (payload.empresa_id !== context.companyId) {
+      throw new FinanceValidationError('Payload company must match request company context.', 422);
+    }
+
+    const nextJob: ReconciliationJob = {
+      id: crypto.randomUUID(),
+      company_id: context.companyId,
+      status: 'processing',
+      progress: 0,
+      total_items: 0,
+      processed_items: 0,
+      auto_matched: 0,
+      pending_review: 0,
+      unreconciled: 0,
+      started_at: now(),
+      created_at: now(),
+    };
+
+    reconciliationJobs.push(nextJob);
+
+    const candidateMovements = payload.extratos.flatMap((extrato) =>
+      extrato.movimentos.map((movimento) => ({ extrato, movimento }))
+    );
+
+    const fallbackMovements = [
+      ...receivables
+        .filter((item) => item.company_id === context.companyId && item.status === 'pendente')
+        .map((item) => ({
+          extrato: { banco: 'Portal', conta: 'simulada' },
+          movimento: {
+            data: item.expected_date,
+            descricao: `Recebimento ${item.partner_name}`,
+            valor: item.amount,
+            tipo: 'credito' as const,
+          },
+          referenciaId: item.id!,
+        })),
+      ...payables
+        .filter((item) => item.company_id === context.companyId && item.status === 'pendente')
+        .map((item) => ({
+          extrato: { banco: 'Portal', conta: 'simulada' },
+          movimento: {
+            data: item.data_vencimento,
+            descricao: `Pagamento ${item.fornecedor_nome}`,
+            valor: item.amount,
+            tipo: 'debito' as const,
+          },
+          referenciaId: item.id!,
+        })),
+    ];
+
+    const workload = candidateMovements.length > 0 ? candidateMovements : fallbackMovements;
+    nextJob.total_items = workload.length;
+
+    for (const [index, entry] of workload.entries()) {
+      const amount = entry.movimento.valor;
+      const score = calculateMatchScore(amount, entry.movimento.data);
+      const linkedReceivable = receivables.find((item) => item.id === (entry as { referenciaId?: string }).referenciaId);
+      const linkedPayable = payables.find((item) => item.id === (entry as { referenciaId?: string }).referenciaId);
+
+      const reconciliationItem: ReconciliationItem = {
+        id: crypto.randomUUID(),
+        company_id: context.companyId,
+        bank_statement_id: crypto.randomUUID(),
+        transaction_id: linkedReceivable?.id ?? linkedPayable?.id,
+        score,
+        status: score >= 80 ? 'conciliado' : score >= 50 ? 'revisao' : 'pendente',
+        match_details: {
+          extrato: {
+            banco: entry.extrato.banco,
+            data_movimento: entry.movimento.data,
+            descricao: entry.movimento.descricao,
+            valor: entry.movimento.valor,
+            tipo: entry.movimento.tipo,
+          },
+          candidato: linkedReceivable ? {
+            tipo: 'recebimento',
+            id: linkedReceivable.id,
+            parceiro: linkedReceivable.partner_name,
+            valor: linkedReceivable.amount,
+            data_prevista: linkedReceivable.expected_date,
+            status: linkedReceivable.status,
+          } : linkedPayable ? {
+            tipo: 'pagamento',
+            id: linkedPayable.id,
+            parceiro: linkedPayable.fornecedor_nome,
+            valor: linkedPayable.amount,
+            data_prevista: linkedPayable.data_vencimento,
+            status: linkedPayable.status,
+          } : null,
+          motivo_review: score >= 80 ? 'Match automatico por valor e data.' : score >= 50 ? 'Requer validacao humana.' : 'Sem match confiavel.',
+          amount: entry.movimento.valor,
+          date: entry.movimento.data,
+        },
+        created_at: now(),
+      };
+
+      reconciliationItems.push(reconciliationItem);
+      nextJob.processed_items += 1;
+      nextJob.progress = Math.round(((index + 1) / Math.max(workload.length, 1)) * 100);
+
+      if (score >= 80) {
+        nextJob.auto_matched += 1;
+        if (linkedReceivable) {
+          linkedReceivable.status = 'recebido';
+          linkedReceivable.received_date = entry.movimento.data;
+        }
+        if (linkedPayable) {
+          linkedPayable.status = 'pago';
+          linkedPayable.data_pagamento = entry.movimento.data;
+        }
+      } else if (score >= 50) {
+        nextJob.pending_review += 1;
+      } else {
+        nextJob.unreconciled += 1;
+      }
+    }
+
+    nextJob.status = 'completed';
+    nextJob.completed_at = now();
+    nextJob.progress = 100;
+    return nextJob;
+  }
+
   const job: ReconciliationJob = {
     id: crypto.randomUUID(),
     company_id: context.companyId,
@@ -759,15 +943,15 @@ export function runReconciliation(context: FinanceRequestContext): Reconciliatio
 }
 
 function calculateMatchScore(amount: number, date: string): number {
-  const randomFactor = Math.random() * 40;
-  const amountFactor = amount > 10000 ? 10 : 20;
-  const dateFactor = date < now() ? 10 : 20;
-  return Math.min(100, Math.floor(50 + randomFactor + amountFactor + dateFactor));
+  const today = now().slice(0, 10);
+  const amountFactor = amount >= 10000 ? 28 : amount >= 5000 ? 20 : 12;
+  const dateDistance = date === today ? 26 : date < today ? 18 : 10;
+  return Math.min(100, amountFactor + dateDistance + 36);
 }
 
 export function getReconciliationStatus(context: FinanceRequestContext, jobId: string): ReconciliationJob {
   const job = reconciliationJobs.find((j) => j.id === jobId && j.company_id === context.companyId);
-  if (!job) throw new Error('Reconciliation job not found');
+  if (!job) throw new FinanceValidationError('Reconciliation job not found.', 404);
   return job;
 }
 
@@ -775,9 +959,17 @@ export function listPendingReconciliation(context: FinanceRequestContext): Recon
   return reconciliationItems.filter((item) => item.company_id === context.companyId && (item.status === 'revisao' || item.status === 'pendente'));
 }
 
-export function approveReconciliationItem(context: FinanceRequestContext, id: string): ReconciliationItem {
+export function approveReconciliationItem(context: FinanceRequestContext, id: string, data?: unknown): ReconciliationItem {
   const item = reconciliationItems.find((i) => i.id === id && i.company_id === context.companyId);
-  if (!item) throw new Error('Reconciliation item not found');
+  if (!item) throw new FinanceValidationError('Reconciliation item not found.', 404);
+
+  if (data !== undefined) {
+    z.object({
+      decisao: z.literal('aprovar').default('aprovar'),
+      referencia_id: z.string().uuid().optional(),
+      observacao: z.string().optional(),
+    }).parse(parseJsonObject(data));
+  }
 
   if (item.status === 'conciliado') {
     throw new FinanceValidationError('Item already reconciled.', 409);
@@ -791,22 +983,30 @@ export function approveReconciliationItem(context: FinanceRequestContext, id: st
     const receivable = receivables.find((r) => r.id === item.transaction_id);
     if (receivable) {
       receivable.status = 'recebido';
-      receivable.received_date = now();
-    }
+        receivable.received_date = now().slice(0, 10);
+      }
 
-    const payable = payables.find((p) => p.id === item.transaction_id);
-    if (payable) {
-      payable.status = 'pago';
-      payable.data_pagamento = now();
+      const payable = payables.find((p) => p.id === item.transaction_id);
+      if (payable) {
+        payable.status = 'pago';
+        payable.data_pagamento = now().slice(0, 10);
+      }
     }
-  }
 
   return item;
 }
 
-export function rejectReconciliationItem(context: FinanceRequestContext, id: string): ReconciliationItem {
+export function rejectReconciliationItem(context: FinanceRequestContext, id: string, data?: unknown): ReconciliationItem {
   const item = reconciliationItems.find((i) => i.id === id && i.company_id === context.companyId);
-  if (!item) throw new Error('Reconciliation item not found');
+  if (!item) throw new FinanceValidationError('Reconciliation item not found.', 404);
+
+  if (data !== undefined) {
+    const parsed = z.object({
+      decisao: z.literal('rejeitar').default('rejeitar'),
+      observacao: z.string().min(1),
+    }).parse(parseJsonObject(data));
+    item.match_details = { ...(item.match_details as Record<string, unknown>), observacao_rejeicao: parsed.observacao };
+  }
 
   if (item.status === 'conciliado') {
     throw new FinanceValidationError('Cannot reject a reconciled item.', 409);
@@ -819,9 +1019,9 @@ export function rejectReconciliationItem(context: FinanceRequestContext, id: str
   return item;
 }
 
-export function createEntryFromReconciliation(context: FinanceRequestContext, id: string): Receivable | Payable {
+export function createEntryFromReconciliation(context: FinanceRequestContext, id: string, data?: unknown): Receivable | Payable {
   const item = reconciliationItems.find((i) => i.id === id && i.company_id === context.companyId);
-  if (!item) throw new Error('Reconciliation item not found');
+  if (!item) throw new FinanceValidationError('Reconciliation item not found.', 404);
 
   if (item.status !== 'revisao' && item.status !== 'pendente') {
     throw new FinanceValidationError('Item must be in review or pending status to create entry.', 422);
@@ -831,10 +1031,45 @@ export function createEntryFromReconciliation(context: FinanceRequestContext, id
   const amount = details.amount ?? 0;
   const date = details.date ?? now();
 
+  const parsed = data === undefined ? {
+    decisao: 'criar_lancamento' as const,
+    tipo: 'recebimento' as const,
+    parceiro_fornecedor: 'Manual Entry',
+    observacao: undefined as string | undefined,
+  } : z.object({
+    decisao: z.literal('criar_lancamento').default('criar_lancamento'),
+    tipo: z.enum(['recebimento', 'pagamento']).default('recebimento'),
+    parceiro_fornecedor: z.string().min(1).default('Manual Entry'),
+    observacao: z.string().optional(),
+  }).parse(parseJsonObject(data));
+
+  if (parsed.tipo === 'pagamento') {
+    const payable: Payable = {
+      id: crypto.randomUUID(),
+      company_id: context.companyId,
+      fornecedor_nome: parsed.parceiro_fornecedor,
+      descricao: parsed.observacao ?? 'Pagamento criado manualmente a partir da conciliacao',
+      amount,
+      currency: 'BRL',
+      data_vencimento: date,
+      status: 'pendente',
+      recorrente: false,
+      created_by: context.userId,
+      created_at: now(),
+    };
+
+    payables.push(payable);
+    item.status = 'conciliado';
+    item.reviewed_by = context.userId;
+    item.reviewed_at = now();
+    item.transaction_id = payable.id;
+    return payable;
+  }
+
   const receivable: Receivable = {
     id: crypto.randomUUID(),
     company_id: context.companyId,
-    partner_name: 'Manual Entry',
+    partner_name: parsed.parceiro_fornecedor,
     amount,
     currency: 'BRL',
     expected_date: date,

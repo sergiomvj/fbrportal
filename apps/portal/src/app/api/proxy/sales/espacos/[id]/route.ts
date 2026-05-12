@@ -4,7 +4,7 @@ import {
   updateEspaco,
   getEspacoPerformance,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../_shared';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,10 +18,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const url = new URL(request.url);
     if (url.searchParams.get('performance') === 'true') {
       const performance = getEspacoPerformance(context, id);
-      return Response.json({ performance });
+      return jsonSuccess(performance);
     }
     const espaco = getEspaco(context, id);
-    return Response.json({ espaco });
+    return jsonSuccess(espaco);
   } catch (error) {
     return jsonError(error);
   }
@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const espaco = updateEspaco(context, id, await request.json());
-    return Response.json({ espaco });
+    return jsonSuccess(espaco);
   } catch (error) {
     return jsonError(error);
   }

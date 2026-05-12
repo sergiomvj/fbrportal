@@ -12,15 +12,9 @@ export function ExportPanel() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
 
-  const headers = {
-    'x-user-id': '33333333-3333-4333-8333-333333333333',
-    'x-company-id': '11111111-1111-4111-8111-111111111111',
-    'Content-Type': 'application/json',
-  };
-
   const fetchData = async () => {
     try {
-      const expRes = await fetch(`/api/proxy/mkt/estrategias/${id}/export`, { headers });
+      const expRes = await fetch(`/api/proxy/mkt/estrategias/${id}/export`);
       if (expRes.ok) {
         const d = await expRes.json();
         setExportsList(d.exports ?? []);
@@ -36,7 +30,6 @@ export function ExportPanel() {
     try {
       const res = await fetch(`/api/proxy/mkt/estrategias/${id}/export`, {
         method: 'POST',
-        headers,
         body: JSON.stringify({ formato }),
       });
       if (res.ok) {

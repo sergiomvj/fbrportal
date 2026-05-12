@@ -1,5 +1,5 @@
 import { reconcileReceivable } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../../_shared';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const context = contextOrResponse(request);
@@ -7,7 +7,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   try {
     const { id } = await params;
-    return Response.json({ recebimento: reconcileReceivable(context, id, await request.json()) });
+    return jsonSuccess(reconcileReceivable(context, id, await request.json()));
   } catch (error) {
     return jsonError(error);
   }

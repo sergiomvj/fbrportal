@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
-import { clickAgents, clickDeals, clickHistory, clickKpis, clickMessages, clickTasks } from '@/lib/click/fixtures';
 import { createDealSchema } from '@/lib/click/schemas';
-import type { ClickDeal, ClickMessage, ClickStage } from '@/lib/click/types';
+import type { ClickAgent, ClickDeal, ClickDealHistory, ClickKpi, ClickMessage, ClickStage, ClickTask } from '@/lib/click/types';
 import { AgentDashboard } from './AgentDashboard';
+import { requestJson } from './api';
 import { CreateDealModal } from './CreateDealModal';
 import { DealDetail } from './DealDetail';
 import { formatCurrency } from './format';
@@ -22,11 +22,30 @@ const stageLabels: Record<ClickStage, string> = {
 
 const discardReasons = ['Sem fit com ICP', 'Sem resposta apos follow-up', 'Budget insuficiente', 'Concorrente escolhido'] as const;
 
-export function ClickWorkspace() {
-  const [deals, setDeals] = useState(clickDeals);
-  const [messages, setMessages] = useState(clickMessages);
-  const [history, setHistory] = useState(clickHistory);
-  const [selectedId, setSelectedId] = useState(clickDeals[0]?.id ?? '');
+export function ClickWorkspace({
+  companyId,
+  initialAgents,
+  initialDeals,
+  initialHistory,
+  initialKpis,
+  initialMessages,
+  initialTasks,
+  isAdmin,
+}: {
+  companyId: string;
+  initialAgents: ClickAgent[];
+  initialDeals: ClickDeal[];
+  initialHistory: ClickDealHistory[];
+  initialKpis: ClickKpi[];
+  initialMessages: ClickMessage[];
+  initialTasks: ClickTask[];
+  isAdmin: boolean;
+}) {
+  const [agents, setAgents] = useState(initialAgents);
+  const [deals, setDeals] = useState(initialDeals);
+  const [messages, setMessages] = useState(initialMessages);
+  const [history, setHistory] = useState(initialHistory);
+  const [selectedId, setSelectedId] = useState(initialDeals[0]?.id ?? '');
   const [modalOpen, setModalOpen] = useState(false);
   const [disposedDeals, setDisposedDeals] = useState<Record<string, { kind: 'archived' | 'discarded'; reason: string }>>({});
   const [discardReason, setDiscardReason] = useState<(typeof discardReasons)[number]>(discardReasons[0]);
@@ -95,38 +114,55 @@ export function ClickWorkspace() {
     [activeDeals],
   );
 
-  function moveDeal(dealId: string, stage: ClickStage) {
+  async function moveDeal(dealId: string, stage: ClickStage) {
+    const currentDeal = deals.find((deal) => deal.id === dealId);
+    if (!currentDeal || currentDeal.stage === stage) return;
+
+    const payload = await requestJson<{ deal: ClickDeal }>(`/api/proxy/click/deals/${dealId}/stage`, {
+      body: JSON.stringify({ stage }),
+      method: 'PATCH',
+    });
+
     setDeals((current) =>
-      current.map((deal) => (deal.id === dealId ? { ...deal, stage, updatedAt: new Date().toISOString() } : deal)),
+      current.map((deal) => (deal.id === dealId ? payload.deal : deal)),
     );
     setHistory((current) => [
       ...current,
       {
         id: `history-ui-${current.length + 1}`,
-        workspaceId: 'empresa-1',
+        workspaceId: payload.deal.workspaceId,
         dealId,
         type: 'stage_changed',
-        actorId: 'operator-1',
+        actorId: payload.deal.userId,
         actorType: 'human',
-        description: `Estagio alterado para ${stage}.`,
+        description: `Estagio alterado de ${currentDeal.stage} para ${stage}.`,
         createdAt: new Date().toISOString(),
       },
     ]);
   }
 
-  function createDeal(input: z.infer<typeof createDealSchema>) {
-    const deal = {
-      ...input,
-      id: `deal-ui-${deals.length + 1}`,
-      workspaceId: 'empresa-1',
-      userId: 'operator-1',
-      empresaId: 'empresa-1',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as ClickDeal;
-    setDeals((current) => [...current, deal]);
-    setSelectedId(deal.id);
-    return deal;
+  async function createDeal(input: z.infer<typeof createDealSchema>) {
+    const payload = await requestJson<{ deal: ClickDeal }>('/api/proxy/click/deals', {
+      body: JSON.stringify(input),
+      method: 'POST',
+    });
+
+    setDeals((current) => [...current, payload.deal]);
+    setSelectedId(payload.deal.id);
+    setHistory((current) => [
+      ...current,
+      {
+        id: `history-ui-${current.length + 1}`,
+        workspaceId: payload.deal.workspaceId,
+        dealId: payload.deal.id,
+        type: 'created',
+        actorId: payload.deal.userId,
+        actorType: 'human',
+        description: 'Deal manual criado.',
+        createdAt: payload.deal.createdAt,
+      },
+    ]);
+    return payload.deal;
   }
 
   function appendHistoryEntry(dealId: string, description: string, actorType: 'human' | 'agent' | 'system' = 'human') {
@@ -134,10 +170,10 @@ export function ClickWorkspace() {
       ...current,
       {
         id: `history-ui-${current.length + 1}`,
-        workspaceId: 'empresa-1',
+        workspaceId: selectedDeal?.workspaceId ?? companyId,
         dealId,
         type: 'stage_changed',
-        actorId: actorType === 'human' ? 'operator-1' : 'system',
+        actorId: actorType === 'human' ? selectedDeal?.userId ?? 'operator-1' : 'system',
         actorType,
         description,
         createdAt: new Date().toISOString(),
@@ -169,17 +205,36 @@ export function ClickWorkspace() {
     appendHistoryEntry(selectedDeal.id, `Deal descartado com motivo: ${discardReason}.`);
   }
 
-  function sendMessage(dealId: string, body: string) {
-    const message: ClickMessage = {
-      id: `message-ui-${messages.length + 1}`,
-      workspaceId: 'empresa-1',
-      dealId,
-      authorId: body.includes('@') ? 'agent-sdr' : 'operator-1',
-      actorType: body.includes('@') ? 'agent' : 'human',
-      body,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((current) => [...current, message]);
+  async function sendMessage(dealId: string, body: string) {
+    const payload = await requestJson<{ message: ClickMessage }>(`/api/proxy/click/deals/${dealId}/messages`, {
+      body: JSON.stringify({
+        actorType: body.includes('@') ? 'agent' : 'human',
+        body,
+      }),
+      method: 'POST',
+    });
+    setMessages((current) => [...current, payload.message]);
+    setHistory((current) => [
+      ...current,
+      {
+        id: `history-ui-${current.length + 1}`,
+        workspaceId: payload.message.workspaceId,
+        dealId,
+        type: 'message_sent',
+        actorId: payload.message.authorId,
+        actorType: payload.message.actorType,
+        description: 'Mensagem registrada no deal.',
+        createdAt: payload.message.createdAt,
+      },
+    ]);
+  }
+
+  async function handleAgentPausedChange(agent: ClickAgent, paused: boolean) {
+    const payload = await requestJson<{ agent: ClickAgent }>(`/api/proxy/click/agents/${agent.id}`, {
+      body: JSON.stringify({ paused }),
+      method: 'PATCH',
+    });
+    setAgents((current) => current.map((item) => (item.id === payload.agent.id ? payload.agent : item)));
   }
 
   return (
@@ -234,7 +289,7 @@ export function ClickWorkspace() {
       </section>
 
       <section className="click-kpis" aria-label="KPIs Click">
-        {clickKpis.map((kpi) => (
+        {initialKpis.map((kpi) => (
           <article key={kpi.id}>
             <span>{kpi.name}</span>
             <strong>{kpi.name.includes('Receita') ? formatCurrency(totalValue) : kpi.value}</strong>
@@ -377,7 +432,7 @@ export function ClickWorkspace() {
               messages={messages}
               onMessage={sendMessage}
               onMove={moveDeal}
-              tasks={clickTasks}
+              tasks={initialTasks}
               {...(disposedDeals[selectedDeal.id]
                 ? {
                     dispositionLabel: `${disposedDeals[selectedDeal.id]!.kind === 'archived' ? 'Arquivado' : 'Descartado'} · ${disposedDeals[selectedDeal.id]!.reason}`,
@@ -388,7 +443,7 @@ export function ClickWorkspace() {
         </div>
       </section>
 
-      <AgentDashboard agents={clickAgents} isAdmin />
+      <AgentDashboard agents={agents} companyId={companyId} isAdmin={isAdmin} onAgentPausedChange={handleAgentPausedChange} />
 
       <details className="click-secondary-panels">
         <summary>Ver superfícies secundarias do modulo</summary>

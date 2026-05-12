@@ -2,7 +2,7 @@ import { triggerAgent } from '@/lib/click/store';
 import { contextOrResponse } from '../../../_shared';
 
 export async function POST(request: Request, { params }: { params: Promise<{ agentId: string }> }) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const dealId = new URL(request.url).searchParams.get('deal_id');

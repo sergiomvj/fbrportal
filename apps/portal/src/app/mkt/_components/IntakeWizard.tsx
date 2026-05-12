@@ -65,11 +65,7 @@ export function IntakeWizard() {
 
     try {
       let bodyInit: BodyInit;
-      let headersInit: Record<string, string> = {
-        'x-user-id': '33333333-3333-4333-8333-333333333333',
-        'x-company-id': '11111111-1111-4111-8111-111111111111',
-      };
-
+      const headersInit: Record<string, string> = {};
       if (mode === 'upload' && file) {
         const formData = new FormData();
         formData.append('nome', wizard.nome);

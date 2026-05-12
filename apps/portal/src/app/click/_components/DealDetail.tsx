@@ -23,8 +23,8 @@ export function DealDetail({
   tasks: ClickTask[];
   documents: Array<{ id: string; name: string; mimeType: string; createdAt: string }>;
   dispositionLabel?: string | undefined;
-  onMove: (dealId: string, stage: ClickStage) => void;
-  onMessage: (dealId: string, body: string) => void;
+  onMove: (dealId: string, stage: ClickStage) => Promise<void> | void;
+  onMessage: (dealId: string, body: string) => Promise<void> | void;
 }) {
   const [tab, setTab] = useState<'timeline' | 'messages' | 'tasks' | 'docs'>('timeline');
 
@@ -60,7 +60,7 @@ export function DealDetail({
       </dl>
       <label className="click-detail__stage">
         Estagio
-        <select value={deal.stage} onChange={(event) => onMove(deal.id, event.target.value as ClickStage)}>
+        <select value={deal.stage} onChange={(event) => void onMove(deal.id, event.target.value as ClickStage)}>
           {clickStages.map((stage) => (
             <option key={stage} value={stage}>
               {stage}

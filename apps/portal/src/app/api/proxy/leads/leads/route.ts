@@ -2,7 +2,7 @@ import { avancarEtapa, createLead, listLeads, parseLeadsQuery, updateLead } from
 import { contextOrResponse, jsonError } from '../_shared';
 
 export async function GET(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {

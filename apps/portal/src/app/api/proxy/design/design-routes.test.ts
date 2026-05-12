@@ -25,8 +25,9 @@ describe('Design proxy routes', () => {
     const formatsBody = await (await formats.GET(request('/api/proxy/design/formats'))).json();
     const templatesBody = await (await templates.GET(request('/api/proxy/design/templates'))).json();
 
-    expect(dashboardBody.kpis.brand_kits_ativos).toBeGreaterThan(0);
-    expect(dashboardBody.agents).toHaveLength(3);
+    expect(dashboardBody.snapshot.kpis.brand_kits_ativos).toBeGreaterThan(0);
+    expect(dashboardBody.snapshot.agent_slots).toHaveLength(3);
+    expect(dashboardBody.available_agents.length).toBeGreaterThan(0);
     expect(formatsBody.formats.length).toBeGreaterThanOrEqual(26);
     expect(templatesBody.templates.length).toBeGreaterThan(0);
   });
@@ -130,7 +131,9 @@ describe('Design proxy routes', () => {
     ).json();
 
     expect(brandKitBody.social_webhook_preview.event).toBe('brand_kit.updated');
+    expect(brandKitBody.social_webhook_preview.body.data.brand_kit_id).toBe('dddddddd-dddd-4ddd-8ddd-dddddddddd01');
     expect(webhookBody.webhook.signature).toHaveLength(64);
+    expect(webhookBody.webhook.body.event).toBe('brand_kit.updated');
     expect(exportBody.export.url).toContain('.pdf');
     expect(approvalBody.approval.status).toBe('aprovado');
   });

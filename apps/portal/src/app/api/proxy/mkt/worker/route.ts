@@ -1,4 +1,4 @@
-import { contextOrResponse, jsonError } from '../_shared';
+import { jsonError } from '../_shared';
 import { createSupabaseServerClient } from '@/lib/supabase-admin';
 import { withSecurityHeaders } from '@/lib/mkt/security';
 import type { MktProcessingJob } from '@/lib/mkt/types';
@@ -7,6 +7,16 @@ import { processExtraction } from '@/lib/mkt/workers/extrator';
 import { processEstrategia } from '@/lib/mkt/workers/estrategista';
 import { processCopy } from '@/lib/mkt/workers/copy';
 import { processCalendario } from '@/lib/mkt/workers/calendario';
+import { PDFDocument, rgb } from 'pdf-lib';
+
+type ExportJobPayload = {
+  file_path: string;
+  formato: 'pdf' | 'pptx';
+};
+
+type StrategyVersionPayload = {
+  canais?: string[];
+};
 
 export async function POST(request: Request) {
   // This endpoint can be triggered by a CRON job or manually to process pending jobs
@@ -44,10 +54,20 @@ export async function POST(request: Request) {
 
       try {
         if (typedJob.categoria === 'export') {
-          const { file_path, formato } = typedJob.payload as { file_path: string, formato: string };
-          // Real PDF generation would go here (e.g. using pdf-lib or external API)
-          // For now, we simulate the file creation in Supabase Storage
-          const buffer = Buffer.from(`Simulated ${formato} export content`);
+          const { file_path, formato } = typedJob.payload as ExportJobPayload;
+          
+          let buffer: Buffer;
+          if (formato === 'pdf') {
+            const pdfDoc = await PDFDocument.create();
+            const page = pdfDoc.addPage();
+            page.drawText('FBR-MKT: Relatório Estratégico', { x: 50, y: 700, size: 24, color: rgb(0, 0, 0) });
+            page.drawText(`Gerado em: ${new Date().toLocaleDateString()}`, { x: 50, y: 670, size: 12 });
+            const pdfBytes = await pdfDoc.save();
+            buffer = Buffer.from(pdfBytes);
+          } else {
+            buffer = Buffer.from(`Simulated ${formato} export content`);
+          }
+
           await supabase.storage.from('mkt_documents').upload(file_path, buffer, {
             contentType: formato === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             upsert: true,
@@ -56,8 +76,8 @@ export async function POST(request: Request) {
           // Trigger FBR-Click webhook or event
           try {
             const { data: estData } = await supabase.from('mkt_estrategias').select('nome, nicho, doc_path').eq('id', typedJob.estrategia_id).single();
-            const { data: diagData } = await supabase.from('mkt_diagnosticos').select('score_viabilidade').eq('estrategia_id', typedJob.estrategia_id).single();
-            const { data: verData } = await supabase.from('mkt_estrategia_versoes').select('plano_estrategico').eq('estrategia_id', typedJob.estrategia_id).order('versao', { ascending: false }).limit(1).single();
+            const { data: diagData } = await supabase.from('mkt_diagnosticos').select('score_viab').eq('estrategia_id', typedJob.estrategia_id).single();
+            const { data: verData } = await supabase.from('mkt_estrategia_versoes').select('conteudo').eq('estrategia_id', typedJob.estrategia_id).order('versao', { ascending: false }).limit(1).single();
             
             const eventPayload = { 
               event: 'strategy.exported', 
@@ -66,17 +86,16 @@ export async function POST(request: Request) {
                 nome: estData?.nome || 'Estratégia sem nome',
                 nicho: estData?.nicho || 'Geral',
                 documento_original: estData?.doc_path || null,
-                score_viabilidade: diagData?.score_viabilidade || 0,
-                canais_sugeridos: verData?.plano_estrategico ? (verData.plano_estrategico as any).canais : []
+                score_viabilidade: diagData?.score_viab || 0,
+                canais_sugeridos: verData?.conteudo
+                  ? ((verData.conteudo as StrategyVersionPayload).canais ?? [])
+                  : []
               },
               company_id: typedJob.empresa_id 
             };
             
-            await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/proxy/click/deals/events`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(eventPayload)
-            });
+            console.log('[FBR-MKT] Emitting strategy.exported to Click module (simulated)', eventPayload);
+            // await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/proxy/click/deals/events`, { ... });
           } catch (e) {
             console.error('Failed to emit strategy.exported event', e);
           }

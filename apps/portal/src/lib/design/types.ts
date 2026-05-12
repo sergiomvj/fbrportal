@@ -256,6 +256,18 @@ export const DesignWebhookPreviewSchema = z.object({
     changed_fields: z.array(z.string().min(1)),
     alterado_por: z.string().min(1),
   }),
+  body: z.object({
+    event: z.literal('brand_kit.updated'),
+    data: z.object({
+      brand_kit_id: z.string().uuid(),
+      empresa_id: z.string().uuid(),
+      cliente_nome: z.string().min(1),
+      versao: z.number().int().positive(),
+      updated_at: z.string(),
+      changed_fields: z.array(z.string().min(1)),
+      alterado_por: z.string().min(1),
+    }),
+  }),
 });
 export type DesignWebhookPreview = z.infer<typeof DesignWebhookPreviewSchema>;
 

@@ -19,17 +19,12 @@ export function AgentesShell() {
   const [loading, setLoading] = useState(true);
   const [queueStatus, setQueueStatus] = useState<Record<string, { pending: number; processing: number; done: number; failed: number }>>({});
 
-  const headers = {
-    'x-user-id': '33333333-3333-4333-8333-333333333333',
-    'x-company-id': '11111111-1111-4111-8111-111111111111',
-  };
-
   const fetchData = useCallback(async () => {
     try {
       const [agentsRes, logsRes, queueRes] = await Promise.all([
-        fetch('/api/proxy/mkt/agents', { headers }),
-        fetch('/api/proxy/mkt/agent-logs?limit=20', { headers }),
-        fetch('/api/proxy/mkt/queue-status', { headers }),
+        fetch('/api/proxy/mkt/agents'),
+        fetch('/api/proxy/mkt/agent-logs?limit=20'),
+        fetch('/api/proxy/mkt/queue-status'),
       ]);
 
       if (agentsRes.ok) {

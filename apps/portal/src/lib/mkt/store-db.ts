@@ -17,13 +17,11 @@ import type {
   MktDashboardKpis,
   MktEstrategiasQuery,
   MktEstrategiaStatus,
-  Campaign,
   CampaignsQuery,
 } from './types';
 import {
   MktEstrategiaSchema,
   MktEstrategiasQuerySchema,
-  CampaignSchema,
   CampaignsQuerySchema,
 } from './types';
 
@@ -416,9 +414,13 @@ export function parseCampaignsQuery(url: string): CampaignsQuery {
 }
 
 export async function listCampaigns(context: MktRequestContext, query: Partial<CampaignsQuery> = {}) {
+  void context;
+  void query;
   return { items: [], pagination: { page: 1, page_size: 10, total: 0, total_pages: 0 } };
 }
 
 export async function createCampaign(context: MktRequestContext, data: unknown) {
+  void context;
+  void data;
   throw new Error('Not implemented');
 }

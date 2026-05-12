@@ -7,6 +7,9 @@ const validEnv = {
   SUPABASE_ANON_KEY: 'anon-key',
   NEXTAUTH_URL: 'http://localhost:3000',
   OPENCLAW_GATEWAY_URL: 'http://localhost:8000',
+  OPENROUTER_API_KEY: 'test-openrouter-key',
+  OPENROUTER_MODEL: 'anthropic/claude-opus-4.7-fast',
+  OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
 };
 
 describe('parseEnv', () => {

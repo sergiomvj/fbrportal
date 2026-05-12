@@ -1,9 +1,10 @@
 import {
   listReceitas,
   createReceita,
+  buildPaymentReceivedForward,
   runReconciliation,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     if (parceiro_id) filters.parceiro_id = parceiro_id;
     if (periodo) filters.periodo = periodo;
     const receitas = listReceitas(context, filters);
-    return Response.json({ receitas });
+    return jsonSuccess(receitas);
   } catch (error) {
     return jsonError(error);
   }
@@ -37,11 +38,14 @@ export async function POST(request: Request) {
 
   try {
     const url = new URL(request.url);
+    const body = await request.json().catch(() => ({}));
     if (url.searchParams.get('action') === 'reconciliar') {
-      const result = runReconciliation(context);
-      return Response.json(result);
+      return jsonSuccess(runReconciliation(context));
     }
-    return Response.json({ receita: createReceita(context, await request.json()) }, { status: 201 });
+    if (url.searchParams.get('action') === 'forward_finance') {
+      return jsonSuccess(buildPaymentReceivedForward(context, String((body as { receita_id?: string }).receita_id)));
+    }
+    return jsonSuccess(createReceita(context, body), { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

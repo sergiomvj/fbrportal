@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { checkRateLimit, resetRateLimitForTests } from '@/lib/rate-limit';
 import { clickAgents, clickDeals, clickHistory, clickKpis, clickMessages, clickTasks } from './fixtures';
-import { createDealSchema, leadQualifiedSchema, messageSchema, normalizeLeadQualified, taskSchema } from './schemas';
+import { createDealSchema, leadQualifiedEventSchema, messageSchema, normalizeLeadQualified, taskSchema } from './schemas';
 import type { ClickAgent, ClickDeal, ClickDealHistory, ClickMessage, ClickTask, ClickUserRole } from './types';
 
 export interface ClickRequestContext {
   userId: string;
   workspaceId: string;
   role: ClickUserRole;
+  moduleSource: string;
 }
 
 let deals: ClickDeal[] = [];
@@ -39,16 +40,20 @@ export function resetClickStoreForTests() {
 
 resetClickStoreForTests();
 
-export function contextFromHeaders(headers: Headers): ClickRequestContext | Response {
+export function contextFromHeaders(
+  headers: Headers,
+  fallbackModuleSource = 'click',
+): ClickRequestContext | Response {
   const userId = headers.get('x-user-id');
-  const workspaceId = headers.get('x-workspace-id') ?? headers.get('x-empresa-id');
+  const workspaceId = headers.get('x-workspace-id') ?? headers.get('x-company-id') ?? headers.get('x-empresa-id');
   const role = (headers.get('x-user-role') ?? 'operator').toLowerCase();
+  const moduleSource = headers.get('x-module-source') ?? fallbackModuleSource;
 
   if (!userId || !workspaceId) {
     return Response.json({ code: 'UNAUTHORIZED_CONTEXT', message: 'X-User-Id and workspace headers are required.' }, { status: 401 });
   }
 
-  return { userId, workspaceId, role: role === 'admin' ? 'admin' : 'operator' };
+  return { userId, workspaceId, role: role === 'admin' ? 'admin' : 'operator', moduleSource };
 }
 
 export function listDeals(context: ClickRequestContext) {
@@ -87,7 +92,7 @@ export function createManualDeal(context: ClickRequestContext, input: unknown) {
 }
 
 export function createDealFromLead(context: ClickRequestContext, input: unknown) {
-  const payload = leadQualifiedSchema.parse(input);
+  const payload = leadQualifiedEventSchema.parse(input).data;
   const existing = deals.find((deal) => deal.workspaceId === context.workspaceId && deal.leadId === payload.lead_id);
 
   if (existing) {
@@ -117,7 +122,7 @@ export function createDealFromLead(context: ClickRequestContext, input: unknown)
 
   deals.push(deal);
   appendHistory(context, deal.id, 'created', 'lead.qualified recebido do FBR-Leads.', {
-    moduleSource: 'fbr_leads',
+    moduleSource: context.moduleSource,
     leadId: payload.lead_id,
   });
 

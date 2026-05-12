@@ -19,6 +19,9 @@ import {
   DashboardKpis,
   TransitionStageBody,
   TransitionStageBodySchema,
+  DealClosedEvent,
+  DealClosedEventSchema,
+  PaymentReceivedForward,
   AnomalyReviewBody,
   AnomalyReviewBodySchema,
   ReconciliationResult,
@@ -33,7 +36,7 @@ export interface SalesRequestContext {
 export class SalesValidationError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 404 | 409 | 422,
+    readonly status: 400 | 403 | 404 | 409 | 422,
     readonly issues?: unknown,
   ) {
     super(message);
@@ -589,6 +592,88 @@ export function getPartner(context: SalesRequestContext, id: string) {
   return partner;
 }
 
+function recordPartnerEvent(event: PartnerEvent) {
+  partnerEvents.push({
+    ...event,
+    id: event.id ?? crypto.randomUUID(),
+    created_at: event.created_at ?? now(),
+  });
+}
+
+export function ingestDealClosed(context: SalesRequestContext, data: unknown) {
+  if (context.moduleSource !== 'fbr-click') {
+    throw new SalesValidationError('X-Module-Source must be fbr-click for deal.closed intake.', 422);
+  }
+
+  let payload: DealClosedEvent;
+  try {
+    payload = DealClosedEventSchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const hasMissingRequired = error.issues.some(
+        (issue) => issue.code === 'invalid_type' && issue.received === 'undefined'
+      );
+      throw new SalesValidationError(
+        hasMissingRequired ? 'Required fields are missing.' : 'Payload validation failed.',
+        hasMissingRequired ? 400 : 422,
+        error.issues
+      );
+    }
+    throw error;
+  }
+
+  const existing = partners.find(
+    (partner) =>
+      partner.company_id === context.companyId &&
+      partner.nome.toLowerCase() === payload.data.empresa_nome.toLowerCase()
+  );
+
+  if (existing) {
+    return { created: false, partner: existing };
+  }
+
+  const partner: Partner = {
+    id: crypto.randomUUID(),
+    company_id: context.companyId,
+    nome: payload.data.empresa_nome,
+    tipo: 'patrocinio_direto',
+    estagio: 'onboarding',
+    contato_nome: payload.data.contato_nome,
+    contato_email: payload.data.contato_email,
+    contato_telefone: payload.data.dados_cliente.telefone,
+    site: payload.data.dados_cliente.site,
+    cnpj: payload.data.dados_cliente.cnpj,
+    pais: 'Brasil',
+    valor_estimado: payload.data.valor_estimado,
+    sla_pagamento: 30,
+    observacoes: payload.data.produto_fechado,
+    owner_id: context.userId,
+    created_by: context.userId,
+    created_at: now(),
+    updated_at: now(),
+  };
+
+  partners.push(partner);
+
+  recordPartnerEvent({
+    partner_id: partner.id!,
+    tipo: 'transicao_estagio',
+    para: 'onboarding',
+    actor_type: 'sistema',
+    actor_id: context.userId,
+    actor_nome: 'FBR-Click',
+    descricao: `Deal fechado importado do Click para onboarding: ${payload.data.produto_fechado}`,
+    metadata: {
+      deal_id: payload.data.deal_id,
+      historico_deal: payload.data.historico_deal,
+      before: null,
+      after: { estagio: 'onboarding', valor_estimado: payload.data.valor_estimado },
+    },
+  });
+
+  return { created: true, partner };
+}
+
 export function createPartner(context: SalesRequestContext, data: unknown) {
   if (typeof data !== 'object' || data === null) {
     throw new SalesValidationError('JSON object payload is required.', 400);
@@ -616,8 +701,7 @@ export function createPartner(context: SalesRequestContext, data: unknown) {
 
     partners.push(validated);
 
-    partnerEvents.push({
-      id: crypto.randomUUID(),
+    recordPartnerEvent({
       partner_id: validated.id!,
       tipo: 'transicao_estagio',
       de: undefined,
@@ -684,6 +768,82 @@ export function transitionPartnerStage(
     );
   }
 
+  if (targetStage === 'negociacao' && (!partner.contato_nome || !partner.contato_email || !parsed.metadata?.proposta_anexada)) {
+    throw new SalesValidationError(
+      'Cannot transition to NEGOTIATION without contact name, contact email, and attached proposal.',
+      400
+    );
+  }
+
+  if (targetStage === 'contract' && parsed.metadata?.proposta_status !== 'aceita') {
+    throw new SalesValidationError(
+      'Cannot transition to CONTRACT without accepted proposal.',
+      400
+    );
+  }
+
+  if (targetStage === 'contract' && (!partner.valor_estimado || partner.valor_estimado <= 0)) {
+    throw new SalesValidationError(
+      'Cannot transition to CONTRACT without estimated value greater than zero.',
+      400
+    );
+  }
+
+  if (targetStage === 'onboarding' && (!parsed.metadata?.contrato_assinado_path || !partner.data_contrato)) {
+    throw new SalesValidationError(
+      'Cannot transition to ONBOARDING without signed contract document and signature date.',
+      400
+    );
+  }
+
+  if (targetStage === 'active' && !parsed.metadata?.checklist_concluido) {
+    throw new SalesValidationError(
+      'Cannot transition to ACTIVE without onboarding checklist completion.',
+      400
+    );
+  }
+
+  if ((targetStage === 'paused' || (targetStage === 'active' && currentStage === 'paused')) && !parsed.descricao?.trim()) {
+    throw new SalesValidationError(
+      'A non-empty description is required for pause/reactivation transitions.',
+      400
+    );
+  }
+
+  if (targetStage === 'encerrado') {
+    if (!parsed.descricao?.trim()) {
+      throw new SalesValidationError('A closure reason is required to close a partner.', 400);
+    }
+    if (!parsed.metadata?.aprovado_humano) {
+      throw new SalesValidationError('Human approval is required to close a partner.', 403);
+    }
+  }
+
+  const beforeSnapshot = clone(partner);
+  const previousStage = partner.estagio;
+  partner.estagio = targetStage;
+  partner.updated_at = now();
+
+  recordPartnerEvent({
+    partner_id: partnerId,
+    tipo: 'transicao_estagio',
+    de: previousStage,
+    para: targetStage,
+    actor_type: 'humano',
+    actor_id: context.userId,
+    descricao: parsed.descricao || `Transicao de ${previousStage} para ${targetStage}`,
+    metadata: {
+      ...parsed.metadata,
+      before: beforeSnapshot,
+      after: clone(partner),
+    },
+    created_at: now(),
+  });
+
+  return partner;
+
+  /*
+  {
   if (targetStage === 'negociacao' && (!partner.contato_nome || !partner.contato_email)) {
     throw new SalesValidationError(
       'Cannot transition to NEGOTIATION without contact name and email.',
@@ -730,6 +890,8 @@ export function transitionPartnerStage(
   });
 
   return partner;
+  }
+  */
 }
 
 export function listPartnerEvents(context: SalesRequestContext, partnerId: string) {
@@ -897,6 +1059,33 @@ export function createReceita(context: SalesRequestContext, data: unknown) {
     }
     throw error;
   }
+}
+
+export function buildPaymentReceivedForward(context: SalesRequestContext, receitaId: string): PaymentReceivedForward {
+  const receita = receitas.find((item) => item.id === receitaId && item.company_id === context.companyId);
+  if (!receita) {
+    throw new SalesValidationError('Receita not found.', 404);
+  }
+
+  const partner = partners.find((item) => item.id === receita.parceiro_id && item.company_id === context.companyId);
+  if (!partner) {
+    throw new SalesValidationError('Partner not found for receita.', 404);
+  }
+
+  return {
+    event: 'payment.received',
+    data: {
+      parceiro_id: partner.id!,
+      parceiro_nome: partner.nome,
+      empresa_id: context.companyId,
+      valor: receita.valor_recebido ?? receita.valor_esperado,
+      moeda: 'BRL',
+      periodo_ref: receita.periodo_ref,
+      data_recebimento: receita.data_recebimento ?? now(),
+      tipo_parceria: partner.ad_network ?? partner.tipo,
+      notas: receita.observacoes,
+    },
+  };
 }
 
 export function runReconciliation(context: SalesRequestContext): ReconciliationResult {

@@ -7,7 +7,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {

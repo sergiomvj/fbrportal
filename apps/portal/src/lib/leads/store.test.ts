@@ -14,6 +14,7 @@ import {
   listICPs,
   listLeads,
   listPipelineStages,
+  handoffToClick,
   resetLeadsStoreForTests,
   updateCampaign,
   updateDomain,
@@ -131,5 +132,19 @@ describe('leads store operations', () => {
 
     deleteCampaign(context, created.id!);
     expect(listCampaigns(context).some((campaign) => campaign.id === created.id)).toBe(false);
+  });
+
+  it('builds a lead.qualified event envelope for Click handoff', () => {
+    const event = handoffToClick(context, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01');
+
+    expect(event).toMatchObject({
+      event: 'lead.qualified',
+      data: {
+        lead_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01',
+        empresa_nome: expect.stringContaining('TechBR'),
+        contato_email: 'rafael@techbr.com.br',
+      },
+    });
+    expect(event.data.historico_interacoes.length).toBeGreaterThan(0);
   });
 });

@@ -600,6 +600,31 @@ export function updateArtigo(context: RedacaoRequestContext, id: string, data: u
   }
 }
 
+export function forceArtigoEtapa(context: RedacaoRequestContext, id: string, etapa: Artigo['etapa']) {
+  const artigo = artigos.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!artigo) throw new RedacaoValidationError('Artigo not found.', 404);
+
+  const allowedTransitions: Record<Artigo['etapa'], Artigo['etapa'][]> = {
+    coletado: ['redigido', 'erro', 'reprovado'],
+    redigido: ['com_midia', 'editado', 'erro', 'reprovado'],
+    com_midia: ['editado', 'erro', 'reprovado'],
+    editado: ['publicado', 'erro', 'reprovado'],
+    publicado: [],
+    erro: ['coletado', 'redigido', 'reprovado'],
+    reprovado: [],
+  };
+
+  if (!allowedTransitions[artigo.etapa].includes(etapa)) {
+    throw new RedacaoValidationError(`Invalid stage transition from ${artigo.etapa} to ${etapa}.`, 400);
+  }
+
+  artigo.etapa = etapa;
+  artigo.updated_at = now();
+  artigo.agente_atual = etapa === 'publicado' ? 'redacao.publisher' : artigo.agente_atual;
+  artigo.publicado_em = etapa === 'publicado' ? now() : artigo.publicado_em;
+  return artigo;
+}
+
 export function listFontes(context: RedacaoRequestContext) {
   return fontes.filter((f) => f.company_id === context.companyId);
 }
@@ -634,6 +659,13 @@ export function updateFonte(context: RedacaoRequestContext, id: string, data: un
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;
   }
+}
+
+export function removeFonte(context: RedacaoRequestContext, id: string) {
+  const index = fontes.findIndex((item) => item.id === id && item.company_id === context.companyId);
+  if (index === -1) throw new RedacaoValidationError('Fonte not found.', 404);
+  const [removed] = fontes.splice(index, 1);
+  return removed;
 }
 
 export function listUGC(context: RedacaoRequestContext, status?: string) {

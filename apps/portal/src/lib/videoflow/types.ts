@@ -229,6 +229,7 @@ export const BriefingSchema = z.object({
 export const HandoffSchemaSchema = z.object({
   production_id: z.string().uuid(),
   versao_schema: z.string(),
+  algoritmo_assinatura: z.literal('sha256').default('sha256'),
   briefing: BriefingSchema,
   vetor_da: DAVectorSchema.nullable(),
   esqueleto: z.object({
@@ -246,11 +247,22 @@ export const HandoffSchemaSchema = z.object({
     etapa_atual: z.string(),
     etapas_concluidas: z.array(z.string()),
     historico: z.array(z.object({
+      etapa: z.string(),
       agente: z.string(),
       timestamp: z.string(),
       hash_output: z.string(),
+      hash_envelope: z.string(),
     })),
+    outputs: z.record(z.unknown()).default({}),
   }),
+  publication_handoff: z.object({
+    destination_module: z.literal('fbr-social'),
+    status: z.enum(['pendente', 'processando', 'entregue']),
+    package_zip_path: z.string().nullable(),
+    package_manifest: z.record(z.unknown()).nullable(),
+    social_job_id: z.string().nullable(),
+    poll_url: z.string().nullable(),
+  }).nullable(),
   hash_envelope: z.string(),
 });
 export type HandoffSchema = z.infer<typeof HandoffSchemaSchema>;

@@ -23,15 +23,9 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const headers = {
-    'x-user-id': '33333333-3333-4333-8333-333333333333',
-    'x-company-id': '11111111-1111-4111-8111-111111111111',
-    'Content-Type': 'application/json',
-  };
-
   const loadMessages = useCallback(async () => {
     try {
-      const res = await fetch(`/api/proxy/mkt/estrategias/${estrategiaId}/chat`, { headers });
+      const res = await fetch(`/api/proxy/mkt/estrategias/${estrategiaId}/chat`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages ?? []);
@@ -62,7 +56,6 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
     try {
       const res = await fetch(`/api/proxy/mkt/estrategias/${estrategiaId}/chat`, {
         method: 'POST',
-        headers,
         body: JSON.stringify({ message: msg }),
       });
       if (res.ok && res.body) {

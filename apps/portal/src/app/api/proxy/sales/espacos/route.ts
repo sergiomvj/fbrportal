@@ -2,7 +2,7 @@ import {
   listEspacos,
   createEspaco,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const includeInactive = url.searchParams.get('include_inactive') === 'true';
     const espacos = listEspacos(context, includeInactive);
-    return Response.json({ espacos });
+    return jsonSuccess(espacos);
   } catch (error) {
     return jsonError(error);
   }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const context = { companyId, userId, moduleSource: 'fbr-portal' };
 
   try {
-    return Response.json({ espaco: createEspaco(context, await request.json()) }, { status: 201 });
+    return jsonSuccess(createEspaco(context, await request.json()), { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

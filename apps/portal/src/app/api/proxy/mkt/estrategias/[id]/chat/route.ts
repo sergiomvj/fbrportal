@@ -2,11 +2,16 @@ import { contextOrResponse, jsonError } from '../../../_shared';
 import { saveChatMessage, listChatByEstrategia, getEstrategia } from '@/lib/mkt/store';
 import { checkRateLimit, rateLimitHeaders, rateLimitResponse, withSecurityHeaders, MKT_RATE_LIMITS } from '@/lib/mkt/security';
 
+type StreamingTextResult = {
+  toTextStreamResponse: () => Response;
+  toDataStreamResponse?: () => Response;
+};
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -22,7 +27,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const rl = checkRateLimit(`chat:${context.userId}:${context.companyId}`, MKT_RATE_LIMITS.chat ?? { windowMs: 60_000, maxRequests: 20 });
@@ -47,7 +52,7 @@ export async function POST(
       return Response.json({ code: 'LIMIT_REACHED', message: 'Chat limit reached. Start a new session.' }, { status: 429 });
     }
 
-    const userMsg = await saveChatMessage({
+    await saveChatMessage({
       estrategia_id: id,
       role: 'user',
       conteudo: message.trim(),
@@ -87,7 +92,10 @@ Diagnóstico: ${diagnostico ? JSON.stringify({ swot: diagnostico.swot, uvp: diag
       }
     });
 
-    const dataStreamResponse = (result as any).toDataStreamResponse ? (result as any).toDataStreamResponse() : result.toTextStreamResponse();
+    const streamingResult = result as StreamingTextResult;
+    const dataStreamResponse = streamingResult.toDataStreamResponse
+      ? streamingResult.toDataStreamResponse()
+      : streamingResult.toTextStreamResponse();
     // Injetar os headers
     const resHeaders = rateLimitHeaders(rl);
     for (const [k, v] of Object.entries(resHeaders)) dataStreamResponse.headers.set(k, v);

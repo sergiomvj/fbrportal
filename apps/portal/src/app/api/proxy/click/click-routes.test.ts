@@ -45,10 +45,18 @@ describe('Click proxy routes', () => {
     const { POST } = await import('./deals/from-lead/route');
     const audit = await import('./audit/route');
     const payload = {
-      lead_id: 'lead-new',
-      empresa_nome: 'Lead Co',
-      contato_email: 'lead@example.com',
-      score: 88,
+      event: 'lead.qualified',
+      data: {
+        lead_id: 'lead-new',
+        empresa_nome: 'Lead Co',
+        contato_nome: 'Ana Lead',
+        contato_email: 'lead@example.com',
+        score: 88,
+        historico_interacoes: [],
+        dados_enriquecimento: {},
+        cadencia_completa: true,
+        total_respostas: 1,
+      },
     };
 
     const first = await POST(request('/api/proxy/click/deals/from-lead', { body: JSON.stringify(payload), method: 'POST' }));
@@ -61,7 +69,7 @@ describe('Click proxy routes', () => {
     const auditBody = await (await audit.GET(request('/api/proxy/click/audit'))).json();
     const createdEvents = auditBody.audit.filter((event: { metadata?: { leadId?: string }; type: string }) => event.metadata?.leadId === 'lead-new' && event.type === 'created');
     expect(createdEvents).toHaveLength(1);
-    expect(createdEvents[0]).toMatchObject({ metadata: { moduleSource: 'fbr_leads' } });
+    expect(createdEvents[0]).toMatchObject({ metadata: { moduleSource: 'click' } });
     expect(JSON.stringify(createdEvents)).not.toContain('manual');
   });
 

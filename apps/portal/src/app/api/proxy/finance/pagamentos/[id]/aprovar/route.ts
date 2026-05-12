@@ -1,5 +1,5 @@
 import { approvePayable } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../../_shared';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const context = contextOrResponse(request);
@@ -7,9 +7,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const { id } = await params;
-    const result = approvePayable(context, id, await request.json());
-    if (result instanceof Response) return result;
-    return Response.json({ pagamento: result });
+    return jsonSuccess(approvePayable(context, id, await request.json()));
   } catch (error) {
     return jsonError(error);
   }

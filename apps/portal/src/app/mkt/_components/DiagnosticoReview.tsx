@@ -18,16 +18,11 @@ export function DiagnosticoReview() {
   const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const headers = {
-    'x-user-id': '33333333-3333-4333-8333-333333333333',
-    'x-company-id': '11111111-1111-4111-8111-111111111111',
-  };
-
   const fetchData = useCallback(async () => {
     try {
       const [estrRes, diagRes] = await Promise.all([
-        fetch(`/api/proxy/mkt/estrategias?page_size=100`, { headers }),
-        fetch(`/api/proxy/mkt/estrategias/${id}/diagnostico`, { headers }),
+        fetch(`/api/proxy/mkt/estrategias?page_size=100`),
+        fetch(`/api/proxy/mkt/estrategias/${id}/diagnostico`),
       ]);
 
       if (estrRes.ok) {
@@ -77,7 +72,7 @@ export function DiagnosticoReview() {
     try {
       const res = await fetch(`/api/proxy/mkt/estrategias/${id}/aprovar-diagnostico`, {
         method: 'POST',
-        headers,
+        
       });
       if (!res.ok) {
         const data = await res.json();

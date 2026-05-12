@@ -1,4 +1,4 @@
-import { getVideoFlowDashboardKpis } from '@/lib/videoflow/store';
+import { getVideoFlowDashboardKpis, listConcepts, listProductions, listTemplates } from '@/lib/videoflow/store';
 import { contextOrResponse, jsonError } from '../_shared';
 
 export async function GET(request: Request) {
@@ -9,7 +9,12 @@ export async function GET(request: Request) {
   const context = { companyId, userId, moduleSource: 'fbr-portal' };
 
   try {
-    return Response.json({ kpis: getVideoFlowDashboardKpis(context) });
+    return Response.json({
+      kpis: getVideoFlowDashboardKpis(context),
+      productions: listProductions(context, { page_size: 100 }).items,
+      templates: listTemplates(context),
+      concepts: listConcepts(context),
+    });
   } catch (error) {
     return jsonError(error);
   }

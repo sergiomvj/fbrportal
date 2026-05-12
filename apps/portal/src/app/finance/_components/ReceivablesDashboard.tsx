@@ -34,9 +34,11 @@ const initialForm: ReceivableForm = {
 export function ReceivablesDashboard({
   initialKpis,
   initialReceivables,
+  proxyHeaders,
 }: {
   initialKpis: DashboardKpis;
   initialReceivables: Receivable[];
+  proxyHeaders: Record<string, string>;
 }) {
   const [receivables, setReceivables] = useState(initialReceivables);
   const [partnerQuery, setPartnerQuery] = useState('');
@@ -86,20 +88,17 @@ export function ReceivablesDashboard({
     setSortDirection((current) => (sortKey === key && current === 'asc' ? 'desc' : 'asc'));
   }
 
-  function createReceivable(input: ReceivableForm) {
-    setReceivables((current) => [
-      {
-        id: `ui-${current.length + 1}`,
-        company_id: initialReceivables[0]?.company_id ?? '11111111-1111-4111-8111-111111111111',
-        partner_name: input.partner_name,
-        amount: input.amount,
-        currency: input.currency,
-        expected_date: input.expected_date,
-        status: 'pendente',
-        created_at: new Date().toISOString(),
-      },
-      ...current,
-    ]);
+  async function createReceivable(input: ReceivableForm) {
+    const response = await fetch('/api/proxy/finance/recebimentos', {
+      method: 'POST',
+      headers: proxyHeaders,
+      body: JSON.stringify(input),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error?.message ?? 'Falha ao criar recebimento.');
+    }
+    setReceivables((current) => [payload.data as Receivable, ...current]);
     setModalOpen(false);
   }
 
@@ -228,24 +227,30 @@ function ReceivableModal({
   open,
 }: {
   onClose: () => void;
-  onCreate: (input: ReceivableForm) => void;
+  onCreate: (input: ReceivableForm) => Promise<void>;
   open: boolean;
 }) {
   const [form, setForm] = useState<ReceivableForm>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     const parsed = receivableFormSchema.safeParse(form);
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
       return;
     }
-    onCreate(parsed.data);
-    setForm(initialForm);
-    setErrors({});
+    setSubmitting(true);
+    try {
+      await onCreate(parsed.data);
+      setForm(initialForm);
+      setErrors({});
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -270,7 +275,7 @@ function ReceivableModal({
           <input type="date" value={form.expected_date} onChange={(event) => setForm((current) => ({ ...current, expected_date: event.target.value }))} />
           {errors.expected_date && <span>{errors.expected_date}</span>}
         </label>
-        <button type="submit">Criar recebimento</button>
+        <button disabled={submitting} type="submit">{submitting ? 'Criando...' : 'Criar recebimento'}</button>
       </form>
     </div>
   );

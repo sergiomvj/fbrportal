@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { z } from 'zod';
 import type { ArvaAgent } from '@fbr/arva-integration';
 import {
@@ -11,6 +12,7 @@ import {
   PipelineStepSnapshot,
   QualityCheck,
   QualityCheckSchema,
+  SocialPackagePreview,
   SocialAgentEvent,
   SocialAgentSlot,
   SocialArte,
@@ -48,7 +50,7 @@ export class SocialValidationError extends Error {
 
 const COMPANY_ALPHA = '11111111-1111-4111-8111-111111111111';
 const USER_SYSTEM = '33333333-3333-4333-8333-333333333333';
-const WEBHOOK_SECRET = 'social-webhook-secret';
+const WEBHOOK_SECRET = 'design-social-secret';
 
 const nowIso = () => new Date('2026-05-08T12:00:00.000Z').toISOString();
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -419,14 +421,7 @@ export function getSocialWebhookSecretForTests() {
 }
 
 export function buildSocialWebhookSignature(payload: string, secret = WEBHOOK_SECRET) {
-  const input = `${secret}:${payload}`;
-  let hash = 0n;
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 131n + BigInt(input.charCodeAt(index))) % (1n << 256n);
-  }
-
-  return hash.toString(16).padStart(64, '0');
+  return createHmac('sha256', secret).update(payload).digest('hex');
 }
 
 export function parseSocialJobsQuery(url: string): SocialJobsQuery {
@@ -761,6 +756,10 @@ export function generateZipPackage(context: SocialRequestContext, jobId: string,
   };
 }
 
+function buildPackagePreview(context: SocialRequestContext, jobId: string): SocialPackagePreview {
+  return generateZipPackage(context, jobId);
+}
+
 export function getSocialKpis(context: SocialRequestContext): SocialKpi {
   const companyJobs = jobs.filter((item) => item.company_id === context.companyId);
   const companyArtefacts = artefacts.filter((item) => item.company_id === context.companyId);
@@ -806,7 +805,7 @@ export function getDashboardSnapshot(context: SocialRequestContext): SocialDashb
     brand_kits: brandKitsForCompany,
     agent_slots: panel.slots,
     agent_events: panel.events,
-    package_preview: readyJob ? generateZipPackage(context, readyJob.id).manifest : null,
+    package_preview: readyJob ? buildPackagePreview(context, readyJob.id) : null,
   };
 }
 
@@ -816,13 +815,13 @@ export function getBrandKitCacheSnapshotForTests() {
 
 export function invalidateBrandKitCache(payload: BrandKitWebhookPayload) {
   const parsed = BrandKitWebhookPayloadSchema.parse(payload);
-  const brandKitId = parsed.brand_kit_id ?? parsed.data?.brand_kit_id;
+  const brandKitId = parsed.data.brand_kit_id ?? parsed.brand_kit_id;
   if (!brandKitId) throw new SocialValidationError('Webhook payload must contain brand_kit_id.', 400);
   const entry = brandKitCache.find((item) => item.id === brandKitId);
   if (!entry) return { invalidated: false, brand_kit_id: brandKitId };
   entry.stale = true;
   entry.stale_reason = 'webhook_invalidation';
-  entry.cached_at = '2026-05-05T12:00:00.000Z';
+  entry.cached_at = parsed.data.updated_at ?? parsed.updated_at ?? nowIso();
   agentEvents.unshift({
     id: crypto.randomUUID(),
     event: 'cache_invalidated',

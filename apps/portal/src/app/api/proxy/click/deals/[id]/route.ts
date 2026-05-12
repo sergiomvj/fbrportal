@@ -2,7 +2,7 @@ import { getDeal } from '@/lib/click/store';
 import { contextOrResponse } from '../../_shared';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const { id } = await params;

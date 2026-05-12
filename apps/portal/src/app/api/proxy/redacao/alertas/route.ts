@@ -10,7 +10,9 @@ export async function GET(request: Request) {
     const filters: Record<string, string | boolean> = {};
     if (url.searchParams.get('nivel')) filters.nivel = url.searchParams.get('nivel')!;
     if (url.searchParams.get('tipo')) filters.tipo = url.searchParams.get('tipo')!;
-    if (url.searchParams.get('resolvido') !== null) filters.resolvido = url.searchParams.get('resolvido') === 'true';
+    filters.resolvido = url.searchParams.get('resolvido') !== null
+      ? url.searchParams.get('resolvido') === 'true'
+      : false;
     return Response.json({ alertas: listAlertas(context, filters) });
   } catch (error) {
     return jsonError(error);

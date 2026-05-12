@@ -51,7 +51,38 @@ export function SocialDashboard({ initialDashboard }: { initialDashboard: Social
   }, [initialDashboard.quality_checks]);
 
   const selectedJob = initialDashboard.jobs.find((job) => job.id === selectedJobId) ?? initialDashboard.jobs[0];
-  const packagePreview = null;
+  const packagePreview = selectedJob
+    ? {
+        zip_name: `${selectedJob.product_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}_2026-05-08_${selectedJob.target_networks[0]}_social.zip`,
+        manifest: {
+          job_id: selectedJob.id,
+          product_name: selectedJob.product_name,
+          generated_at: initialDashboard.package_preview?.manifest.job_id === selectedJob.id
+            ? initialDashboard.package_preview.manifest.generated_at
+            : '2026-05-08T12:00:00.000Z',
+          networks: Array.from(new Set(
+            initialDashboard.artefacts
+              .filter((artefact) => artefact.job_id === selectedJob.id && ['ready', 'quality_warning'].includes(artefact.status))
+              .map((artefact) => artefact.network),
+          )),
+          files: initialDashboard.artefacts
+            .filter((artefact) => artefact.job_id === selectedJob.id && ['ready', 'quality_warning'].includes(artefact.status))
+            .map((artefact) => ({
+              network: artefact.network,
+              format_slug: artefact.format_slug,
+              file: `${artefact.network}/${artefact.file_name}`,
+              dimensions: `${artefact.width}x${artefact.height}`,
+              size_bytes: artefact.size_bytes,
+            })),
+          total_files: initialDashboard.artefacts
+            .filter((artefact) => artefact.job_id === selectedJob.id && ['ready', 'quality_warning'].includes(artefact.status))
+            .length,
+          total_size_bytes: initialDashboard.artefacts
+            .filter((artefact) => artefact.job_id === selectedJob.id && ['ready', 'quality_warning'].includes(artefact.status))
+            .reduce((total, artefact) => total + artefact.size_bytes, 0),
+        },
+      }
+    : initialDashboard.package_preview;
 
   const selectedBrandKit = selectedJob
     ? initialDashboard.brand_kits.find((item) => item.id === selectedJob.brand_kit_id) ?? null

@@ -99,7 +99,7 @@ export async function getJobsByEstrategia(estrategiaId: string): Promise<MktQueu
   const supabase = createSupabaseServerClient();
   const { data } = await supabase.from('mkt_processing_jobs').select('*').eq('estrategia_id', estrategiaId);
   if (!data) return [];
-  return data.map((d: any) => convertToQueueJob(d as MktProcessingJob));
+  return data.map((row) => convertToQueueJob(row as MktProcessingJob));
 }
 
 export async function getQueueStatus(): Promise<Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>> {

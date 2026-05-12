@@ -1,11 +1,9 @@
 import { SocialDashboard } from './_components/SocialDashboard';
 import './social.css';
-import { getDashboardSnapshot, getSocialTestCompanyIds } from '@/lib/social/store';
+import { getSocialDashboardFromPortal } from '@/lib/social/portal-api';
 
-export default function SocialPage() {
-  const { alpha, user } = getSocialTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user, role: 'admin' };
-  const dashboard = getDashboardSnapshot(context);
+export default async function SocialPage() {
+  const dashboard = await getSocialDashboardFromPortal();
 
   return <SocialDashboard initialDashboard={dashboard} />;
 }

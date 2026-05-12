@@ -1,11 +1,9 @@
 import { RedacaoUGC } from '../_components/RedacaoUGC';
-import { getRedacaoTestCompanyIds, listUGC } from '@/lib/redacao/store';
+import { getRedacaoUGCFromPortal } from '@/lib/redacao/portal-api';
 import '../redacao.css';
 
-export default function UGCPage() {
-  const { alpha, user } = getRedacaoTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
-  const ugc = listUGC(context);
+export default async function UGCPage() {
+  const ugc = await getRedacaoUGCFromPortal();
 
   return <RedacaoUGC ugc={ugc} />;
 }

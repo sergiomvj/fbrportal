@@ -27,7 +27,7 @@ export function CreateDealModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (input: FormState) => ClickDeal;
+  onCreate: (input: FormState) => Promise<ClickDeal>;
 }) {
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -40,7 +40,7 @@ export function CreateDealModal({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (submitting) return;
 
@@ -55,7 +55,7 @@ export function CreateDealModal({
     }
 
     try {
-      onCreate(parsed.data);
+      await onCreate(parsed.data);
       setForm(initialForm);
       onClose();
     } catch (error) {

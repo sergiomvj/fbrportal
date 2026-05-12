@@ -57,14 +57,9 @@ export function MktDashboard() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const headers = {
-        'x-user-id': '33333333-3333-4333-8333-333333333333',
-        'x-company-id': '11111111-1111-4111-8111-111111111111',
-      };
-
       const [dashRes, estrRes] = await Promise.all([
-        fetch('/api/proxy/mkt/dashboard', { headers }),
-        fetch('/api/proxy/mkt/estrategias?page_size=5', { headers }),
+        fetch('/api/proxy/mkt/dashboard'),
+        fetch('/api/proxy/mkt/estrategias?page_size=5'),
       ]);
 
       if (!dashRes.ok || !estrRes.ok) throw new Error('Erro ao carregar dados');

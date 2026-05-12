@@ -34,7 +34,13 @@ const initialForm: PayableForm = {
   recorrente: false,
 };
 
-export function PayablesDashboard({ initialPayables }: { initialPayables: Payable[] }) {
+export function PayablesDashboard({
+  initialPayables,
+  proxyHeaders,
+}: {
+  initialPayables: Payable[];
+  proxyHeaders: Record<string, string>;
+}) {
   const [payables, setPayables] = useState(initialPayables);
   const [fornecedorQuery, setFornecedorQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<PayableStatus[]>([]);
@@ -76,31 +82,35 @@ export function PayablesDashboard({ initialPayables }: { initialPayables: Payabl
     setSortDirection((current) => (sortKey === key && current === 'asc' ? 'desc' : 'asc'));
   }
 
-  function createPayable(input: PayableForm) {
-    setPayables((current) => [
-      {
-        id: `ui-${current.length + 1}`,
-        company_id: '11111111-1111-4111-8111-111111111111',
-        fornecedor_nome: input.fornecedor_nome,
-        descricao: input.descricao,
-        amount: input.amount,
-        currency: 'BRL',
-        data_vencimento: input.data_vencimento,
-        status: 'pendente',
-        recorrente: input.recorrente,
-        created_at: new Date().toISOString(),
-      },
-      ...current,
-    ]);
+  async function createPayable(input: PayableForm) {
+    const response = await fetch('/api/proxy/finance/pagamentos', {
+      method: 'POST',
+      headers: proxyHeaders,
+      body: JSON.stringify(input),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error?.message ?? 'Falha ao criar pagamento.');
+    }
+    setPayables((current) => [payload.data as Payable, ...current]);
     setModalOpen(false);
   }
 
-  function approvePayable(id: string) {
-    setPayables((current) =>
-      current.map((p) =>
-        p.id === id ? { ...p, status: 'aprovado' as const, aprovado_por: 'current-user', aprovado_em: new Date().toISOString() } : p,
-      ),
-    );
+  async function approvePayable(id: string, decisao: 'aprovar' | 'rejeitar' = 'aprovar') {
+    const response = await fetch(`/api/proxy/finance/pagamentos/${id}/aprovar`, {
+      method: 'POST',
+      headers: proxyHeaders,
+      body: JSON.stringify({
+        role: 'gestor',
+        decisao,
+        observacao: decisao === 'rejeitar' ? 'Rejeitado pela UI do portal.' : undefined,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error?.message ?? 'Falha ao atualizar pagamento.');
+    }
+    setPayables((current) => current.map((item) => (item.id === id ? (payload.data as Payable) : item)));
   }
 
   return (
@@ -190,7 +200,7 @@ export function PayablesDashboard({ initialPayables }: { initialPayables: Payabl
                   </td>
                   <td>
                     {payable.status === 'pendente' && (
-                      <button onClick={() => approvePayable(payable.id!)} type="button">Aprovar</button>
+                      <button onClick={() => void approvePayable(payable.id!)} type="button">Aprovar</button>
                     )}
                     {payable.recorrente && <span title="Recorrente">🔄</span>}
                   </td>
@@ -218,24 +228,30 @@ function PayableModal({
   open,
 }: {
   onClose: () => void;
-  onCreate: (input: PayableForm) => void;
+  onCreate: (input: PayableForm) => Promise<void>;
   open: boolean;
 }) {
   const [form, setForm] = useState<PayableForm>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     const parsed = payableFormSchema.safeParse(form);
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
       return;
     }
-    onCreate(parsed.data);
-    setForm(initialForm);
-    setErrors({});
+    setSubmitting(true);
+    try {
+      await onCreate(parsed.data);
+      setForm(initialForm);
+      setErrors({});
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -269,7 +285,7 @@ function PayableModal({
           <input type="checkbox" checked={form.recorrente} onChange={(event) => setForm((current) => ({ ...current, recorrente: event.target.checked }))} />
           Recorrente
         </label>
-        <button type="submit">Criar pagamento</button>
+        <button disabled={submitting} type="submit">{submitting ? 'Criando...' : 'Criar pagamento'}</button>
       </form>
     </div>
   );

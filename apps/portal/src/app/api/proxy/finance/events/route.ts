@@ -1,5 +1,5 @@
 import { processFinancialEvent } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function POST(request: Request) {
   const context = contextOrResponse(request);
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
   try {
     const payable = processFinancialEvent(context, await request.json());
-    return Response.json({ pagamento: payable }, { status: 201 });
+    return jsonSuccess(payable, { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

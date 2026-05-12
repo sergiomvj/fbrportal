@@ -8,7 +8,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -24,7 +24,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const rl = checkRateLimit(`export:${context.companyId}`, MKT_RATE_LIMITS.export ?? { windowMs: 60_000, maxRequests: 10 });

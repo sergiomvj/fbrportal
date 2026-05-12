@@ -53,6 +53,67 @@ function generateHash(data: string): string {
   return Math.abs(hash).toString(16).padStart(64, '0');
 }
 
+function normalizeEnvelopeForHash(handoff: HandoffSchema) {
+  return {
+    ...handoff,
+    hash_envelope: undefined,
+    pipeline: {
+      ...handoff.pipeline,
+      historico: undefined,
+    },
+  };
+}
+
+function rehashEnvelope(handoff: HandoffSchema) {
+  return generateHash(JSON.stringify(normalizeEnvelopeForHash(handoff)));
+}
+
+function buildPublicationManifest(production: Production) {
+  return {
+    production_id: production.id,
+    title: production.nome,
+    platform: production.briefing.canal,
+    duration_seconds: production.briefing.duracao_seg,
+    aspect_ratio: production.vetor_da?.formato.proporcao ?? null,
+    assets: ['roteiro_final.md', 'thumbnail.png', 'captions.srt'],
+  };
+}
+
+function createStageOutput(stage: ProductionStatus, production: Production) {
+  if (stage === 'orquestrador') {
+    return {
+      resumo_criativo: production.briefing.objetivo,
+      checkpoints: ['vetor_da_emitido', 'esqueleto_inicializado'],
+    };
+  }
+
+  if (stage === 'producao') {
+    return {
+      mapa_de_cenas: ['abertura', 'desenvolvimento', 'cta_final'],
+      asset_map: ['thumb_cover', 'broll_01', 'voiceover_ptbr'],
+    };
+  }
+
+  if (stage === 'revisao') {
+    return {
+      supervisor_checklist: ['consistencia_visual', 'coerencia_emocional', 'aderencia_ao_vetor_da'],
+      aprovado_para_pacote: true,
+    };
+  }
+
+  if (stage === 'pacote_pronto' || stage === 'concluido') {
+    return {
+      pacote_publicacao: buildPublicationManifest(production),
+      handoff_social: {
+        destination_module: 'fbr-social',
+        status: stage === 'concluido' ? 'processando' : 'pendente',
+      },
+    };
+  }
+
+  return null;
+}
+
 const defaultVetorDA = {
   narrativa: {
     tom_emocional: 'neutro' as const,
@@ -361,7 +422,7 @@ let concepts: Concept[] = [];
 let agents: Agent[] = [];
 let templates: TemplatePreset[] = [];
 
-function resetVideoFlowStoreForTests() {
+export function resetVideoFlowStoreForTests() {
   productions = clone(initialProductions);
   concepts = clone(initialConcepts);
   agents = clone(initialAgents);
@@ -499,28 +560,56 @@ export function updateVetorDA(context: VideoFlowRequestContext, id: string, body
 
   const handoff: HandoffSchema = {
     production_id: production.id!,
-    versao_schema: '1.0',
+    versao_schema: '1.1',
+    algoritmo_assinatura: 'sha256',
     briefing: production.briefing,
     vetor_da: parsed.vetor_da,
-    esqueleto: null,
-    memoria_de_marca: null,
+    esqueleto: {
+      fonte_conceito_id: concepts.find((concept) => concept.company_id === context.companyId && concept.canal === production.briefing.canal)?.id ?? null,
+      similaridade: concepts.find((concept) => concept.company_id === context.companyId && concept.canal === production.briefing.canal)?.score_qualidade ?? null,
+      arco_narrativo_sugerido: parsed.vetor_da.narrativa.arco_dramatico,
+    },
+    memoria_de_marca: {
+      brand_kit: production.briefing.brand_kit_id ? { brand_kit_id: production.briefing.brand_kit_id } : null,
+      guia_tom: { tom: production.briefing.tom },
+      restricoes: parsed.vetor_da.marca.restricoes_visuais,
+      aprovados_recentes: concepts
+        .filter((concept) => concept.company_id === context.companyId && concept.aprovado)
+        .slice(0, 3)
+        .map((concept) => concept.titulo),
+    },
     pipeline: {
       etapa_atual: 'orquestrador',
-      etapas_concluidas: [],
+      etapas_concluidas: ['briefing'],
       historico: [],
+      outputs: {
+        briefing: {
+          canal: production.briefing.canal,
+          duracao_seg: production.briefing.duracao_seg,
+          objetivo: production.briefing.objetivo,
+        },
+        orquestrador: createStageOutput('orquestrador', production),
+      },
+    },
+    publication_handoff: {
+      destination_module: 'fbr-social',
+      status: 'pendente',
+      package_zip_path: null,
+      package_manifest: null,
+      social_job_id: null,
+      poll_url: null,
     },
     hash_envelope: '',
   };
 
-  const envelopeData = JSON.stringify({
-    ...handoff,
-    hash_envelope: undefined,
-    pipeline: {
-      ...handoff.pipeline,
-      historico: undefined,
-    },
+  handoff.hash_envelope = rehashEnvelope(handoff);
+  handoff.pipeline.historico.push({
+    etapa: 'orquestrador',
+    agente: 'maestro',
+    timestamp: now(),
+    hash_output: generateHash(JSON.stringify(handoff.pipeline.outputs.orquestrador)),
+    hash_envelope: handoff.hash_envelope,
   });
-  handoff.hash_envelope = generateHash(envelopeData);
 
   production.vetor_da = parsed.vetor_da;
   production.handoff = handoff;
@@ -562,12 +651,29 @@ export function advancePipeline(context: VideoFlowRequestContext, productionId: 
   production.updated_at = now();
 
   if (production.handoff) {
+    const stageOutput = createStageOutput(nextStage as ProductionStatus, production);
+    if (stageOutput) {
+      production.handoff.pipeline.outputs[nextStage] = stageOutput;
+    }
     production.handoff.pipeline.etapas_concluidas.push(nextStage);
     production.handoff.pipeline.etapa_atual = nextStage;
+    if (nextStage === 'pacote_pronto' || nextStage === 'concluido') {
+      production.handoff.publication_handoff = {
+        destination_module: 'fbr-social',
+        status: nextStage === 'concluido' ? 'processando' : 'pendente',
+        package_zip_path: `videoflow/${production.id}/publication-package.zip`,
+        package_manifest: buildPublicationManifest(production),
+        social_job_id: nextStage === 'concluido' ? `social-${production.id!.slice(0, 8)}` : null,
+        poll_url: nextStage === 'concluido' ? `/api/proxy/social/jobs/social-${production.id!.slice(0, 8)}` : null,
+      };
+    }
+    production.handoff.hash_envelope = rehashEnvelope(production.handoff);
     production.handoff.pipeline.historico.push({
+      etapa: nextStage,
       agente: 'system',
       timestamp: now(),
-      hash_output: generateHash(JSON.stringify(production.handoff)),
+      hash_output: generateHash(JSON.stringify(stageOutput ?? { stage: nextStage })),
+      hash_envelope: production.handoff.hash_envelope,
     });
   }
 

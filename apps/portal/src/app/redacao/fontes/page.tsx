@@ -1,11 +1,9 @@
 import { RedacaoFontes } from '../_components/RedacaoFontes';
-import { getRedacaoTestCompanyIds, listFontes } from '@/lib/redacao/store';
+import { getRedacaoFontesFromPortal } from '@/lib/redacao/portal-api';
 import '../redacao.css';
 
-export default function FontesPage() {
-  const { alpha, user } = getRedacaoTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
-  const fontes = listFontes(context);
+export default async function FontesPage() {
+  const fontes = await getRedacaoFontesFromPortal();
 
   return <RedacaoFontes fontes={fontes} />;
 }

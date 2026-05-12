@@ -3,7 +3,7 @@ import { listAgentLogs } from '@/lib/mkt/store';
 import { withSecurityHeaders } from '@/lib/mkt/security';
 
 export async function GET(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {

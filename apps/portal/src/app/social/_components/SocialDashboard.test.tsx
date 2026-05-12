@@ -43,4 +43,12 @@ describe('SocialDashboard', () => {
       expect(screen.getAllByText(step).length).toBeGreaterThan(0);
     });
   });
+
+  it('shows the selected job package preview in the side panel', () => {
+    renderDashboard();
+
+    expect(screen.getByText('ZIP package')).toBeInTheDocument();
+    expect(screen.getByText(/_social\.zip$/i)).toBeInTheDocument();
+    expect(screen.getByText(/arquivos/i)).toBeInTheDocument();
+  });
 });

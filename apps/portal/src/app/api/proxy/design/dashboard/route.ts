@@ -1,4 +1,4 @@
-import { getDesignDashboardKpis, listAgentSlots, listTemplates } from '@/lib/design/store';
+import { getDesignArvaAgents, getDesignModuleSnapshot, previewBrandKitWebhook } from '@/lib/design/store';
 import { contextOrResponse, jsonError } from '../_shared';
 
 export async function GET(request: Request) {
@@ -6,10 +6,15 @@ export async function GET(request: Request) {
   if (context instanceof Response) return context;
 
   try {
+    const snapshot = getDesignModuleSnapshot(context);
+    const webhookPreviews = Object.fromEntries(
+      snapshot.brand_kits.map((brandKit) => [brandKit.id ?? '', previewBrandKitWebhook(context, brandKit.id ?? '')]),
+    );
+
     return Response.json({
-      kpis: getDesignDashboardKpis(context),
-      agents: listAgentSlots(),
-      templates: listTemplates(),
+      snapshot,
+      available_agents: getDesignArvaAgents(),
+      webhook_previews: webhookPreviews,
     });
   } catch (error) {
     return jsonError(error);

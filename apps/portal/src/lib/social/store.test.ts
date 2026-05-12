@@ -101,7 +101,7 @@ describe('social store', () => {
 
     expect(dashboard.kpis.redes_ativas).toBeGreaterThan(1);
     expect(dashboard.package_preview).toBeDefined();
-    expect(dashboard.package_preview?.total_files).toBeGreaterThan(0);
+    expect(dashboard.package_preview?.manifest.total_files).toBeGreaterThan(0);
     expect(dashboard.agent_events.length).toBeGreaterThan(0);
   });
 });

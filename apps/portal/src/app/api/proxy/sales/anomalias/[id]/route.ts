@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { reviewAnomaly } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../_shared';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   try {
     const body = await request.json();
     const anomaly = reviewAnomaly(context, id, body);
-    return Response.json({ anomaly });
+    return jsonSuccess(anomaly);
   } catch (error) {
     return jsonError(error);
   }

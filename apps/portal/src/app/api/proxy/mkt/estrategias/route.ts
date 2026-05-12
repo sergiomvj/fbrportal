@@ -5,7 +5,7 @@ import { enqueueJob } from '@/lib/mkt/queue';
 import { createSupabaseServerClient } from '@/lib/supabase-admin';
 
 export async function GET(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const rl = checkRateLimit(`estrategias:${context.companyId}`, MKT_RATE_LIMITS.estrategias ?? { windowMs: 60_000, maxRequests: 30 });
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   try {
     const contentType = request.headers.get('content-type') || '';
-    let body: any = {};
+    let body: Record<string, unknown> = {};
     let fileToUpload: File | null = null;
     let ext = '';
 

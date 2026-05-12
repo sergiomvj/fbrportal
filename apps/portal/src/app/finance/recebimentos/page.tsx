@@ -1,5 +1,5 @@
 import { ReceivablesDashboard } from '../_components/ReceivablesDashboard';
-import { getDashboardKpis, getFinanceTestCompanyIds, listReceivables } from '@/lib/finance/store';
+import { getDashboardKpis, getFinanceProxyHeaders, getFinanceTestCompanyIds, listReceivables } from '@/lib/finance/store';
 import '../finance.css';
 
 export default function FinanceReceivablesPage() {
@@ -7,5 +7,5 @@ export default function FinanceReceivablesPage() {
   const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
   const receivables = listReceivables(context, { page_size: 100 }).items;
 
-  return <ReceivablesDashboard initialKpis={getDashboardKpis(context)} initialReceivables={receivables} />;
+  return <ReceivablesDashboard initialKpis={getDashboardKpis(context)} initialReceivables={receivables} proxyHeaders={getFinanceProxyHeaders(alpha, user)} />;
 }

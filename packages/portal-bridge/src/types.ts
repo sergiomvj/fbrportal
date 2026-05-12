@@ -1,23 +1,27 @@
 export type PortalMessage =
   | {
       type: 'AUTH_TOKEN';
-      payload: { token: string; expiresAt: string };
+      payload: { userId: string; role: string };
     }
   | {
       type: 'NAVIGATE';
-      payload: { path: string };
+      payload: { module: string; path: string };
     }
   | {
       type: 'NOTIFICATION';
-      payload: { level: 'info' | 'success' | 'warning' | 'error'; message: string };
+      payload: { title: string; body: string; level: 'info' | 'warn' | 'error' };
     }
   | {
       type: 'MODULE_READY';
-      payload: { moduleId: string };
+      payload: { module: string };
     }
   | {
       type: 'CROSS_MODULE_EVENT';
       payload: { event: string; data: unknown };
+    }
+  | {
+      type: 'ORACULO_CONTEXT';
+      payload: { module: string; screen: string; pathname?: string; entity?: { type: string; id: string } };
     };
 
 export type PortalMessageType = PortalMessage['type'];

@@ -55,7 +55,15 @@ function nativeAgentsToArva(agents: Agent[]): ArvaAgent[] {
   }));
 }
 
-export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs: AgentLog[] }) {
+export function LeadsAgents({
+  agentLogs,
+  agents,
+  companyId,
+}: {
+  agents: Agent[];
+  agentLogs: AgentLog[];
+  companyId: string;
+}) {
   const [arvaAgents, setArvaAgents] = useState<ArvaAgent[]>([]);
   const [linkedAgents, setLinkedAgents] = useState<ArvaAgent[]>([]);
   const [loadingArva, setLoadingArva] = useState(true);
@@ -67,7 +75,7 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
     async function loadArvaAgents() {
       try {
         setLoadingArva(true);
-        const payload = await requestJson<{ agents: ArvaAgent[] }>('/api/arva/agents?company_id=11111111-1111-4111-8111-111111111111');
+        const payload = await requestJson<{ agents: ArvaAgent[] }>(`/api/arva/agents?company_id=${companyId}`);
         setArvaAgents(payload.agents);
         setLinkedAgents(payload.agents.slice(0, 2));
       } catch (requestError) {
@@ -80,7 +88,7 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
     }
 
     loadArvaAgents();
-  }, [nativeFallback]);
+  }, [companyId, nativeFallback]);
 
   const teams = teamOrder.map((num) => ({
     numero: num,
@@ -116,7 +124,7 @@ export function LeadsAgents({ agents, agentLogs }: { agents: Agent[]; agentLogs:
           </div>
           <AgentPicker
             agents={arvaAgents}
-            companyId="11111111-1111-4111-8111-111111111111"
+            companyId={companyId}
             linkedAgents={linkedAgents}
             loading={loadingArva}
             moduleId="leads"

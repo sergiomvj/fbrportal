@@ -2,7 +2,7 @@ import { createMessage, listMessages } from '@/lib/click/store';
 import { contextOrResponse, jsonError } from '../../../_shared';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   const { id } = await params;
@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const context = contextOrResponse(request);
+  const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
   try {

@@ -1,10 +1,10 @@
+import { getLeadsPageContext } from '@/lib/leads/context';
+import { listLeads, listPipelineStages } from '@/lib/leads/store';
 import { LeadsPipeline } from '../_components/LeadsPipeline';
-import { getLeadsTestCompanyIds, listLeads, listPipelineStages } from '@/lib/leads/store';
 import '../leads.css';
 
-export default function LeadsPipelinePage() {
-  const { alpha, user } = getLeadsTestCompanyIds();
-  const context = { companyId: alpha, moduleSource: 'fbr-portal', userId: user };
+export default async function LeadsPipelinePage() {
+  const context = await getLeadsPageContext();
   const leads = listLeads(context, { page_size: 100 }).items;
   const stages = listPipelineStages();
 

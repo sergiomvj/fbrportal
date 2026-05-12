@@ -1,5 +1,5 @@
 import { approveReconciliationItem } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../../_shared';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const context = contextOrResponse(request);
@@ -7,8 +7,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const { id } = await params;
-    const item = approveReconciliationItem(context, id);
-    return Response.json({ item });
+    const body = await request.json().catch(() => undefined);
+    return jsonSuccess(approveReconciliationItem(context, id, body));
   } catch (error) {
     return jsonError(error);
   }

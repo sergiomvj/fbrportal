@@ -2,7 +2,7 @@ import {
   listMediaKits,
   createMediaKit,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   try {
     const mediaKits = listMediaKits(context);
-    return Response.json({ media_kits: mediaKits });
+    return jsonSuccess(mediaKits);
   } catch (error) {
     return jsonError(error);
   }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const mediaKit = createMediaKit(context, body);
-    return Response.json({ media_kit: mediaKit }, { status: 201 });
+    return jsonSuccess(mediaKit, { status: 201 });
   } catch (error) {
     return jsonError(error);
   }

@@ -4,13 +4,19 @@ import { useState } from 'react';
 import type { ClickMessage } from '@/lib/click/types';
 import { formatDate } from './format';
 
-export function MessagesPanel({ messages, onSend }: { messages: ClickMessage[]; onSend: (body: string) => void }) {
+export function MessagesPanel({
+  messages,
+  onSend,
+}: {
+  messages: ClickMessage[];
+  onSend: (body: string) => Promise<void> | void;
+}) {
   const [body, setBody] = useState('');
   const mentions = ['@sdr', '@qualificador', '@proposta', '@negociador', '@closer', '@sucesso'];
 
-  function submit() {
+  async function submit() {
     if (!body.trim()) return;
-    onSend(body.trim());
+    await onSend(body.trim());
     setBody('');
   }
 
@@ -40,15 +46,14 @@ export function MessagesPanel({ messages, onSend }: { messages: ClickMessage[]; 
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            submit();
+            void submit();
           }
         }}
         value={body}
       />
-      <button onClick={submit} type="button">
+      <button onClick={() => void submit()} type="button">
         Enviar
       </button>
     </section>
   );
 }
-

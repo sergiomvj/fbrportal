@@ -1,7 +1,7 @@
 import {
   listAnomalies,
 } from '@/lib/sales/store';
-import { contextOrResponse, jsonError } from '../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
 
 export async function GET(request: Request) {
   const contextOr = contextOrResponse(request);
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     if (severidade) filters.severidade = severidade;
     if (status) filters.status = status;
     const anomalias = listAnomalies(context, filters);
-    return Response.json({ anomalias });
+    return jsonSuccess(anomalias);
   } catch (error) {
     return jsonError(error);
   }

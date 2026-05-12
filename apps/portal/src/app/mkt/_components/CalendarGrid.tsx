@@ -12,13 +12,8 @@ export function CalendarGrid() {
   const [loading, setLoading] = useState(true);
   const [canalFilter, setCanalFilter] = useState<string>('all');
 
-  const headers = {
-    'x-user-id': '33333333-3333-4333-8333-333333333333',
-    'x-company-id': '11111111-1111-4111-8111-111111111111',
-  };
-
   useEffect(() => {
-    fetch(`/api/proxy/mkt/estrategias/${id}/calendario`, { headers })
+    fetch(`/api/proxy/mkt/estrategias/${id}/calendario`)
       .then((r) => r.json())
       .then((d) => setItems(d.calendario ?? []))
       .catch(() => {})
@@ -45,7 +40,7 @@ export function CalendarGrid() {
   const handleExportCsv = async () => {
     const res = await fetch(`/api/proxy/mkt/estrategias/${id}/calendario`, {
       method: 'POST',
-      headers,
+      
     });
     if (res.ok) {
       const blob = await res.blob();

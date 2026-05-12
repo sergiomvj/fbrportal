@@ -1,5 +1,5 @@
 import { getProfitLoss } from '@/lib/finance/store';
-import { contextOrResponse, jsonError } from '../../_shared';
+import { contextOrResponse, jsonError, jsonSuccess } from '../../_shared';
 
 export async function GET(request: Request, { params }: { params: Promise<{ empresa_id: string }> }) {
   const context = contextOrResponse(request);
@@ -7,7 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ empr
 
   try {
     const { empresa_id } = await params;
-    return Response.json({ pl: getProfitLoss(context, empresa_id) });
+    return jsonSuccess(getProfitLoss(context, empresa_id));
   } catch (error) {
     return jsonError(error);
   }
