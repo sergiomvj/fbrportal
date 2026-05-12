@@ -8,7 +8,7 @@ vi.mock('next/navigation', () => ({
   usePathname,
 }));
 
-vi.mock('@fbr/auth', () => ({
+vi.mock('@fbr/auth/client', () => ({
   useSession,
 }));
 

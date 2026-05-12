@@ -35,11 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid Oraculo query payload.' }, { status: 400 });
   }
 
-  const context: OraculoContext = parsed.data.context.entity
-    ? parsed.data.context
-    : Object.fromEntries(
-        Object.entries(parsed.data.context).filter(([key]) => key !== 'entity'),
-      ) as OraculoContext;
+  const context: OraculoContext = parsed.data.context as OraculoContext;
 
   const response = await queryOraculo(parsed.data.question, context);
   return NextResponse.json(response);

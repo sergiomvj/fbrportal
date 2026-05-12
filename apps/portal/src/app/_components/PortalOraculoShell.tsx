@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from '@fbr/auth';
+import { useSession } from '@fbr/auth/client';
 import { usePathname } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveOraculoContext } from '@/lib/oraculo/context';
