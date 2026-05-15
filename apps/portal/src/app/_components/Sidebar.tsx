@@ -357,28 +357,43 @@ export function Sidebar() {
 
         .sidebar__link {
           display: flex;
+          flex-direction: row;
           align-items: center;
-          gap: 14px;
-          padding: 12px 16px;
-          border-radius: 14px;
-          text-decoration: none;
+          gap: 12px;
+          padding: 10px 16px;
+          border-radius: 12px;
+          text-decoration: none !important;
           color: #94a3b8;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
-          font-weight: 600;
+          font-family: inherit;
+          font-weight: 700;
           font-size: 15px;
+          letter-spacing: -0.02em;
           background: none;
           border: none;
           width: 100%;
           text-align: left;
           cursor: pointer;
+          outline: none;
         }
-        .sidebar__link:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
-        .sidebar__link.active { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+
+        .sidebar__link:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: #fff;
+          text-decoration: none !important;
+        }
+
+        .sidebar__link.active {
+          background: rgba(249, 115, 22, 0.12);
+          color: #f97316;
+          text-decoration: none !important;
+        }
+
         .sidebar__link-icon {
           width: 20px;
           height: 20px;
-          opacity: 0.7;
+          opacity: 0.8;
           flex-shrink: 0;
           display: flex;
           align-items: center;
@@ -391,9 +406,13 @@ export function Sidebar() {
           display: block;
         }
 
-        .sidebar__link.active .sidebar__link-icon, .sidebar__link:hover .sidebar__link-icon {
-          opacity: 1;
-          color: #f97316;
+        .sidebar__link-label {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1;
+          margin: 0;
+          padding: 0;
         }
 
         .sidebar__badge {
