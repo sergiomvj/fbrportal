@@ -1,5 +1,5 @@
-import { GET as getDesignDashboard } from '@/app/api/proxy/design/dashboard/route';
 import { headers } from 'next/headers';
+import { getInternalApiUrl } from '../api-utils';
 import type { DesignModuleSnapshot, DesignWebhookPreview } from './types';
 import type { ArvaAgent } from '@fbr/arva-integration';
 
@@ -22,7 +22,8 @@ export interface DesignPortalDashboardPayload {
 }
 
 export async function getDesignDashboardFromPortal(): Promise<DesignPortalDashboardPayload> {
-  const response = await getDesignDashboard(new Request('http://localhost/api/proxy/design/dashboard', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/design/dashboard');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   if (!response.ok) {
     throw new Error(`Failed to load design dashboard: ${response.status}`);
   }

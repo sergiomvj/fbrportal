@@ -1,10 +1,5 @@
-import { GET as getDashboard } from '@/app/api/proxy/redacao/dashboard/route';
-import { GET as getArtigos } from '@/app/api/proxy/redacao/artigos/route';
-import { GET as getPublicados } from '@/app/api/proxy/redacao/publicados/route';
-import { GET as getFontes } from '@/app/api/proxy/redacao/fontes/route';
-import { GET as getUGC } from '@/app/api/proxy/redacao/ugc/route';
-import { GET as getAlertas } from '@/app/api/proxy/redacao/alertas/route';
 import { headers } from 'next/headers';
+import { getInternalApiUrl } from '../api-utils';
 import type { Alerta, Artigo, DashboardKpis, FonteRSS, UGCSubmission } from './types';
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -28,37 +23,43 @@ async function buildProxyHeaders() {
 }
 
 export async function getRedacaoDashboardFromPortal(): Promise<DashboardKpis> {
-  const response = await getDashboard(new Request('http://localhost/api/proxy/redacao/dashboard', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/redacao/dashboard');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ kpis: DashboardKpis }>(response);
   return body.kpis;
 }
 
 export async function getRedacaoArtigosFromPortal(query = ''): Promise<Artigo[]> {
-  const response = await getArtigos(new Request(`http://localhost/api/proxy/redacao/artigos${query}`, { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl(`/api/proxy/redacao/artigos${query}`);
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ artigos: Artigo[] }>(response);
   return body.artigos;
 }
 
 export async function getRedacaoPublicadosFromPortal(): Promise<Artigo[]> {
-  const response = await getPublicados(new Request('http://localhost/api/proxy/redacao/publicados', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/redacao/publicados');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ publicados: Artigo[] }>(response);
   return body.publicados;
 }
 
 export async function getRedacaoFontesFromPortal(): Promise<FonteRSS[]> {
-  const response = await getFontes(new Request('http://localhost/api/proxy/redacao/fontes', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/redacao/fontes');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ fontes: FonteRSS[] }>(response);
   return body.fontes;
 }
 
 export async function getRedacaoUGCFromPortal(): Promise<UGCSubmission[]> {
-  const response = await getUGC(new Request('http://localhost/api/proxy/redacao/ugc', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/redacao/ugc');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ ugc: UGCSubmission[] }>(response);
   return body.ugc;
 }
 
 export async function getRedacaoAlertasFromPortal(): Promise<Alerta[]> {
-  const response = await getAlertas(new Request('http://localhost/api/proxy/redacao/alertas', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/redacao/alertas');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   const body = await readJson<{ alertas: Alerta[] }>(response);
   return body.alertas;
 }

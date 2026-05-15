@@ -1,5 +1,5 @@
-import { GET as getSocialDashboard } from '@/app/api/proxy/social/dashboard/route';
 import { headers } from 'next/headers';
+import { getInternalApiUrl } from '../api-utils';
 import type { SocialDashboardSnapshot } from './types';
 
 async function buildProxyHeaders() {
@@ -15,7 +15,8 @@ async function buildProxyHeaders() {
 }
 
 export async function getSocialDashboardFromPortal(): Promise<SocialDashboardSnapshot> {
-  const response = await getSocialDashboard(new Request('http://localhost/api/proxy/social/dashboard', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/social/dashboard');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   if (!response.ok) {
     throw new Error(`Failed to load social dashboard: ${response.status}`);
   }

@@ -1,5 +1,5 @@
-import { GET as getVideoFlowDashboard } from '@/app/api/proxy/videoflow/dashboard/route';
 import { headers } from 'next/headers';
+import { getInternalApiUrl } from '../api-utils';
 import type { Concept, Production, TemplatePreset, VideoFlowDashboardKpis } from './types';
 
 async function buildProxyHeaders() {
@@ -22,7 +22,8 @@ export interface VideoFlowPortalDashboardPayload {
 }
 
 export async function getVideoFlowDashboardFromPortal(): Promise<VideoFlowPortalDashboardPayload> {
-  const response = await getVideoFlowDashboard(new Request('http://localhost/api/proxy/videoflow/dashboard', { headers: await buildProxyHeaders() }));
+  const url = await getInternalApiUrl('/api/proxy/videoflow/dashboard');
+  const response = await fetch(url, { headers: await buildProxyHeaders() });
   if (!response.ok) {
     throw new Error(`Failed to load videoflow dashboard: ${response.status}`);
   }
