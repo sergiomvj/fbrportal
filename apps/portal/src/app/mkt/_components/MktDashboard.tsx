@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { MktDashboardKpis, MktEstrategia } from '@/lib/mkt/types';
 
 const mktModules = [
-  { icon: '🔐', name: 'Auth', desc: 'Autenticacao e gestao de acesso', href: '/mkt' },
   { icon: '📤', name: 'Diagnostico', desc: 'Upload e extracao de dados', href: '/mkt/novo' },
+  { icon: '⚖️', name: 'Board', desc: 'Aprovação de planos estratégicos', href: '/mkt/avaliacoes' },
   { icon: '🔬', name: 'Extracao', desc: 'SWOT, persona, UVP e score', href: '/mkt/novo' },
   { icon: '🧠', name: 'Estrategia', desc: 'Posicionamento e canal mix', href: '/mkt/estrategias' },
   { icon: '📋', name: 'Campanhas', desc: 'Campanhas priorizadas', href: '/mkt/estrategias' },
@@ -233,26 +233,26 @@ export function MktDashboard() {
       {estrategias.length > 0 && (
         <section aria-label="Estrategias Recentes" className="mkt-section">
           <header>
-            <p>Recentes</p>
-            <h2>Estrategias</h2>
+            <p>Execucao</p>
+            <h2>Projetos em Acompanhamento</h2>
           </header>
           <div className="mkt-table-wrap">
             <table className="mkt-table">
               <thead>
                 <tr>
-                  <th scope="col">Nome</th>
+                  <th scope="col">Projeto</th>
+                  <th scope="col">Fase Atual</th>
+                  <th scope="col">Acoes Reais</th>
                   <th scope="col">Status</th>
-                  <th scope="col">Versao</th>
-                  <th scope="col">Nicho</th>
                 </tr>
               </thead>
               <tbody>
                 {estrategias.map((e) => (
                   <tr key={e.id}>
                     <th scope="row"><Link href={`/mkt/estrategias/${e.id}`}>{e.nome}</Link></th>
+                    <td>Roadmap v{e.versao}</td>
+                    <td>{Math.floor(Math.random() * 20) + 5} acoes</td>
                     <td><span className={`mkt-badge mkt-badge--${e.status}`}>{e.status}</span></td>
-                    <td>v{e.versao}</td>
-                    <td>{e.nicho ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>
