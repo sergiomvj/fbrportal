@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { createSupabaseServerClient } from '../supabase-admin';
 
 export interface ClickRequestContext {
