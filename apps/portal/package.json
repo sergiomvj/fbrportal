@@ -19,6 +19,7 @@
     "@fbr/portal-bridge": "0.1.0",
     "@fbr/ui": "0.1.0",
     "@hookform/resolvers": "^5.0.1",
+    "@napi-rs/canvas": "^0.1.80",
     "@supabase/supabase-js": "^2.49.4",
     "ai": "^6.0.177",
     "iron-session": "^8.0.4",
