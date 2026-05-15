@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createSupabaseServerClient } from '../supabase-admin';
-import type {
+import { broadcastMarketingApproval } from '../marketing-integration';
+import {
   MktEstrategia,
   MktDiagnostico,
   MktEstrategiaVersao,
@@ -606,6 +607,9 @@ export async function approveAvaliacao(avaliacaoId: string, context: MktRequestC
       projeto_gerado_id: estrategia.id 
     })
     .eq('id', avaliacaoId);
+
+  // 5. Transmitir para as outras áreas (Redação, Social, Design, etc)
+  await broadcastMarketingApproval(estrategia, context);
 
   return estrategia;
 }
