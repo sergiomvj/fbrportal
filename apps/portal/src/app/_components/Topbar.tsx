@@ -162,12 +162,13 @@ export function Topbar() {
           left: 260px;
           right: 0;
           height: 60px;
-          background: var(--color-bg-primary, #0f172a);
-          border-bottom: 1px solid var(--color-border, #334155);
+          background: rgba(15, 23, 42, 0.8);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 20px;
+          padding: 0 24px;
           z-index: 100;
         }
 
@@ -180,7 +181,7 @@ export function Topbar() {
         .topbar__right {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
         }
 
         .topbar__dropdown {
@@ -191,17 +192,18 @@ export function Topbar() {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 12px;
-          background: var(--color-bg-secondary, #1e293b);
-          border: 1px solid var(--color-border, #334155);
-          border-radius: 8px;
+          padding: 8px 14px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
           color: var(--color-text-primary, #fff);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .topbar__company-btn:hover {
-          border-color: var(--color-primary, #3b82f6);
+          border-color: var(--color-primary, #f97316);
+          background: rgba(249, 115, 22, 0.05);
         }
 
         .topbar__company-icon {
@@ -209,13 +211,14 @@ export function Topbar() {
         }
 
         .topbar__company-name {
-          font-size: 14px;
-          font-weight: 500;
+          font-size: 13px;
+          font-weight: 600;
         }
 
         .topbar__dropdown-arrow {
-          font-size: 10px;
+          font-size: 8px;
           color: var(--color-text-secondary, #94a3b8);
+          opacity: 0.5;
         }
 
         .topbar__icon-btn {
@@ -223,73 +226,78 @@ export function Topbar() {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
-          background: none;
-          border: none;
-          border-radius: 8px;
+          width: 38px;
+          height: 38px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
           cursor: pointer;
-          font-size: 18px;
+          font-size: 16px;
           color: var(--color-text-secondary, #94a3b8);
           transition: all 0.2s;
         }
 
         .topbar__icon-btn:hover {
-          background: var(--color-bg-hover, #334155);
-          color: var(--color-text-primary, #fff);
+          background: rgba(249, 115, 22, 0.1);
+          color: var(--color-primary, #f97316);
+          border-color: rgba(249, 115, 22, 0.2);
         }
 
         .topbar__badge {
           position: absolute;
-          top: 4px;
-          right: 4px;
+          top: -4px;
+          right: -4px;
           min-width: 18px;
           height: 18px;
           padding: 0 4px;
-          background: var(--color-error, #ef4444);
+          background: var(--color-primary, #f97316);
           border-radius: 9px;
-          font-size: 11px;
-          font-weight: 600;
+          font-size: 10px;
+          font-weight: 700;
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
+          box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
         }
 
         .topbar__profile-btn {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 6px 12px 6px 6px;
-          background: none;
-          border: 1px solid transparent;
-          border-radius: 8px;
+          padding: 4px 12px 4px 4px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
           cursor: pointer;
           color: var(--color-text-primary, #fff);
           transition: all 0.2s;
         }
 
         .topbar__profile-btn:hover {
-          background: var(--color-bg-hover, #334155);
+          background: rgba(249, 115, 22, 0.1);
+          border-color: rgba(249, 115, 22, 0.2);
         }
 
         .topbar__avatar {
-          width: 32px;
-          height: 32px;
-          background: var(--color-primary, #3b82f6);
-          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
-          font-size: 14px;
+          font-weight: 700;
+          font-size: 13px;
           color: #fff;
+          box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
         }
 
         .topbar__avatar.large {
-          width: 48px;
-          height: 48px;
-          font-size: 18px;
+          width: 44px;
+          height: 44px;
+          font-size: 16px;
+          border-radius: 14px;
         }
 
         .topbar__user-info {
@@ -300,26 +308,30 @@ export function Topbar() {
 
         .topbar__user-name {
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           line-height: 1.2;
         }
 
         .topbar__user-role {
-          font-size: 11px;
-          color: var(--color-text-secondary, #94a3b8);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--color-primary, #f97316);
+          font-weight: 700;
         }
 
         .topbar__dropdown-menu {
           position: absolute;
-          top: calc(100% + 8px);
+          top: calc(100% + 10px);
           right: 0;
-          min-width: 200px;
-          background: var(--color-bg-secondary, #1e293b);
-          border: 1px solid var(--color-border, #334155);
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          min-width: 220px;
+          background: #0f172a;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
           overflow: hidden;
           z-index: 1000;
+          padding: 6px;
         }
 
         .topbar__dropdown-item {
@@ -327,33 +339,39 @@ export function Topbar() {
           align-items: center;
           gap: 10px;
           width: 100%;
-          padding: 10px 16px;
+          padding: 10px 14px;
           background: none;
           border: none;
+          border-radius: 10px;
           color: var(--color-text-primary, #fff);
           font-size: 14px;
           cursor: pointer;
           text-align: left;
-          transition: background 0.2s;
+          transition: all 0.2s;
         }
 
         .topbar__dropdown-item:hover {
-          background: var(--color-bg-hover, #334155);
+          background: rgba(255, 255, 255, 0.05);
+          color: var(--color-primary, #f97316);
         }
 
         .topbar__dropdown-item.active {
-          background: var(--color-primary-alpha, rgba(59, 130, 246, 0.15));
-          color: var(--color-primary, #3b82f6);
+          background: rgba(249, 115, 22, 0.1);
+          color: var(--color-primary, #f97316);
         }
 
         .topbar__dropdown-item.logout {
-          color: var(--color-error, #ef4444);
+          color: #ef4444;
+        }
+
+        .topbar__dropdown-item.logout:hover {
+          background: rgba(239, 68, 68, 0.1);
         }
 
         .topbar__dropdown-divider {
           height: 1px;
-          background: var(--color-border, #334155);
-          margin: 4px 0;
+          background: rgba(255, 255, 255, 0.06);
+          margin: 6px;
         }
 
         .topbar__notifications {
@@ -365,54 +383,57 @@ export function Topbar() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--color-border, #334155);
+          padding: 14px 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .topbar__notifications-header span {
-          font-weight: 600;
-          font-size: 14px;
+          font-weight: 700;
+          font-size: 15px;
         }
 
         .topbar__mark-read {
           background: none;
           border: none;
-          color: var(--color-primary, #3b82f6);
+          color: var(--color-primary, #f97316);
           font-size: 12px;
+          font-weight: 600;
           cursor: pointer;
         }
 
         .topbar__notifications-list {
           max-height: 320px;
           overflow-y: auto;
+          padding: 8px;
         }
 
         .topbar__notification-item {
           display: flex;
           gap: 12px;
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--color-border, #334155);
+          padding: 12px;
+          border-radius: 12px;
           cursor: pointer;
           transition: background 0.2s;
         }
 
         .topbar__notification-item:hover {
-          background: var(--color-bg-hover, #334155);
+          background: rgba(255, 255, 255, 0.04);
         }
 
         .topbar__notification-item.read {
-          opacity: 0.6;
+          opacity: 0.5;
         }
 
         .topbar__notification-icon {
           font-size: 16px;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--color-bg-hover, #334155);
-          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+          flex-shrink: 0;
         }
 
         .topbar__notification-content {
@@ -423,7 +444,7 @@ export function Topbar() {
         .topbar__notification-content strong {
           display: block;
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 700;
           margin-bottom: 2px;
         }
 
@@ -439,32 +460,37 @@ export function Topbar() {
         .topbar__notification-time {
           font-size: 11px;
           color: var(--color-text-secondary, #94a3b8);
+          opacity: 0.7;
         }
 
         .topbar__notifications-footer {
           padding: 12px 16px;
-          border-top: 1px solid var(--color-border, #334155);
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
           text-align: center;
         }
 
         .topbar__notifications-footer button {
           background: none;
           border: none;
-          color: var(--color-primary, #3b82f6);
+          color: var(--color-primary, #f97316);
           font-size: 13px;
+          font-weight: 600;
           cursor: pointer;
         }
 
         .topbar__profile-header {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
           padding: 16px;
+          background: rgba(255, 255, 255, 0.02);
+          margin: -6px -6px 6px -6px;
         }
 
         .topbar__profile-header strong {
           display: block;
-          font-size: 14px;
+          font-size: 15px;
+          font-weight: 700;
         }
 
         .topbar__profile-header span {
@@ -475,7 +501,7 @@ export function Topbar() {
         @media (max-width: 768px) {
           .topbar {
             left: 0;
-            padding: 0 12px 0 60px;
+            padding: 0 16px 0 64px;
           }
 
           .topbar__user-info {
