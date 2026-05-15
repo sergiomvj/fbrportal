@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import {
   Partner,
@@ -36,7 +37,7 @@ export interface SalesRequestContext {
 export class SalesValidationError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 403 | 404 | 409 | 422,
+    readonly status: 400 | 401 | 403 | 404 | 409 | 422,
     readonly issues?: unknown,
   ) {
     super(message);
@@ -499,7 +500,7 @@ let anomalies: Anomaly[] = [];
 let mediaKits: MediaKit[] = [];
 let rateCards: RateCard[] = [];
 
-function resetSalesStoreForTests() {
+export function resetSalesStoreForTests() {
   partners = clone(initialPartners);
   partnerEvents = clone(initialPartnerEvents);
   espacos = clone(initialEspacos);
@@ -513,6 +514,25 @@ resetSalesStoreForTests();
 
 export function getSalesTestCompanyIds() {
   return { alpha: COMPANY_ALPHA, user: USER_SYSTEM };
+}
+
+export function buildSalesClickWebhookSignature(payload: string, secret: string) {
+  return createHmac('sha256', secret).update(payload).digest('hex');
+}
+
+export function validateSalesClickWebhookSignature(payload: string, signature: string | null, secret: string) {
+  if (!signature) {
+    throw new SalesValidationError('Missing webhook signature.', 401);
+  }
+
+  const normalized = signature.startsWith('sha256=') ? signature.slice('sha256='.length) : signature;
+  const expected = buildSalesClickWebhookSignature(payload, secret);
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  const receivedBuffer = Buffer.from(normalized, 'hex');
+
+  if (receivedBuffer.length !== expectedBuffer.length || !timingSafeEqual(receivedBuffer, expectedBuffer)) {
+    throw new SalesValidationError('Invalid webhook signature.', 401);
+  }
 }
 
 export function parsePartnersQuery(url: string): PartnersQuery {
@@ -1086,6 +1106,61 @@ export function buildPaymentReceivedForward(context: SalesRequestContext, receit
       notas: receita.observacoes,
     },
   };
+}
+
+export type FinanceForwardResult =
+  | { status: 'sent'; statusCode: number; response: unknown }
+  | { status: 'skipped'; reason: 'SALES_FINANCE_INTAKE_URL_NOT_CONFIGURED' }
+  | { status: 'failed'; statusCode?: number; message: string };
+
+export function resolveFinanceIntakeEndpoint(
+  explicitEndpoint = process.env.SALES_FINANCE_INTAKE_URL,
+  baseUrl = process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? process.env.VERCEL_URL,
+): string | null {
+  if (explicitEndpoint && explicitEndpoint.trim().length > 0) {
+    return explicitEndpoint;
+  }
+
+  if (!baseUrl || baseUrl.trim().length === 0) {
+    return null;
+  }
+
+  const normalizedBase = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
+  return new URL('/api/proxy/finance/recebimentos/sales-intake', normalizedBase).toString();
+}
+
+export async function emitPaymentReceivedEvent(
+  event: PaymentReceivedForward,
+  context: SalesRequestContext,
+  endpoint = resolveFinanceIntakeEndpoint(),
+): Promise<FinanceForwardResult> {
+  if (!endpoint) {
+    return { status: 'skipped', reason: 'SALES_FINANCE_INTAKE_URL_NOT_CONFIGURED' };
+  }
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-user-id': context.userId,
+        'x-company-id': context.companyId,
+        'x-module-source': 'fbr-sales',
+      },
+      body: JSON.stringify(event),
+    });
+
+    const text = await response.text();
+    const parsed = text ? JSON.parse(text) : null;
+
+    if (!response.ok) {
+      return { status: 'failed', statusCode: response.status, message: text };
+    }
+
+    return { status: 'sent', statusCode: response.status, response: parsed };
+  } catch (error) {
+    return { status: 'failed', message: error instanceof Error ? error.message : 'Unknown Finance bridge error' };
+  }
 }
 
 export function runReconciliation(context: SalesRequestContext): ReconciliationResult {

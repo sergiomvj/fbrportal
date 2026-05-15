@@ -1,4 +1,3 @@
-import { createSupabaseServerClient } from '../supabase-admin';
 import type { MktJobCategory, MktProcessingJob, MktJobStatus } from './types';
 
 export interface MktQueueJob {
@@ -15,6 +14,7 @@ export interface MktQueueJob {
   startedAt: string | null;
   completedAt: string | null;
   failedAt: string | null;
+  nextAttemptAt: string | null;
 }
 
 export interface MktQueueConfig {
@@ -30,6 +30,7 @@ export const MKT_QUEUE_NAMES = [
   'mkt:copy',
   'mkt:calendario',
   'mkt:export',
+  'mkt:fbr_click',
 ] as const;
 
 export type MktQueueName = (typeof MKT_QUEUE_NAMES)[number];
@@ -48,10 +49,26 @@ const CATEGORY_TO_QUEUE: Record<MktJobCategory, MktQueueName> = {
   copy: 'mkt:copy',
   calendario: 'mkt:calendario',
   export: 'mkt:export',
+  fbr_click_delivery: 'mkt:fbr_click',
 };
 
 export function getQueueForCategory(category: MktJobCategory): MktQueueName {
   return CATEGORY_TO_QUEUE[category];
+}
+
+export function getMktRetryDelayMs(attemptNumber: number, config = MKT_DEFAULT_JOB_CONFIG): number {
+  const safeAttempt = Math.max(attemptNumber, 1);
+  return config.backoff.delay * 2 ** (safeAttempt - 1);
+}
+
+export function buildMktNextAttemptAt(attemptNumber: number, now = Date.now()): string {
+  return new Date(now + getMktRetryDelayMs(attemptNumber)).toISOString();
+}
+
+export function isMktJobReadyForProcessing(job: Pick<MktProcessingJob, 'next_attempt_at'>, now = Date.now()): boolean {
+  if (!job.next_attempt_at) return true;
+  const nextAttempt = Date.parse(job.next_attempt_at);
+  return Number.isNaN(nextAttempt) || nextAttempt <= now;
 }
 
 type JobProcessor = (job: MktQueueJob) => Promise<void>;
@@ -68,7 +85,7 @@ export async function enqueueJob(
   empresaId: string,
   payload: Record<string, unknown> = {},
 ): Promise<MktQueueJob> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await getSupabaseClient();
   
   const insertPayload = {
     categoria: category,
@@ -78,6 +95,7 @@ export async function enqueueJob(
     status: 'pending',
     max_tentativas: MKT_DEFAULT_JOB_CONFIG.attempts,
     tentativas: 0,
+    next_attempt_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -89,36 +107,49 @@ export async function enqueueJob(
 }
 
 export async function getJob(jobId: string): Promise<MktQueueJob | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await getSupabaseClient();
   const { data } = await supabase.from('mkt_processing_jobs').select('*').eq('id', jobId).maybeSingle();
   if (!data) return null;
   return convertToQueueJob(data as MktProcessingJob);
 }
 
-export async function getJobsByEstrategia(estrategiaId: string): Promise<MktQueueJob[]> {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase.from('mkt_processing_jobs').select('*').eq('estrategia_id', estrategiaId);
+export async function getJobsByEstrategia(estrategiaId: string, companyId?: string): Promise<MktQueueJob[]> {
+  const supabase = await getSupabaseClient();
+  let query = supabase.from('mkt_processing_jobs').select('*').eq('estrategia_id', estrategiaId);
+  if (companyId) {
+    query = query.eq('empresa_id', companyId);
+  }
+  const { data } = await query;
   if (!data) return [];
   return data.map((row) => convertToQueueJob(row as MktProcessingJob));
 }
 
-export async function getQueueStatus(): Promise<Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>> {
+export type MktQueueStatus = Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>;
+
+export async function getQueueStatus(companyId?: string): Promise<MktQueueStatus> {
+  const supabase = await getSupabaseClient();
+  let query = supabase.from('mkt_processing_jobs').select('categoria, status');
+  if (companyId) {
+    query = query.eq('empresa_id', companyId);
+  }
+
+  const { data } = await query;
+  return buildQueueStatusFromRows((data as Array<{ categoria: MktJobCategory; status: MktJobStatus }> | null) ?? []);
+}
+
+export function buildQueueStatusFromRows(rows: Array<{ categoria: MktJobCategory; status: MktJobStatus }>): MktQueueStatus {
   const status = {} as Record<MktQueueName, { pending: number; processing: number; done: number; failed: number }>;
   for (const name of MKT_QUEUE_NAMES) {
     status[name] = { pending: 0, processing: 0, done: 0, failed: 0 };
   }
-  
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase.from('mkt_processing_jobs').select('categoria, status');
-  if (data) {
-    for (const row of data) {
-      const qname = getQueueForCategory(row.categoria as MktJobCategory);
-      if (qname && status[qname] && status[qname][row.status as keyof typeof status[typeof qname]] !== undefined) {
-        status[qname][row.status as keyof typeof status[typeof qname]]++;
-      }
+
+  for (const row of rows) {
+    const qname = getQueueForCategory(row.categoria);
+    if (qname && status[qname] && status[qname][row.status] !== undefined) {
+      status[qname][row.status]++;
     }
   }
-  
+
   return status;
 }
 
@@ -141,6 +172,7 @@ function convertToQueueJob(job: MktProcessingJob): MktQueueJob {
     startedAt: job.started_at ?? null,
     completedAt: job.completed_at ?? null,
     failedAt: job.failed_at ?? null,
+    nextAttemptAt: job.next_attempt_at ?? null,
   };
 }
 
@@ -158,7 +190,13 @@ export function convertToProcessingJob(job: MktQueueJob): MktProcessingJob {
     started_at: job.startedAt,
     completed_at: job.completedAt,
     failed_at: job.failedAt,
+    next_attempt_at: job.nextAttemptAt,
     created_at: job.createdAt,
     updated_at: job.completedAt ?? job.failedAt ?? job.startedAt ?? job.createdAt,
   };
+}
+
+async function getSupabaseClient() {
+  const { createSupabaseServerClient } = await import('../supabase-admin');
+  return createSupabaseServerClient();
 }

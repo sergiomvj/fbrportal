@@ -1,9 +1,9 @@
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { z } from 'zod';
-import { getDiagnosticoByEstrategia, saveCalendarItems, MktRequestContext } from '../store';
+import { getDiagnosticoByEstrategia, saveCalendarItems, saveRoadmapTasks, MktRequestContext } from '../store';
 import { emitGeracao } from '../sse';
-import type { MktProcessingJob, MktCalendarItem } from '../types';
+import { buildCalendarAndRoadmapArtifacts, MktGeneratedCalendarSchema } from '../artifacts';
+import type { MktProcessingJob } from '../types';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
@@ -12,46 +12,33 @@ const openai = createOpenAI({
 
 export async function processCalendario(job: MktProcessingJob, context: MktRequestContext) {
   const diagnostico = await getDiagnosticoByEstrategia(job.estrategia_id, context);
-  if (!diagnostico) throw new Error('Diagnóstico não encontrado ou não aprovado.');
+  if (!diagnostico) throw new Error('Diagnostico nao encontrado ou nao aprovado.');
 
-  emitGeracao(job.estrategia_id, 10, 'Iniciando geração de calendário', 'calendario_bot');
+  emitGeracao(job.estrategia_id, 10, 'Iniciando geracao de calendario', 'calendario_bot');
 
-  // LLM Call
   const { object } = await generateObject({
     model: openai(process.env.LLM_MODEL || 'gpt-4o'),
-    schema: z.object({
-      tarefas: z.array(z.object({
-        dias_a_frente: z.number(),
-        canal: z.string(),
-        tipo: z.enum(['organico', 'pago']),
-        tema: z.string(),
-        copy_resumo: z.string(),
-        is_quick_win: z.boolean()
-      }))
-    }),
-    prompt: `Gere um calendário editorial detalhado de 90 dias para a estratégia de marketing baseada no UVP: ${diagnostico.uvp}.
-Inclua pelo menos 10 posts distribuídos ao longo dos 90 dias, mesclando orgânico e pago.
-Destaque os 'quick wins' que podem trazer retorno rápido.`
+    schema: MktGeneratedCalendarSchema,
+    prompt: `Gere o calendario editorial e roadmap operacional do FBR-MKT a partir do diagnostico aprovado.
+UVP: ${diagnostico.uvp}
+Persona: ${JSON.stringify(diagnostico.persona)}
+
+Contrato obrigatorio dos PRDs:
+- tarefas deve conter exatamente 90 itens, um para cada dia de dias_a_frente 0 ate 89.
+- cada item deve distinguir organico vs pago, canal, tema, copy_resumo e status editorial implicito.
+- quick wins devem existir somente nos primeiros 30 dias.
+- roadmap_tasks deve conter as fases 0-30d, 30-60d e 60-90d, com responsavel, ferramenta e alerta_prazo.`,
   });
 
-  // Save calendario
-  const hoje = new Date();
-  const itemsToSave: Omit<MktCalendarItem, 'id' | 'created_at'>[] = object.tarefas.map(t => {
-    const dataAlvo = new Date(hoje);
-    dataAlvo.setDate(dataAlvo.getDate() + t.dias_a_frente);
-    return {
-      estrategia_id: job.estrategia_id,
-      versao: 1,
-      data: dataAlvo.toISOString().substring(0, 10),
-      canal: t.canal,
-      tipo: t.tipo,
-      tema: t.tema,
-      copy_resumo: t.copy_resumo,
-      status: 'pendente',
-      is_quick_win: t.is_quick_win
-    };
-  });
-  await saveCalendarItems(itemsToSave);
+  const payload = (job.payload ?? {}) as { versao?: number };
+  const { calendario, roadmap } = buildCalendarAndRoadmapArtifacts(
+    object,
+    job.estrategia_id,
+    payload.versao ?? 1,
+  );
 
-  emitGeracao(job.estrategia_id, 100, 'Calendário gerado com sucesso', 'calendario_bot');
+  await saveCalendarItems(calendario);
+  await saveRoadmapTasks(roadmap);
+
+  emitGeracao(job.estrategia_id, 100, 'Calendario e roadmap gerados com sucesso', 'calendario_bot');
 }

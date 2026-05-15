@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-admin';
-import { isSignedUrlExpired } from '@/lib/mkt/storage';
+import { bucketForStoragePath, isSignedUrlExpired } from '@/lib/mkt/storage';
 import { jsonError } from '../_shared';
 
 export async function GET(request: Request) {
@@ -16,10 +16,7 @@ export async function GET(request: Request) {
       return Response.json({ message: 'Download link expired' }, { status: 403 });
     }
 
-    // Identificar o bucket com base no path
-    // Ex: mkt/... ou mkt-exports/...
-    // Como simplificação, estamos usando mkt_documents
-    const bucket = path.includes('exports') ? 'mkt_documents' : 'mkt_documents';
+    const bucket = bucketForStoragePath(path);
 
     const supabase = createSupabaseServerClient();
     

@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     const clickPayload = await clickResponse.json();
     return Response.json(
       {
+        deal_id: clickPayload.deal?.id,
         click: clickPayload.deal,
         created: clickPayload.created,
         handoff,

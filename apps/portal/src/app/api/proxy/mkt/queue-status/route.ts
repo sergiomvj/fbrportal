@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (context instanceof Response) return context;
 
   try {
-    const status = await getQueueStatus();
+    const status = await getQueueStatus(context.companyId);
     return withSecurityHeaders(Response.json({ queues: status }));
   } catch (error) {
     return jsonError(error);

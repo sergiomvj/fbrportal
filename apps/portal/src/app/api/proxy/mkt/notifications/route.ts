@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const unreadOnly = url.searchParams.get('unread') === 'true';
-    const items = listNotifications(context.companyId, { userId: context.userId, unreadOnly });
+    const items = await listNotifications(context.companyId, { userId: context.userId, unreadOnly });
     return withSecurityHeaders(Response.json({ notifications: items }));
   } catch (error) {
     return jsonError(error);
@@ -26,8 +26,8 @@ export async function PATCH(request: Request) {
     if (!notification_id) {
       return Response.json({ code: 'BAD_REQUEST', message: 'notification_id required.' }, { status: 400 });
     }
-    markNotificationRead(notification_id);
-    return withSecurityHeaders(Response.json({ ok: true }));
+    const marked = await markNotificationRead(notification_id, context.companyId);
+    return withSecurityHeaders(Response.json({ ok: marked }));
   } catch (error) {
     return jsonError(error);
   }

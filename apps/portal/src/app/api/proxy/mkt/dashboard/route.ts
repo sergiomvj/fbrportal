@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (context instanceof Response) return context;
 
   try {
-    return withSecurityHeaders(Response.json({ kpis: getDashboardKpis(context) }));
+    return withSecurityHeaders(Response.json({ kpis: await getDashboardKpis(context) }));
   } catch (error) {
     return jsonError(error);
   }

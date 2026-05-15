@@ -7,6 +7,7 @@ export const MktJobCategorySchema = z.enum([
   'copy',
   'calendario',
   'export',
+  'fbr_click_delivery',
 ]);
 export type MktJobCategory = z.infer<typeof MktJobCategorySchema>;
 
@@ -282,6 +283,7 @@ export const MktProcessingJobSchema = z.object({
   started_at: z.string().nullable().optional(),
   completed_at: z.string().nullable().optional(),
   failed_at: z.string().nullable().optional(),
+  next_attempt_at: z.string().nullable().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });

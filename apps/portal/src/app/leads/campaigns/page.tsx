@@ -4,6 +4,8 @@ import { listCampaigns, listDomains, listICPs } from '@/lib/leads/store';
 import { LeadsCampaigns } from '../_components/LeadsCampaigns';
 import '../leads.css';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LeadsCampaignsPage() {
   const context = await getLeadsPageContext();
   const campaigns = listCampaigns(context);

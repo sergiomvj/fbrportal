@@ -20,20 +20,48 @@ export const createDealSchema = z.object({
 
 export const leadQualifiedSchema = z.object({
   lead_id: z.string().min(1),
+  empresa_id: z.string().optional(),
   empresa_nome: z.string().min(1),
-  contato_nome: z.string().optional(),
-  contato_email: z.string().email().optional(),
+  empresa_cnpj: z.string().nullable().optional(),
+  contato_nome: z.string().nullable().optional(),
+  contato_email: z.string().email().nullable().optional(),
+  contato_cargo: z.string().nullable().optional(),
+  contato_linkedin: z.string().nullable().optional(),
+  contato_telefone: z.string().nullable().optional(),
   score: scoreSchema,
+  icp_id: z.string().nullable().optional(),
+  icp_nome: z.string().nullable().optional(),
   icp_origem: z.string().optional(),
+  etapa_final: z.string().optional(),
   historico_interacoes: z.array(z.unknown()).optional(),
   dados_enriquecimento: z.record(z.unknown()).optional(),
+  cadencia: z.record(z.unknown()).optional(),
+  deduplicacao: z.record(z.unknown()).optional(),
   cadencia_completa: z.boolean().optional(),
   total_respostas: z.number().int().min(0).optional(),
-});
+  prioridade: z.enum(clickPriorities).optional(),
+  motivo_prioridade: z.string().optional(),
+  sugestao_acao: z.string().optional(),
+}).passthrough();
 
 export const leadQualifiedEventSchema = z.object({
   event: z.literal('lead.qualified'),
+  timestamp: z.string().optional(),
+  module_source: z.literal('fbr-leads').optional(),
   data: leadQualifiedSchema,
+}).passthrough();
+
+export const strategyExportedEventSchema = z.object({
+  event: z.literal('strategy.exported'),
+  data: z.object({
+    estrategia_id: z.string().min(1),
+    nome: z.string().min(1),
+    nicho: z.string().min(1),
+    documento_original: z.string(),
+    score_viabilidade: scoreSchema,
+    canais_sugeridos: z.array(z.string()),
+    exportado_por: z.string().min(1),
+  }),
 });
 
 export const messageSchema = z.object({
@@ -52,12 +80,12 @@ export function normalizeLeadQualified(input: unknown) {
   return {
     title: `Lead qualificado - ${payload.empresa_nome}`,
     companyName: payload.empresa_nome,
-    contactName: payload.contato_nome,
-    contactEmail: payload.contato_email,
+    contactName: payload.contato_nome ?? undefined,
+    contactEmail: payload.contato_email ?? undefined,
     valueCents: 0,
     stage: 'contato_inicial' as const,
     source: 'fbr_leads' as const,
-    priority: payload.score >= 80 ? ('alta' as const) : ('media' as const),
+    priority: payload.prioridade ?? (payload.score >= 80 ? ('alta' as const) : ('media' as const)),
     score: payload.score,
     leadId: payload.lead_id,
   };

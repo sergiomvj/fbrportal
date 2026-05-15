@@ -1,42 +1,57 @@
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-// TODO: Move to Upstash Redis or Vercel KV for Serverless production environments
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
 export interface MktRateLimitConfig {
   windowMs: number;
   maxRequests: number;
 }
 
+export interface MktRateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+  source: 'supabase';
+  unavailable?: boolean;
+}
+
 export const MKT_RATE_LIMITS: Record<string, MktRateLimitConfig> = {
   upload: { windowMs: 60_000, maxRequests: 10 },
   estrategias: { windowMs: 60_000, maxRequests: 30 },
-  chat: { windowMs: 60_000, maxRequests: 20 },
+  chat: { windowMs: 60_000, maxRequests: 10 },
   export: { windowMs: 60_000, maxRequests: 10 },
   generacao: { windowMs: 60_000, maxRequests: 5 },
 };
 
-export function checkRateLimit(
+export async function checkPersistentRateLimit(
   key: string,
   config: MktRateLimitConfig,
-): { allowed: boolean; remaining: number; resetAt: number } {
-  const now = Date.now();
-  const entry = rateLimitStore.get(key);
+): Promise<MktRateLimitResult> {
+  try {
+    const { createSupabaseServerClient } = await import('@/lib/supabase-admin');
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .rpc('mkt_consume_rate_limit', {
+        p_key: key,
+        p_limit: config.maxRequests,
+        p_window_ms: config.windowMs,
+      })
+      .single();
 
-  if (!entry || now > entry.resetAt) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + config.windowMs });
-    return { allowed: true, remaining: config.maxRequests - 1, resetAt: now + config.windowMs };
+    if (error || !data) throw new Error(error?.message ?? 'Rate limit RPC returned no data.');
+
+    const row = data as { allowed: boolean; remaining: number; reset_at_ms: number };
+    return {
+      allowed: row.allowed,
+      remaining: row.remaining,
+      resetAt: row.reset_at_ms,
+      source: 'supabase',
+    };
+  } catch {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + config.windowMs,
+      source: 'supabase',
+      unavailable: true,
+    };
   }
-
-  if (entry.count >= config.maxRequests) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-  }
-
-  entry.count += 1;
-  return { allowed: true, remaining: config.maxRequests - entry.count, resetAt: entry.resetAt };
 }
 
 export function rateLimitHeaders(result: { remaining: number; resetAt: number }): Record<string, string> {
@@ -46,18 +61,36 @@ export function rateLimitHeaders(result: { remaining: number; resetAt: number })
   };
 }
 
-export function rateLimitResponse(result: { remaining: number; resetAt: number }): Response {
+export function rateLimitResponse(result: { remaining: number; resetAt: number; unavailable?: boolean }): Response {
+  const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000);
+  if (result.unavailable) {
+    return Response.json(
+      {
+        code: 'RATE_LIMIT_UNAVAILABLE',
+        message: 'Rate limit infrastructure is unavailable. Please try again later.',
+        retryAfter,
+      },
+      {
+        status: 503,
+        headers: {
+          ...rateLimitHeaders(result),
+          'Retry-After': String(retryAfter),
+        },
+      },
+    );
+  }
+
   return Response.json(
     {
       code: 'RATE_LIMITED',
       message: 'Too many requests. Please try again later.',
-      retryAfter: Math.ceil((result.resetAt - Date.now()) / 1000),
+      retryAfter,
     },
     {
       status: 429,
       headers: {
         ...rateLimitHeaders(result),
-        'Retry-After': String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+        'Retry-After': String(retryAfter),
       },
     },
   );
@@ -143,5 +176,5 @@ export function withSecurityHeaders(response: Response): Response {
 }
 
 export function resetRateLimitsForTests() {
-  rateLimitStore.clear();
+  // Rate limits are persisted through Supabase; kept for test compatibility.
 }

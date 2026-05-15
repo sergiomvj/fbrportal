@@ -3,19 +3,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { MktCopyVariant } from '@/lib/mkt/types';
+import type { MktCopyVariant, MktLeadMagnet } from '@/lib/mkt/types';
 
 export function CopywritingView() {
   const params = useParams();
   const id = params.id as string;
   const [copies, setCopies] = useState<MktCopyVariant[]>([]);
+  const [leadMagnets, setLeadMagnets] = useState<MktLeadMagnet[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     fetch(`/api/proxy/mkt/estrategias/${id}/copy`)
       .then((r) => r.json())
-      .then((d) => setCopies(d.copy ?? []))
+      .then((d) => {
+        setCopies(d.copy ?? []);
+        setLeadMagnets(d.lead_magnets ?? []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -98,6 +102,28 @@ export function CopywritingView() {
             </div>
           </section>
         ))
+      )}
+
+      {leadMagnets.length > 0 && (
+        <section className="mkt-section">
+          <header>
+            <p>Pacote de captacao</p>
+            <h2>Lead magnets, landing pages e nurture emails</h2>
+          </header>
+          <div className="mkt-copy-list">
+            {leadMagnets.map((magnet) => (
+              <div key={magnet.id ?? magnet.nome} className="mkt-copy-card" style={{ borderLeftColor: '#10B981' }}>
+                <div className="mkt-copy-header">
+                  <span className="mkt-badge" style={{ background: '#10B98122', color: '#10B981' }}>{magnet.funil_estagio}</span>
+                  <span className="mkt-copy-canal">{magnet.persona_alvo}</span>
+                </div>
+                <strong>{magnet.nome}</strong>
+                <p className="mkt-copy-content">{magnet.landing_page.hero}</p>
+                <small>{magnet.landing_page.cta} - {magnet.nurture_emails.length} emails</small>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );

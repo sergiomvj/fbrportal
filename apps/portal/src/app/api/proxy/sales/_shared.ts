@@ -32,6 +32,7 @@ export function jsonError(error: unknown) {
     const ve = error as unknown as { status: number; message: string; issues?: unknown };
     const code =
       ve.status === 400 ? 'BAD_REQUEST' :
+      ve.status === 401 ? 'UNAUTHORIZED' :
       ve.status === 403 ? 'FORBIDDEN' :
       ve.status === 404 ? 'NOT_FOUND' :
       ve.status === 409 ? 'CONFLICT' :

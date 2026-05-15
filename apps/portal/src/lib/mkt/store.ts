@@ -24,11 +24,26 @@ import {
   MktEstrategiasQuerySchema,
   CampaignsQuerySchema,
 } from './types';
+import { buildCampaignRowsFromStrategyVersions } from './campaigns';
+import { calculateAverageGenerationSeconds } from './store-helpers';
 
 export interface MktRequestContext {
   companyId: string;
   userId: string;
   moduleSource: string;
+}
+
+export interface MktChatListOptions {
+  limit?: number;
+  before?: string;
+}
+
+export interface MktChatContextCacheRecord {
+  estrategia_id: string;
+  empresa_id: string;
+  payload: unknown;
+  expires_at: string;
+  updated_at?: string;
 }
 
 export class MktValidationError extends Error {
@@ -307,11 +322,66 @@ export async function saveChatMessage(msg: Omit<MktChatMessage, 'id' | 'created_
   return data as MktChatMessage;
 }
 
-export async function listChatByEstrategia(estrategiaId: string, context: MktRequestContext, limit = 50): Promise<MktChatMessage[]> {
+export async function listChatByEstrategia(
+  estrategiaId: string,
+  context: MktRequestContext,
+  options: number | MktChatListOptions = 50,
+): Promise<MktChatMessage[]> {
   await getEstrategia(estrategiaId, context);
+  const listOptions = typeof options === 'number' ? { limit: options } : options;
+  const limit = Math.max(1, listOptions.limit ?? 50);
   const supabase = createSupabaseServerClient();
-  const { data } = await supabase.from('mkt_chat_messages').select('*').eq('estrategia_id', estrategiaId).order('created_at', { ascending: true }).limit(limit);
-  return (data as MktChatMessage[]) || [];
+  let query = supabase
+    .from('mkt_chat_messages')
+    .select('*')
+    .eq('estrategia_id', estrategiaId);
+
+  if (listOptions.before) {
+    query = query.lt('created_at', listOptions.before);
+  }
+
+  const { data } = await query.order('created_at', { ascending: false }).limit(limit);
+  return ((data as MktChatMessage[]) || []).reverse();
+}
+
+export async function getMktChatContextCache(
+  estrategiaId: string,
+  context: MktRequestContext,
+): Promise<MktChatContextCacheRecord | null> {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase
+    .from('mkt_chat_context_cache')
+    .select('estrategia_id, empresa_id, payload, expires_at, updated_at')
+    .eq('estrategia_id', estrategiaId)
+    .eq('empresa_id', context.companyId)
+    .gt('expires_at', now())
+    .maybeSingle();
+
+  return (data as MktChatContextCacheRecord | null) ?? null;
+}
+
+export async function saveMktChatContextCache(
+  estrategiaId: string,
+  context: MktRequestContext,
+  payload: unknown,
+  ttlMs = 30 * 60 * 1000,
+): Promise<MktChatContextCacheRecord> {
+  const supabase = createSupabaseServerClient();
+  const full = {
+    estrategia_id: estrategiaId,
+    empresa_id: context.companyId,
+    payload,
+    expires_at: new Date(Date.now() + ttlMs).toISOString(),
+    updated_at: now(),
+  };
+  const { data, error } = await supabase
+    .from('mkt_chat_context_cache')
+    .upsert(full, { onConflict: 'estrategia_id,empresa_id' })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as MktChatContextCacheRecord;
 }
 
 export async function saveExport(exp: Omit<MktExport, 'id' | 'created_at'>): Promise<MktExport> {
@@ -373,12 +443,23 @@ export async function getDashboardKpis(context: MktRequestContext): Promise<MktD
   const aprovados = diags?.filter(d => d.aprovado).length || 0;
   const total_diags = diags?.length || 0;
   
-  const { count: exports } = await supabase.from('mkt_exports').select('*', { count: 'exact', head: true }).eq('mkt_estrategias.empresa_id', context.companyId); // Wait, this might need an inner join
+  const { count: exports } = await supabase
+    .from('mkt_exports')
+    .select('id, mkt_estrategias!inner(empresa_id)', { count: 'exact', head: true })
+    .eq('mkt_estrategias.empresa_id', context.companyId);
+  const { data: completedJobs } = await supabase
+    .from('mkt_processing_jobs')
+    .select('created_at, started_at, completed_at')
+    .eq('empresa_id', context.companyId)
+    .eq('status', 'done');
   
   const { count: jobsFalha } = await supabase.from('mkt_processing_jobs').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'failed');
   const { count: agentes } = await supabase.from('mkt_agents').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('ativo', true);
 
   const taxaAprovacao = total_diags > 0 ? (aprovados / total_diags) * 100 : 0;
+  const tempoMedioGeracao = calculateAverageGenerationSeconds(
+    (completedJobs as Array<{ created_at?: string | null; started_at?: string | null; completed_at?: string | null }> | null) ?? [],
+  );
 
   return {
     estrategias_ativas: ativas || 0,
@@ -386,7 +467,7 @@ export async function getDashboardKpis(context: MktRequestContext): Promise<MktD
     total_diagnosticos: total_diags,
     total_exportacoes: exports || 0,
     taxa_aprovacao: Number(taxaAprovacao.toFixed(1)),
-    tempo_medio_geracao: 45,
+    tempo_medio_geracao: tempoMedioGeracao,
     agentes_ativos: agentes || 0,
     jobs_falha: jobsFalha || 0,
   };
@@ -414,13 +495,27 @@ export function parseCampaignsQuery(url: string): CampaignsQuery {
 }
 
 export async function listCampaigns(context: MktRequestContext, query: Partial<CampaignsQuery> = {}) {
-  void context;
-  void query;
-  return { items: [], pagination: { page: 1, page_size: 10, total: 0, total_pages: 0 } };
+  const estrategias = await listEstrategias(context, {
+    page: 1,
+    page_size: 100,
+    sort_by: 'created_at',
+    sort_dir: 'desc',
+  });
+  const sources = await Promise.all(
+    estrategias.items.map(async (estrategia) => ({
+      estrategia,
+      versao: (await listVersoes(estrategia.id!, context))[0] ?? null,
+    })),
+  );
+
+  return buildCampaignRowsFromStrategyVersions(
+    sources.filter((source): source is { estrategia: MktEstrategia; versao: MktEstrategiaVersao } => Boolean(source.versao)),
+    query,
+  );
 }
 
 export async function createCampaign(context: MktRequestContext, data: unknown) {
   void context;
   void data;
-  throw new Error('Not implemented');
+  throw new MktValidationError('Campaigns are generated as strategy-version artifacts; use the strategy generation or regeneration flow.', 409);
 }

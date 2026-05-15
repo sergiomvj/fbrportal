@@ -1,7 +1,7 @@
 import { contextOrResponse, jsonError } from '../../../_shared';
 import { saveExport, listExportsByEstrategia, getEstrategia, listVersoes } from '@/lib/mkt/store';
 import { enqueueJob } from '@/lib/mkt/queue';
-import { withSecurityHeaders, checkRateLimit, rateLimitHeaders, rateLimitResponse, MKT_RATE_LIMITS } from '@/lib/mkt/security';
+import { withSecurityHeaders, checkPersistentRateLimit, rateLimitHeaders, rateLimitResponse, MKT_RATE_LIMITS } from '@/lib/mkt/security';
 import { createSignedDownload, buildExportPath } from '@/lib/mkt/storage';
 
 export async function GET(
@@ -27,7 +27,7 @@ export async function POST(
   const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
-  const rl = checkRateLimit(`export:${context.companyId}`, MKT_RATE_LIMITS.export ?? { windowMs: 60_000, maxRequests: 10 });
+  const rl = await checkPersistentRateLimit(`export:${context.companyId}`, MKT_RATE_LIMITS.export ?? { windowMs: 60_000, maxRequests: 10 });
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
@@ -43,7 +43,7 @@ export async function POST(
     const versoesData = await listVersoes(id, context);
     const currentVersao = versoesData[0]?.versao ?? estrategia.versao;
 
-    const filePath = buildExportPath(context.companyId, id, formato);
+    const filePath = buildExportPath(context.companyId, id, formato, currentVersao);
     const signed = createSignedDownload(filePath);
 
     const exp = await saveExport({
@@ -60,6 +60,7 @@ export async function POST(
       export_id: exp.id,
       formato,
       file_path: filePath,
+      exportado_por: context.userId,
     });
 
     const resp = Response.json({ export: exp }, { status: 201 });

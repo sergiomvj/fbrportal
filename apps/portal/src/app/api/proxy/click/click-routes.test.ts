@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetClickStoreForTests } from '@/lib/click/store';
+import { buildDealClosedEvent, resetClickStoreForTests } from '@/lib/click/store';
+import { buildSalesClickWebhookSignature, getSalesTestCompanyIds, resetSalesStoreForTests } from '@/lib/sales/store';
 
 function request(path: string, init: RequestInit = {}) {
   return new Request(`http://localhost${path}`, {
@@ -15,7 +16,10 @@ function request(path: string, init: RequestInit = {}) {
 }
 
 describe('Click proxy routes', () => {
-  beforeEach(() => resetClickStoreForTests());
+  beforeEach(() => {
+    resetClickStoreForTests();
+    resetSalesStoreForTests();
+  });
 
   it('creates manual deals with user context and rejects missing context', async () => {
     const { POST } = await import('./deals/route');
@@ -59,8 +63,16 @@ describe('Click proxy routes', () => {
       },
     };
 
-    const first = await POST(request('/api/proxy/click/deals/from-lead', { body: JSON.stringify(payload), method: 'POST' }));
-    const second = await POST(request('/api/proxy/click/deals/from-lead', { body: JSON.stringify(payload), method: 'POST' }));
+    const first = await POST(request('/api/proxy/click/deals/from-lead', {
+      body: JSON.stringify(payload),
+      headers: { 'x-module-source': 'leads' },
+      method: 'POST',
+    }));
+    const second = await POST(request('/api/proxy/click/deals/from-lead', {
+      body: JSON.stringify(payload),
+      headers: { 'x-module-source': 'leads' },
+      method: 'POST',
+    }));
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(200);
@@ -68,9 +80,153 @@ describe('Click proxy routes', () => {
 
     const auditBody = await (await audit.GET(request('/api/proxy/click/audit'))).json();
     const createdEvents = auditBody.audit.filter((event: { metadata?: { leadId?: string }; type: string }) => event.metadata?.leadId === 'lead-new' && event.type === 'created');
+    const receivedEvents = auditBody.audit.filter((event: { metadata?: { leadId?: string }; type: string }) => event.metadata?.leadId === 'lead-new' && event.type === 'lead_received');
     expect(createdEvents).toHaveLength(1);
-    expect(createdEvents[0]).toMatchObject({ metadata: { moduleSource: 'click' } });
+    expect(receivedEvents).toHaveLength(1);
+    expect(createdEvents[0]).toMatchObject({ metadata: { moduleSource: 'leads' } });
+    expect(receivedEvents[0]).toMatchObject({ metadata: { payload } });
     expect(JSON.stringify(createdEvents)).not.toContain('manual');
+  });
+
+  it('accepts strategy.exported events from FBR-MKT into Click audit', async () => {
+    const events = await import('./events/route');
+    const audit = await import('./audit/route');
+    const payload = {
+      event: 'strategy.exported',
+      data: {
+        estrategia_id: 'mkt-strategy-1',
+        nome: 'Plano MKT',
+        nicho: 'SaaS',
+        documento_original: 'uploads/empresa/doc.pdf',
+        score_viabilidade: 82,
+        canais_sugeridos: ['linkedin', 'google_ads'],
+        exportado_por: 'operator-1',
+      },
+    };
+
+    const accepted = await events.POST(request('/api/proxy/click/events', {
+      body: JSON.stringify(payload),
+      headers: { 'x-module-source': 'fbr-mkt' },
+      method: 'POST',
+    }));
+
+    expect(accepted.status).toBe(202);
+    expect(await accepted.json()).toEqual({ accepted: true, event: 'strategy.exported' });
+
+    const body = await (await audit.GET(request('/api/proxy/click/audit'))).json();
+    expect(body.audit).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dealId: 'mkt-strategy-1',
+          type: 'cross_module_event',
+          metadata: expect.objectContaining({ event: 'strategy.exported', moduleSource: 'fbr-mkt' }),
+        }),
+      ]),
+    );
+  });
+
+  it('builds deal.closed from a closed Click deal and delivers it to the official Sales webhook with HMAC', async () => {
+    const deals = await import('./deals/route');
+    const stage = await import('./deals/[id]/stage/route');
+    const salesWebhook = await import('../sales/webhooks/fbr-click/deal-closed/route');
+    const salesPartners = await import('../sales/parceiros/route');
+    const { alpha, user } = getSalesTestCompanyIds();
+    const secret = 'test-click-sales-secret';
+    process.env.SALES_FBR_CLICK_WEBHOOK_SECRET = secret;
+
+    const created = await deals.POST(request('/api/proxy/click/deals', {
+      body: JSON.stringify({
+        title: 'Patrocinio Revista Online',
+        companyName: 'Cliente Click Sales',
+        contactName: 'Marina Cliente',
+        contactEmail: 'marina@cliente.example',
+        contactPhone: '+55 11 99999-0101',
+        valueCents: 2500000,
+        stage: 'negociacao',
+        source: 'manual',
+        priority: 'alta',
+        score: 91,
+      }),
+      headers: { 'x-workspace-id': alpha },
+      method: 'POST',
+    }));
+    const createdBody = await created.json();
+    const dealId = createdBody.deal.id as string;
+
+    await stage.PATCH(request(`/api/proxy/click/deals/${dealId}/stage`, {
+      body: JSON.stringify({ stage: 'fechamento' }),
+      headers: { 'x-workspace-id': alpha },
+      method: 'PATCH',
+    }), { params: Promise.resolve({ id: dealId }) });
+
+    const payload = buildDealClosedEvent({
+      userId: 'operator-1',
+      workspaceId: alpha,
+      role: 'admin',
+      moduleSource: 'click',
+    }, dealId);
+    expect(payload).toMatchObject({
+      event: 'deal.closed',
+      data: {
+        deal_id: dealId,
+        empresa_nome: 'Cliente Click Sales',
+        valor_estimado: 25000,
+        moeda: 'BRL',
+        produto_fechado: 'Patrocinio Revista Online',
+      },
+    });
+
+    const body = JSON.stringify(payload);
+    const delivered = await salesWebhook.POST(new Request('http://localhost/api/proxy/sales/webhooks/fbr-click/deal-closed', {
+      body,
+      headers: {
+        'content-type': 'application/json',
+        'x-company-id': alpha,
+        'x-module-source': 'fbr-click',
+        'x-user-id': user,
+        'x-webhook-signature': buildSalesClickWebhookSignature(body, secret),
+      },
+      method: 'POST',
+    }));
+    const duplicate = await salesWebhook.POST(new Request('http://localhost/api/proxy/sales/webhooks/fbr-click/deal-closed', {
+      body,
+      headers: {
+        'content-type': 'application/json',
+        'x-company-id': alpha,
+        'x-module-source': 'fbr-click',
+        'x-user-id': user,
+        'x-webhook-signature': buildSalesClickWebhookSignature(body, secret),
+      },
+      method: 'POST',
+    }));
+    const invalidSignature = await salesWebhook.POST(new Request('http://localhost/api/proxy/sales/webhooks/fbr-click/deal-closed', {
+      body,
+      headers: {
+        'content-type': 'application/json',
+        'x-company-id': alpha,
+        'x-module-source': 'fbr-click',
+        'x-user-id': user,
+        'x-webhook-signature': 'bad-signature',
+      },
+      method: 'POST',
+    }));
+
+    expect(delivered.status).toBe(201);
+    expect(duplicate.status).toBe(200);
+    expect(invalidSignature.status).toBe(401);
+
+    const partners = await salesPartners.GET(new Request('http://localhost/api/proxy/sales/parceiros?busca=Cliente%20Click%20Sales', {
+      headers: { 'x-company-id': alpha, 'x-user-id': user },
+    }));
+    const partnersBody = await partners.json();
+    expect(partnersBody.data).toEqual([
+      expect.objectContaining({
+        nome: 'Cliente Click Sales',
+        contato_email: 'marina@cliente.example',
+        estagio: 'onboarding',
+        valor_estimado: 25000,
+      }),
+    ]);
   });
 
   it('creates append-only events for stage movement, messages, and task updates', async () => {

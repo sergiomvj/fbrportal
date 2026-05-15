@@ -1,6 +1,6 @@
 import { createEstrategia, listEstrategias, parseEstrategiasQuery } from '@/lib/mkt/store';
 import { contextOrResponse, jsonError } from '../_shared';
-import { checkRateLimit, rateLimitHeaders, rateLimitResponse, withSecurityHeaders, MKT_RATE_LIMITS } from '@/lib/mkt/security';
+import { checkPersistentRateLimit, rateLimitHeaders, rateLimitResponse, withSecurityHeaders, MKT_RATE_LIMITS } from '@/lib/mkt/security';
 import { enqueueJob } from '@/lib/mkt/queue';
 import { createSupabaseServerClient } from '@/lib/supabase-admin';
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const context = await contextOrResponse(request);
   if (context instanceof Response) return context;
 
-  const rl = checkRateLimit(`estrategias:${context.companyId}`, MKT_RATE_LIMITS.estrategias ?? { windowMs: 60_000, maxRequests: 30 });
+  const rl = await checkPersistentRateLimit(`estrategias:${context.companyId}`, MKT_RATE_LIMITS.estrategias ?? { windowMs: 60_000, maxRequests: 30 });
   if (!rl.allowed) return rateLimitResponse(rl);
 
   try {
@@ -48,14 +48,14 @@ export async function POST(request: Request) {
 
     // 2. Se houver arquivo, faz upload no path correto do PRD e atualiza
     if (fileToUpload) {
-      const { buildStoragePath } = await import('@/lib/mkt/storage');
+      const { buildStoragePath, MKT_STORAGE_BUCKETS } = await import('@/lib/mkt/storage');
       const supabase = createSupabaseServerClient();
       const filePath = buildStoragePath(context.companyId, estrategia.id!, `${crypto.randomUUID()}.${ext}`);
       
       const arrayBuffer = await fileToUpload.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       
-      const { error: uploadError } = await supabase.storage.from('mkt_documents').upload(filePath, buffer, {
+      const { error: uploadError } = await supabase.storage.from(MKT_STORAGE_BUCKETS.uploads).upload(filePath, buffer, {
         contentType: fileToUpload.type,
         upsert: true,
       });

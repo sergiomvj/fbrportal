@@ -82,7 +82,7 @@ export interface ClickDealHistory {
   id: string;
   workspaceId: string;
   dealId: string;
-  type: 'created' | 'stage_changed' | 'message_sent' | 'task_updated' | 'agent_triggered';
+  type: 'created' | 'lead_received' | 'stage_changed' | 'message_sent' | 'task_updated' | 'agent_triggered' | 'cross_module_event';
   actorId: string;
   actorType: ClickActorType;
   description: string;
@@ -155,14 +155,48 @@ export interface ClickLlmCascade {
 
 export interface LeadQualifiedPayload {
   lead_id: string;
+  empresa_id?: string;
   empresa_nome: string;
-  contato_nome?: string;
-  contato_email?: string;
+  empresa_cnpj?: string | null;
+  contato_nome?: string | null;
+  contato_email?: string | null;
+  contato_cargo?: string | null;
+  contato_linkedin?: string | null;
+  contato_telefone?: string | null;
   score: number;
+  icp_id?: string | null;
+  icp_nome?: string | null;
   icp_origem?: string;
+  etapa_final?: string;
   historico_interacoes?: unknown[];
   dados_enriquecimento?: Record<string, unknown>;
+  cadencia?: Record<string, unknown>;
+  deduplicacao?: Record<string, unknown>;
   cadencia_completa?: boolean;
   total_respostas?: number;
+  prioridade?: ClickPriority;
+  motivo_prioridade?: string;
+  sugestao_acao?: string;
 }
 
+export interface DealClosedBridgeEvent {
+  event: 'deal.closed';
+  data: {
+    deal_id: string;
+    empresa_nome: string;
+    contato_nome: string;
+    contato_email: string;
+    valor_estimado: number;
+    moeda: 'BRL';
+    produto_fechado: string;
+    historico_deal: Array<{
+      estagio: string;
+      data_entrada: string;
+      data_saida: string;
+      responsavel: string;
+    }>;
+    dados_cliente: {
+      telefone?: string;
+    };
+  };
+}

@@ -18,16 +18,17 @@ export function buildStoragePath(
   filename: string,
 ): string {
   const sanitized = sanitizeFilename(filename);
-  return `mkt/${empresaId}/${estrategiaId}/${sanitized}`;
+  return `uploads/${empresaId}/${estrategiaId}/${sanitized}`;
 }
 
 export function buildExportPath(
   empresaId: string,
   estrategiaId: string,
   formato: 'pdf' | 'pptx',
+  versao?: number,
 ): string {
-  const ts = Date.now();
-  return `mkt-exports/${empresaId}/${estrategiaId}/${ts}.${formato}`;
+  const suffix = versao && versao > 0 ? `v${versao}` : String(Date.now());
+  return `exports/${empresaId}/${estrategiaId}/${suffix}.${formato}`;
 }
 
 export function sanitizeFilename(name: string): string {
@@ -86,6 +87,11 @@ export function isSignedUrlExpired(expiresAt: string): boolean {
 }
 
 export const MKT_STORAGE_BUCKETS = {
-  uploads: 'mkt-uploads',
-  exports: 'mkt-exports',
+  uploads: 'mkt',
+  exports: 'mkt',
 } as const;
+
+export function bucketForStoragePath(path: string): (typeof MKT_STORAGE_BUCKETS)[keyof typeof MKT_STORAGE_BUCKETS] {
+  if (path.startsWith('exports/')) return MKT_STORAGE_BUCKETS.exports;
+  return MKT_STORAGE_BUCKETS.uploads;
+}

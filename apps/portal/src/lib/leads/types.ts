@@ -17,6 +17,15 @@ export type LeadEtapa = z.infer<typeof LeadEtapaSchema>;
 export const LeadFonteSchema = z.enum(['linkedin', 'cnpj_biz', 'google_maps', 'site', 'manual']);
 export type LeadFonte = z.infer<typeof LeadFonteSchema>;
 
+export const LeadCaptureFonteSchema = z.enum(['linkedin', 'cnpj_biz', 'google_maps', 'site']);
+export type LeadCaptureFonte = z.infer<typeof LeadCaptureFonteSchema>;
+
+export const LeadSourceRunStatusSchema = z.enum(['pending', 'processing', 'done', 'failed']);
+export type LeadSourceRunStatus = z.infer<typeof LeadSourceRunStatusSchema>;
+
+export const LeadDuplicateStatusSchema = z.enum(['new', 'duplicate']);
+export type LeadDuplicateStatus = z.infer<typeof LeadDuplicateStatusSchema>;
+
 export const EmailValidoSchema = z.enum(['safe', 'catch_all', 'invalido', 'disposable', 'nao_verificado']);
 export type EmailValido = z.infer<typeof EmailValidoSchema>;
 
@@ -195,6 +204,48 @@ export const EmailTemplateSchema = z.object({
 });
 export type EmailTemplate = z.infer<typeof EmailTemplateSchema>;
 
+export const LeadSourceRecordSchema = z.object({
+  id: z.string().uuid().optional(),
+  company_id: z.string().uuid(),
+  source_run_id: z.string().uuid(),
+  fonte: LeadCaptureFonteSchema,
+  source_key: z.string().min(1),
+  raw_payload: z.record(z.string(), z.unknown()),
+  normalized_lead_id: z.string().uuid().optional(),
+  duplicate_status: LeadDuplicateStatusSchema.default('new'),
+  duplicate_of_lead_id: z.string().uuid().optional(),
+  error: z.string().optional(),
+  captured_at: z.string(),
+  created_at: z.string().optional(),
+});
+export type LeadSourceRecord = z.infer<typeof LeadSourceRecordSchema>;
+
+export const LeadSourceRunSchema = z.object({
+  id: z.string().uuid().optional(),
+  company_id: z.string().uuid(),
+  fonte: LeadCaptureFonteSchema,
+  query: z.record(z.string(), z.unknown()).default({}),
+  status: LeadSourceRunStatusSchema.default('pending'),
+  total_records: z.number().int().min(0).default(0),
+  leads_created: z.number().int().min(0).default(0),
+  duplicates: z.number().int().min(0).default(0),
+  failed_records: z.number().int().min(0).default(0),
+  error: z.string().optional(),
+  created_by: z.string().uuid().optional(),
+  started_at: z.string().optional(),
+  completed_at: z.string().optional(),
+  created_at: z.string().optional(),
+});
+export type LeadSourceRun = z.infer<typeof LeadSourceRunSchema>;
+
+export const LeadSourceCaptureRequestSchema = z.object({
+  fonte: LeadCaptureFonteSchema,
+  query: z.record(z.string(), z.unknown()).default({}),
+  records: z.array(z.record(z.string(), z.unknown())).default([]),
+  fail_reason: z.string().min(1).optional(),
+});
+export type LeadSourceCaptureRequest = z.infer<typeof LeadSourceCaptureRequestSchema>;
+
 export const AgentStatusSchema = z.enum(['online', 'offline', 'processando', 'erro']);
 export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 
@@ -257,31 +308,68 @@ export type Campaign = z.infer<typeof CampaignSchema>;
 
 export const LeadQualifiedEventSchema = z.object({
   event: z.literal('lead.qualified'),
+  timestamp: z.string().datetime(),
+  module_source: z.literal('fbr-leads'),
   data: z.object({
     lead_id: z.string().uuid(),
+    empresa_id: z.string().uuid(),
     empresa_nome: z.string(),
-    contato_nome: z.string(),
-    contato_email: z.string().email(),
+    empresa_cnpj: z.string().nullable(),
+    contato_nome: z.string().nullable(),
+    contato_email: z.string().email().nullable(),
+    contato_cargo: z.string().nullable(),
+    contato_linkedin: z.string().url().nullable(),
+    contato_telefone: z.string().nullable(),
     score: z.number().int(),
+    icp_id: z.string().nullable(),
+    icp_nome: z.string().nullable(),
     icp_origem: z.string().optional(),
+    etapa_final: z.string(),
     historico_interacoes: z.array(
       z.object({
-        tipo: z.enum(['email_enviado', 'email_respondido', 'email_aberto', 'email_bounce']),
+        tipo: z.enum(['email_enviado', 'email_respondido', 'email_aberto', 'email_bounce', 'email_clicou']),
         data: z.string(),
         conteudo: z.string(),
         agente: z.string(),
+        metadata: z.object({
+          toque_numero: z.number().int(),
+          subject: z.string(),
+          body_preview: z.string().optional(),
+        }).optional(),
       }),
     ),
     dados_enriquecimento: z.object({
-      porte: z.string().optional(),
-      setor: z.string().optional(),
-      regiao: z.string().optional(),
-      funcionarios: z.number().int().optional(),
-      faturamento_estimado: z.number().optional(),
-      presenca_digital: z.string().optional(),
+      cnpj: z.string().nullable(),
+      setor: z.string().nullable(),
+      porte: z.string().nullable(),
+      funcionarios: z.number().int().nullable(),
+      faturamento_estimado: z.number().nullable(),
+      regiao: z.string().nullable(),
+      site: z.string().url().nullable(),
+      presenca_digital: z.enum(['forte', 'media', 'fraca', 'nenhuma']).nullable(),
+      tecnologias: z.array(z.string()).optional(),
+    }),
+    cadencia: z.object({
+      total_toques: z.number().int(),
+      toques_enviados: z.number().int(),
+      cadencia_completa: z.boolean(),
+      primeiro_envio: z.string().nullable(),
+      ultimo_envio: z.string().nullable(),
+      total_emails: z.number().int(),
+      total_aberturas: z.number().int(),
+      total_cliques: z.number().int(),
+      dominio_utilizado: z.string().nullable(),
+    }),
+    deduplicacao: z.object({
+      fontes_origem: z.array(z.string()),
+      hash_principal: z.string().nullable(),
+      duplicatas_encontradas: z.number().int(),
     }),
     cadencia_completa: z.boolean(),
     total_respostas: z.number().int(),
+    prioridade: z.enum(['alta', 'media', 'baixa']),
+    motivo_prioridade: z.string(),
+    sugestao_acao: z.string(),
   }),
 });
 export type LeadQualifiedEvent = z.infer<typeof LeadQualifiedEventSchema>;

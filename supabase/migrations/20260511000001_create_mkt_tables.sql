@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS mkt_processing_jobs (
   empresa_id      UUID NOT NULL,
   estrategia_id   UUID NOT NULL REFERENCES mkt_estrategias(id) ON DELETE CASCADE,
   categoria       TEXT NOT NULL
-    CHECK (categoria IN ('upload', 'extracao', 'geracao_estrategia', 'copy', 'calendario', 'export')),
+    CHECK (categoria IN ('upload', 'extracao', 'geracao_estrategia', 'copy', 'calendario', 'export', 'fbr_click_delivery')),
   status          TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'processing', 'done', 'failed')),
   tentativas      INTEGER NOT NULL DEFAULT 0 CHECK (tentativas >= 0),
@@ -160,6 +160,7 @@ CREATE TABLE IF NOT EXISTS mkt_processing_jobs (
   started_at      TIMESTAMPTZ,
   completed_at    TIMESTAMPTZ,
   failed_at       TIMESTAMPTZ,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -209,6 +210,7 @@ CREATE INDEX IF NOT EXISTS idx_mkt_roadmap_estrategia ON mkt_roadmap_tasks(estra
 CREATE INDEX IF NOT EXISTS idx_mkt_chat_estrategia ON mkt_chat_messages(estrategia_id);
 CREATE INDEX IF NOT EXISTS idx_mkt_exports_estrategia ON mkt_exports(estrategia_id);
 CREATE INDEX IF NOT EXISTS idx_mkt_jobs_empresa_status ON mkt_processing_jobs(empresa_id, status);
+CREATE INDEX IF NOT EXISTS idx_mkt_jobs_next_attempt ON mkt_processing_jobs(status, next_attempt_at);
 CREATE INDEX IF NOT EXISTS idx_mkt_jobs_estrategia ON mkt_processing_jobs(estrategia_id);
 CREATE INDEX IF NOT EXISTS idx_mkt_agents_empresa_slot ON mkt_agents(empresa_id, slot);
 CREATE INDEX IF NOT EXISTS idx_mkt_agent_logs_empresa ON mkt_agent_action_logs(empresa_id);

@@ -1,13 +1,13 @@
 import { createSupabaseServerClient } from '../../supabase-admin';
 import { MktRequestContext } from '../store';
-// @ts-expect-error pdf-parse ships without a compatible default export declaration here.
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { saveDiagnostico, updateEstrategiaStatus } from '../store';
 import { emitExtracao } from '../sse';
 import type { MktProcessingJob, MktSwot, MktPersona } from '../types';
+import { bucketForStoragePath } from '../storage';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
@@ -28,12 +28,14 @@ export async function processExtraction(job: MktProcessingJob, context: MktReque
   let extractedText = '';
   
   if (doc_path) {
-    const { data, error } = await supabase.storage.from('mkt_documents').download(doc_path);
+    const { data, error } = await supabase.storage.from(bucketForStoragePath(doc_path)).download(doc_path);
     if (error) throw new Error(`Falha ao baixar documento: ${error.message}`);
     
     if (doc_path.endsWith('.pdf')) {
       const buffer = Buffer.from(await data.arrayBuffer());
-      const parsed = await pdfParse(buffer);
+      const parser = new PDFParse({ data: new Uint8Array(buffer) });
+      const parsed = await parser.getText();
+      await parser.destroy();
       extractedText = parsed.text.substring(0, 15000); // Limit context
     } else {
       // Basic text extraction for other files

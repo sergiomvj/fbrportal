@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { checkRateLimit, resetRateLimitForTests } from '@/lib/rate-limit';
 import { clickAgents, clickDeals, clickHistory, clickKpis, clickMessages, clickTasks } from './fixtures';
-import { createDealSchema, leadQualifiedEventSchema, messageSchema, normalizeLeadQualified, taskSchema } from './schemas';
-import type { ClickAgent, ClickDeal, ClickDealHistory, ClickMessage, ClickTask, ClickUserRole } from './types';
+import { createDealSchema, leadQualifiedEventSchema, messageSchema, normalizeLeadQualified, strategyExportedEventSchema, taskSchema } from './schemas';
+import type { ClickAgent, ClickDeal, ClickDealHistory, ClickMessage, ClickTask, ClickUserRole, DealClosedBridgeEvent } from './types';
 
 export interface ClickRequestContext {
   userId: string;
@@ -68,7 +68,7 @@ export function createManualDeal(context: ClickRequestContext, input: unknown) {
   const payload = createDealSchema.parse(input);
   const createdAt = now();
   const deal: ClickDeal = {
-    id: id('deal'),
+    id: crypto.randomUUID(),
     workspaceId: context.workspaceId,
     userId: context.userId,
     empresaId: context.workspaceId,
@@ -92,7 +92,8 @@ export function createManualDeal(context: ClickRequestContext, input: unknown) {
 }
 
 export function createDealFromLead(context: ClickRequestContext, input: unknown) {
-  const payload = leadQualifiedEventSchema.parse(input).data;
+  const event = leadQualifiedEventSchema.parse(input);
+  const payload = event.data;
   const existing = deals.find((deal) => deal.workspaceId === context.workspaceId && deal.leadId === payload.lead_id);
 
   if (existing) {
@@ -102,7 +103,7 @@ export function createDealFromLead(context: ClickRequestContext, input: unknown)
   const normalized = normalizeLeadQualified(payload);
   const createdAt = now();
   const deal: ClickDeal = {
-    id: id('deal'),
+    id: crypto.randomUUID(),
     workspaceId: context.workspaceId,
     userId: context.userId,
     empresaId: context.workspaceId,
@@ -125,8 +126,29 @@ export function createDealFromLead(context: ClickRequestContext, input: unknown)
     moduleSource: context.moduleSource,
     leadId: payload.lead_id,
   });
+  appendHistory(context, deal.id, 'lead_received', 'Payload lead.qualified completo recebido do FBR-Leads.', {
+    moduleSource: context.moduleSource,
+    leadId: payload.lead_id,
+    payload: event,
+  });
 
   return { deal, created: true };
+}
+
+export function recordStrategyExportedEvent(context: ClickRequestContext, input: unknown) {
+  const payload = strategyExportedEventSchema.parse(input);
+  appendHistory(context, payload.data.estrategia_id, 'cross_module_event', 'strategy.exported recebido do FBR-MKT.', {
+    moduleSource: context.moduleSource,
+    event: payload.event,
+    nome: payload.data.nome,
+    nicho: payload.data.nicho,
+    documentoOriginal: payload.data.documento_original,
+    scoreViabilidade: payload.data.score_viabilidade,
+    canaisSugeridos: payload.data.canais_sugeridos,
+    exportadoPor: payload.data.exportado_por,
+  });
+
+  return payload;
 }
 
 export function moveDealStage(context: ClickRequestContext, dealId: string, input: unknown) {
@@ -146,6 +168,39 @@ export function moveDealStage(context: ClickRequestContext, dealId: string, inpu
   });
 
   return deal;
+}
+
+export function buildDealClosedEvent(context: ClickRequestContext, dealId: string): DealClosedBridgeEvent | null {
+  const deal = getDeal(context, dealId);
+  if (!deal) return null;
+  if (!deal.contactName || !deal.contactEmail || deal.valueCents <= 0) return null;
+
+  const timeline = history
+    .filter((event) => event.workspaceId === context.workspaceId && event.dealId === dealId)
+    .filter((event) => event.type === 'created' || event.type === 'stage_changed')
+    .map((event) => ({
+      estagio: typeof event.metadata?.nextStage === 'string' ? event.metadata.nextStage : deal.stage,
+      data_entrada: event.createdAt,
+      data_saida: event.createdAt,
+      responsavel: event.actorId,
+    }));
+
+  return {
+    event: 'deal.closed',
+    data: {
+      deal_id: deal.id,
+      empresa_nome: deal.companyName,
+      contato_nome: deal.contactName,
+      contato_email: deal.contactEmail,
+      valor_estimado: deal.valueCents / 100,
+      moeda: 'BRL',
+      produto_fechado: deal.title,
+      historico_deal: timeline,
+      dados_cliente: {
+        ...(deal.contactPhone ? { telefone: deal.contactPhone } : {}),
+      },
+    },
+  };
 }
 
 export function listMessages(context: ClickRequestContext, dealId: string) {

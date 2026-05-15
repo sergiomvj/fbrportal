@@ -1,9 +1,9 @@
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { z } from 'zod';
-import { getDiagnosticoByEstrategia, saveCopyVariants, MktRequestContext } from '../store';
+import { getDiagnosticoByEstrategia, saveCopyVariants, saveLeadMagnets, MktRequestContext } from '../store';
 import { emitGeracao } from '../sse';
-import type { MktCopyVariant, MktProcessingJob } from '../types';
+import { buildCopyAndLeadMagnetArtifacts, MktGeneratedCopySchema } from '../artifacts';
+import type { MktProcessingJob } from '../types';
 
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
@@ -12,36 +12,33 @@ const openai = createOpenAI({
 
 export async function processCopy(job: MktProcessingJob, context: MktRequestContext) {
   const diagnostico = await getDiagnosticoByEstrategia(job.estrategia_id, context);
-  if (!diagnostico) throw new Error('Diagnóstico não encontrado ou não aprovado.');
+  if (!diagnostico) throw new Error('Diagnostico nao encontrado ou nao aprovado.');
 
-  emitGeracao(job.estrategia_id, 10, 'Iniciando geração de copy', 'redator_bot');
+  emitGeracao(job.estrategia_id, 10, 'Iniciando geracao de copy', 'redator_bot');
 
-  // LLM Call
   const { object } = await generateObject({
     model: openai(process.env.LLM_MODEL || 'gpt-4o'),
-    schema: z.object({
-      variants: z.array(z.object({
-        canal: z.string(),
-        tipo: z.enum(['headline', 'cta', 'body', 'landing_page', 'email']),
-        campanha_nome: z.string(),
-        conteudo: z.string(),
-        tom: z.string()
-      }))
-    }),
-    prompt: `Gere 10 variantes de Copy de marketing cobrindo múltiplos canais (ex: Instagram, Email, Landing Page) e múltiplos tipos (headline, cta, body, landing_page, email). Baseie as copies no UVP: ${diagnostico.uvp}`
+    schema: MktGeneratedCopySchema,
+    prompt: `Gere o pacote de captacao do FBR-MKT a partir do diagnostico aprovado.
+UVP: ${diagnostico.uvp}
+Persona: ${JSON.stringify(diagnostico.persona)}
+
+Contrato obrigatorio dos PRDs:
+- variants deve cobrir headlines, CTAs, body copy, landing_page e email por campanha prioritaria.
+- lead_magnets deve conter de 5 a 10 itens alinhados a persona e funil.
+- cada lead magnet deve incluir landing_page com hero, beneficios, social_proof e CTA.
+- cada lead magnet deve incluir sequencia nurture_emails com 5 a 7 emails.`,
   });
 
-  // Save copy
-  const variantsToSave: Omit<MktCopyVariant, 'id' | 'created_at'>[] = object.variants.map((variant) => ({
-    estrategia_id: job.estrategia_id,
-    versao: 1,
-    campanha_nome: variant.campanha_nome,
-    tipo: variant.tipo,
-    canal: variant.canal,
-    conteudo: variant.conteudo,
-    tom: variant.tom,
-  }));
-  await saveCopyVariants(variantsToSave);
+  const payload = (job.payload ?? {}) as { versao?: number };
+  const { variants, leadMagnets } = buildCopyAndLeadMagnetArtifacts(
+    object,
+    job.estrategia_id,
+    payload.versao ?? 1,
+  );
 
-  emitGeracao(job.estrategia_id, 100, 'Copy gerada com sucesso', 'redator_bot');
+  await saveCopyVariants(variants);
+  await saveLeadMagnets(leadMagnets);
+
+  emitGeracao(job.estrategia_id, 100, 'Copy e pacote de captacao gerados com sucesso', 'redator_bot');
 }

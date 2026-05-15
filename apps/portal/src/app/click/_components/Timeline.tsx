@@ -4,6 +4,8 @@ import { formatDate } from './format';
 const icons: Record<ClickDealHistory['type'], string> = {
   agent_triggered: 'AI',
   created: '+',
+  cross_module_event: 'EVT',
+  lead_received: 'SQL',
   message_sent: 'MSG',
   stage_changed: 'ET',
   task_updated: 'OK',
@@ -26,4 +28,3 @@ export function Timeline({ events }: { events: ClickDealHistory[] }) {
     </section>
   );
 }
-

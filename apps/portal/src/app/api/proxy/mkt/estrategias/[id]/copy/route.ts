@@ -1,5 +1,5 @@
 import { contextOrResponse, jsonError } from '../../../_shared';
-import { listCopyByEstrategia } from '@/lib/mkt/store';
+import { listCopyByEstrategia, listLeadMagnetsByEstrategia } from '@/lib/mkt/store';
 import { withSecurityHeaders } from '@/lib/mkt/security';
 
 export async function GET(
@@ -12,7 +12,8 @@ export async function GET(
   try {
     const { id } = await params;
     const copy = await listCopyByEstrategia(id, context);
-    return withSecurityHeaders(Response.json({ copy }));
+    const lead_magnets = await listLeadMagnetsByEstrategia(id, context);
+    return withSecurityHeaders(Response.json({ copy, lead_magnets }));
   } catch (error) {
     return jsonError(error);
   }

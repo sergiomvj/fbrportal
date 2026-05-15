@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   avancarEtapa,
+  captureLeadsFromSource,
   createCampaign,
   createDomain,
   createICP,
@@ -9,11 +10,13 @@ import {
   deleteDomain,
   deleteICP,
   getLeadsTestCompanyIds,
+  getSourceRun,
   listCampaigns,
   listDomains,
   listICPs,
   listLeads,
   listPipelineStages,
+  listSourceRuns,
   handoffToClick,
   resetLeadsStoreForTests,
   updateCampaign,
@@ -139,12 +142,165 @@ describe('leads store operations', () => {
 
     expect(event).toMatchObject({
       event: 'lead.qualified',
+      module_source: 'fbr-leads',
       data: {
         lead_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01',
+        empresa_id: ids.alpha,
         empresa_nome: expect.stringContaining('TechBR'),
         contato_email: 'rafael@techbr.com.br',
+        etapa_final: 'sql_entregue',
+        cadencia: {
+          total_toques: 4,
+          toques_enviados: 2,
+          dominio_utilizado: 'outreach.facebrasil.com.br',
+        },
+        deduplicacao: {
+          fontes_origem: ['linkedin', 'cnpj_biz'],
+        },
+        prioridade: 'alta',
       },
     });
+    expect(event.timestamp).toEqual(expect.any(String));
     expect(event.data.historico_interacoes.length).toBeGreaterThan(0);
+    expect(event.data.historico_interacoes[0]).toMatchObject({
+      metadata: { toque_numero: 1 },
+    });
+  });
+
+  it('captures PRD source records into normalized company-scoped leads', () => {
+    const linkedin = captureLeadsFromSource(context, {
+      fonte: 'linkedin',
+      query: { icp_id: 'linkedin-mkt-sp' },
+      records: [{
+        linkedin_url: 'https://linkedin.com/in/maria-growth',
+        contato_nome: 'Maria Growth',
+        cargo: 'CMO',
+        empresa_nome: 'Growth One',
+        empresa_linkedin_url: 'https://linkedin.com/company/growth-one',
+        setor: 'Marketing Digital',
+        regiao: 'SP',
+        email: 'maria@growthone.com.br',
+        tamanho_empresa: '51-200',
+        ultima_atividade: '2026-05-01',
+        conexoes_comum: 12,
+        headline: 'CMO | Growth',
+      }],
+    });
+
+    const cnpj = captureLeadsFromSource(context, {
+      fonte: 'cnpj_biz',
+      records: [{
+        cnpj: '22.222.222/0001-22',
+        razao_social: 'SaaS Brasil Ltda',
+        nome_fantasia: 'SaaS Brasil',
+        cnae_descricao: 'Desenvolvimento de software',
+        porte: 'Medio',
+        uf: 'SP',
+        municipio: 'Sao Paulo',
+        situacao_cadastral: 'Ativa',
+        email_cadastral: 'contato@saasbrasil.com.br',
+        funcionarios_estimado: 90,
+      }],
+    });
+
+    const googleMaps = captureLeadsFromSource(context, {
+      fonte: 'google_maps',
+      records: [{
+        place_id: 'ChIJ-growth-maps',
+        nome: 'Maps Growth Agency',
+        endereco_completo: 'Av. Paulista, Sao Paulo',
+        categoria: ['Marketing Agency'],
+        avaliacao_media: 4.7,
+        total_avaliacoes: 38,
+        telefone: '+55 11 99999-0000',
+        site: 'https://mapsgrowth.com.br',
+      }],
+    });
+
+    const site = captureLeadsFromSource(context, {
+      fonte: 'site',
+      records: [{
+        url_site: 'https://contentgrowth.com.br',
+        titulo_pagina: 'Content Growth',
+        emails_encontrados: ['hello@contentgrowth.com.br'],
+        contato_email: 'hello@contentgrowth.com.br',
+        empresa_nome: 'Content Growth',
+        tecnologias: ['Next.js', 'HubSpot'],
+        presenca_blog: true,
+        https_ativo: true,
+        page_speed_score: 82,
+      }],
+    });
+
+    expect(linkedin.run).toMatchObject({ fonte: 'linkedin', status: 'done', total_records: 1, leads_created: 1 });
+    expect(cnpj.run).toMatchObject({ fonte: 'cnpj_biz', status: 'done', leads_created: 1 });
+    expect(googleMaps.run).toMatchObject({ fonte: 'google_maps', status: 'done', leads_created: 1 });
+    expect(site.run).toMatchObject({ fonte: 'site', status: 'done', leads_created: 1 });
+
+    const captured = listLeads(context, { busca: 'Growth One', page_size: 5 }).items[0];
+    expect(captured).toMatchObject({
+      empresa_nome: 'Growth One',
+      contato_nome: 'Maria Growth',
+      fonte: 'linkedin',
+      etapa: 'captado',
+      fontes_origem: ['linkedin'],
+      hash_deduplicacao: 'email:maria@growthone.com.br',
+    });
+    expect(listSourceRuns(context)).toHaveLength(4);
+    expect(getSourceRun(context, linkedin.run.id!).records[0]).toMatchObject({
+      fonte: 'linkedin',
+      duplicate_status: 'new',
+      source_key: 'linkedin:https://linkedin.com/in/maria-growth',
+    });
+  });
+
+  it('deduplicates captured records by company and stable source/contact keys', () => {
+    const first = captureLeadsFromSource(context, {
+      fonte: 'site',
+      records: [{
+        url_site: 'https://dedupe.example.com',
+        empresa_nome: 'Dedupe Example',
+        contato_nome: 'Ana Dedupe',
+        contato_email: 'ana@dedupe.example.com',
+        https_ativo: true,
+      }],
+    });
+    const second = captureLeadsFromSource(context, {
+      fonte: 'linkedin',
+      records: [{
+        linkedin_url: 'https://linkedin.com/in/ana-dedupe',
+        empresa_nome: 'Dedupe Example',
+        contato_nome: 'Ana Dedupe',
+        email: 'ana@dedupe.example.com',
+      }],
+    });
+
+    expect(first.run).toMatchObject({ leads_created: 1, duplicates: 0 });
+    expect(second.run).toMatchObject({ leads_created: 0, duplicates: 1 });
+    expect(second.records[0]).toMatchObject({
+      duplicate_status: 'duplicate',
+      duplicate_of_lead_id: first.leads[0]!.id,
+    });
+    expect(listLeads(context, { busca: 'Dedupe Example', page_size: 10 }).items).toHaveLength(1);
+  });
+
+  it('keeps source runs isolated by company and exposes failed terminal runs', () => {
+    const otherContext = {
+      companyId: '22222222-2222-4222-8222-222222222222',
+      userId: ids.user,
+      moduleSource: 'fbr-portal',
+    };
+    const failed = captureLeadsFromSource(context, {
+      fonte: 'google_maps',
+      query: { cidade: 'Sao Paulo' },
+      fail_reason: 'GOOGLE_MAPS_API_KEY_NOT_CONFIGURED',
+    });
+
+    expect(failed.run).toMatchObject({
+      status: 'failed',
+      error: 'GOOGLE_MAPS_API_KEY_NOT_CONFIGURED',
+    });
+    expect(listSourceRuns(otherContext)).toHaveLength(0);
+    expect(listLeads(otherContext, { page_size: 100 }).items).toHaveLength(0);
   });
 });

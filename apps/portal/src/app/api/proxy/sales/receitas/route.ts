@@ -2,6 +2,7 @@ import {
   listReceitas,
   createReceita,
   buildPaymentReceivedForward,
+  emitPaymentReceivedEvent,
   runReconciliation,
 } from '@/lib/sales/store';
 import { contextOrResponse, jsonError, jsonSuccess } from '../_shared';
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
       return jsonSuccess(runReconciliation(context));
     }
     if (url.searchParams.get('action') === 'forward_finance') {
-      return jsonSuccess(buildPaymentReceivedForward(context, String((body as { receita_id?: string }).receita_id)));
+      const event = buildPaymentReceivedForward(context, String((body as { receita_id?: string }).receita_id));
+      const delivery = await emitPaymentReceivedEvent(event, context);
+      return jsonSuccess({ event, delivery });
     }
     return jsonSuccess(createReceita(context, body), { status: 201 });
   } catch (error) {

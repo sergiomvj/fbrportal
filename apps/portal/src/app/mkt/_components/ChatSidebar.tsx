@@ -7,7 +7,7 @@ interface ChatSidebarProps {
   onToggle: () => void;
 }
 
-const suggestions = [
+const defaultSuggestions = [
   'Refine o posicionamento',
   'Sugira mais canais',
   'Gere variantes de headline',
@@ -18,6 +18,8 @@ const suggestions = [
 
 export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps) {
   const [messages, setMessages] = useState<MktChatMessage[]>([]);
+  const [contextSuggestions, setContextSuggestions] = useState<string[]>(defaultSuggestions);
+  const [inconsistencyFlags, setInconsistencyFlags] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,12 +31,26 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages ?? []);
+        setContextSuggestions(data.suggestions?.length ? data.suggestions : defaultSuggestions);
+        setInconsistencyFlags(data.inconsistencyFlags ?? []);
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [estrategiaId]);
 
   useEffect(() => { loadMessages(); }, [loadMessages]);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        onToggle();
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [onToggle]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -56,17 +72,42 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
     try {
       const res = await fetch(`/api/proxy/mkt/estrategias/${estrategiaId}/chat`, {
         method: 'POST',
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ message: msg }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { message?: string } | null;
+        const errorMessage = body?.message ?? 'Nao foi possivel processar a mensagem agora.';
+        setMessages((prev) => prev.map(m => m.id === newAsstId ? { ...m, conteudo: errorMessage } : m));
+        return;
+      }
       if (res.ok && res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let assistantText = '';
+        let sseBuffer = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          assistantText += chunk;
+          if (res.headers.get('content-type')?.includes('text/event-stream')) {
+            sseBuffer += chunk;
+            const events = sseBuffer.split('\n\n');
+            sseBuffer = events.pop() ?? '';
+            for (const event of events) {
+              const eventType = event.split('\n').find((line) => line.startsWith('event: '))?.slice(7);
+              const dataLine = event.split('\n').find((line) => line.startsWith('data: '));
+              if (!dataLine || eventType === 'done') continue;
+              const payload = JSON.parse(dataLine.slice(6)) as { delta?: string; message?: string };
+              if (eventType === 'error') {
+                assistantText = payload.message ?? 'Erro no stream do assistente.';
+              } else {
+                assistantText += payload.delta ?? '';
+              }
+            }
+          } else {
+            assistantText += chunk;
+          }
           setMessages((prev) => prev.map(m => m.id === newAsstId ? { ...m, conteudo: assistantText } : m));
         }
       }
@@ -119,9 +160,9 @@ export function ChatSidebar({ estrategiaId, isOpen, onToggle }: ChatSidebarProps
       </div>
 
       <div className="mkt-chat-suggestions">
-        {suggestions.map((s) => (
-          <button key={s} className="mkt-chat-chip" onClick={() => handleSend(s)}>
-            {s}
+        {[...contextSuggestions, ...inconsistencyFlags.map((flag) => `Corrigir ${flag}`)].slice(0, 6).map((suggestion) => (
+          <button key={suggestion} className="mkt-chat-chip" onClick={() => handleSend(suggestion)}>
+            {suggestion}
           </button>
         ))}
       </div>

@@ -18,50 +18,80 @@ export interface MktNotification {
   createdAt: string;
 }
 
-const notifications: MktNotification[] = [];
+type MktNotificationRow = {
+  id: string;
+  empresa_id: string;
+  user_id?: string | null;
+  tipo: MktNotificationType;
+  titulo: string;
+  mensagem: string;
+  entidade_id?: string | null;
+  entidade_tipo?: string | null;
+  lida: boolean;
+  created_at: string;
+};
 
-export function emitNotification(
+export async function emitNotification(
   empresaId: string,
   tipo: MktNotificationType,
   titulo: string,
   mensagem: string,
   opts: { userId?: string | undefined; entidadeId?: string | undefined; entidadeTipo?: string | undefined } = {},
-): MktNotification {
-  const notification: MktNotification = {
+): Promise<MktNotification> {
+  const row = {
     id: crypto.randomUUID(),
-    empresaId,
-    userId: opts.userId,
+    empresa_id: empresaId,
+    user_id: opts.userId ?? null,
     tipo,
     titulo,
     mensagem,
-    entidadeId: opts.entidadeId,
-    entidadeTipo: opts.entidadeTipo,
+    entidade_id: opts.entidadeId ?? null,
+    entidade_tipo: opts.entidadeTipo ?? null,
     lida: false,
-    createdAt: new Date().toISOString(),
+    created_at: new Date().toISOString(),
   };
-  notifications.push(notification);
-  return notification;
+
+  const supabase = await getSupabaseClient();
+  const { data, error } = await supabase.from('mkt_notifications').insert(row).select().single();
+  if (error) throw new Error(error.message);
+  return mapNotification(data as MktNotificationRow);
 }
 
-export function listNotifications(
+export async function listNotifications(
   empresaId: string,
   opts: { userId?: string; unreadOnly?: boolean } = {},
-): MktNotification[] {
-  return notifications.filter((n) => {
-    if (n.empresaId !== empresaId) return false;
-    if (opts.userId && n.userId && n.userId !== opts.userId) return false;
-    if (opts.unreadOnly && n.lida) return false;
-    return true;
-  });
+): Promise<MktNotification[]> {
+  const supabase = await getSupabaseClient();
+  let query = supabase
+    .from('mkt_notifications')
+    .select('*')
+    .eq('empresa_id', empresaId);
+
+  if (opts.userId) {
+    query = query.or(`user_id.is.null,user_id.eq.${opts.userId}`);
+  }
+
+  if (opts.unreadOnly) {
+    query = query.eq('lida', false);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(50);
+  if (error) throw new Error(error.message);
+  return ((data as MktNotificationRow[] | null) ?? []).map(mapNotification);
 }
 
-export function markNotificationRead(notificationId: string): boolean {
-  const n = notifications.find((item) => item.id === notificationId);
-  if (n) {
-    n.lida = true;
-    return true;
-  }
-  return false;
+export async function markNotificationRead(notificationId: string, empresaId: string): Promise<boolean> {
+  const supabase = await getSupabaseClient();
+  const { data, error } = await supabase
+    .from('mkt_notifications')
+    .update({ lida: true })
+    .eq('id', notificationId)
+    .eq('empresa_id', empresaId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return Boolean(data);
 }
 
 export function notifyStrategyReady(empresaId: string, estrategiaId: string, nome: string) {
@@ -115,5 +145,25 @@ export function notifyDiagnosticoReady(empresaId: string, estrategiaId: string) 
 }
 
 export function resetNotificationsForTests() {
-  notifications.length = 0;
+  // Notifications are persisted through Supabase; kept for test compatibility.
+}
+
+function mapNotification(row: MktNotificationRow): MktNotification {
+  return {
+    id: row.id,
+    empresaId: row.empresa_id,
+    userId: row.user_id ?? undefined,
+    tipo: row.tipo,
+    titulo: row.titulo,
+    mensagem: row.mensagem,
+    entidadeId: row.entidade_id ?? undefined,
+    entidadeTipo: row.entidade_tipo ?? undefined,
+    lida: row.lida,
+    createdAt: row.created_at,
+  };
+}
+
+async function getSupabaseClient() {
+  const { createSupabaseServerClient } = await import('../supabase-admin');
+  return createSupabaseServerClient();
 }

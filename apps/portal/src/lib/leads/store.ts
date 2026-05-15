@@ -6,6 +6,12 @@ import {
   Domain, DomainSchema,
   EmailCadencia,
   EmailTemplate,
+  LeadCaptureFonte,
+  LeadSourceCaptureRequestSchema,
+  LeadSourceRecord,
+  LeadSourceRecordSchema,
+  LeadSourceRun,
+  LeadSourceRunSchema,
   Agent,
   AgentLog,
   Campaign, CampaignSchema,
@@ -56,11 +62,142 @@ function slugify(value: string) {
     .replace(/^_+|_+$/g, '');
 }
 
+function nullable<T>(value: T | undefined): T | null {
+  return value ?? null;
+}
+
+function handoffPriority(score: number): 'alta' | 'media' | 'baixa' {
+  if (score >= 80) return 'alta';
+  if (score >= 60) return 'media';
+  return 'baixa';
+}
+
 function parseJsonObject(input: unknown) {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new LeadsValidationError('JSON object payload is required.', 400);
   }
   return input as Record<string, unknown>;
+}
+
+function optionalText(input: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = input[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  }
+  return undefined;
+}
+
+function optionalNumber(input: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = input[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = Number(value.replace(/[^\d.,-]/g, '').replace(',', '.'));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function optionalInteger(input: Record<string, unknown>, ...keys: string[]) {
+  const value = optionalNumber(input, ...keys);
+  return value === undefined ? undefined : Math.round(value);
+}
+
+function optionalStringArray(input: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = input[key];
+    if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+  }
+  return undefined;
+}
+
+function normalizeStableKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9@.:/-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function sourceKeyFor(fonte: LeadCaptureFonte, raw: Record<string, unknown>) {
+  const key =
+    fonte === 'linkedin'
+      ? optionalText(raw, 'linkedin_url', 'email', 'contato_email', 'empresa_linkedin_url')
+      : fonte === 'cnpj_biz'
+        ? optionalText(raw, 'cnpj', 'empresa_cnpj')
+        : fonte === 'google_maps'
+          ? optionalText(raw, 'place_id', 'site', 'telefone', 'nome')
+          : optionalText(raw, 'url_site', 'site', 'email', 'contato_email');
+
+  if (key) return `${fonte}:${normalizeStableKey(key)}`;
+
+  const company = optionalText(raw, 'empresa_nome', 'nome_fantasia', 'razao_social', 'nome');
+  if (!company) throw new LeadsValidationError('Captured record must include a stable source key or company name.', 422);
+  return `${fonte}:${normalizeStableKey(company)}`;
+}
+
+function leadHashFor(fonte: LeadCaptureFonte, raw: Record<string, unknown>, sourceKey: string) {
+  const email = optionalText(raw, 'email', 'contato_email', 'email_cadastral');
+  if (email) return `email:${email.toLowerCase()}`;
+
+  const cnpj = optionalText(raw, 'cnpj', 'empresa_cnpj');
+  if (cnpj) return `cnpj:${normalizeStableKey(cnpj)}`;
+
+  const site = optionalText(raw, 'url_site', 'site');
+  if (site) return `site:${normalizeStableKey(site.replace(/^https?:\/\//i, '').replace(/\/$/, ''))}`;
+
+  return sourceKey;
+}
+
+function normalizeCapturedLead(context: LeadsRequestContext, fonte: LeadCaptureFonte, raw: Record<string, unknown>, sourceKey: string) {
+  const email = optionalText(raw, 'email', 'contato_email', 'email_cadastral');
+  const companyName =
+    optionalText(raw, 'empresa_nome', 'nome_fantasia', 'razao_social', 'nome') ??
+    (() => { throw new LeadsValidationError('Captured record requires empresa_nome, nome_fantasia, razao_social, or nome.', 422); })();
+  const siteUrl = optionalText(raw, 'url_site', 'site');
+  const tecnologias = optionalStringArray(raw, 'tecnologias', 'site_tecnologias');
+
+  return LeadSchema.parse({
+    company_id: context.companyId,
+    empresa_nome: companyName,
+    empresa_cnpj: optionalText(raw, 'cnpj', 'empresa_cnpj'),
+    contato_nome: optionalText(raw, 'contato_nome', 'nome_contato') ?? 'Contato a identificar',
+    contato_email: email && z.string().email().safeParse(email).success ? email.toLowerCase() : undefined,
+    contato_cargo: optionalText(raw, 'cargo', 'contato_cargo'),
+    contato_linkedin: optionalText(raw, 'linkedin_url', 'contato_linkedin'),
+    contato_telefone: optionalText(raw, 'telefone', 'ddd_telefone', 'contato_telefone'),
+    setor: optionalText(raw, 'setor', 'cnae_descricao', 'categoria'),
+    porte: optionalText(raw, 'porte', 'tamanho_empresa'),
+    regiao: optionalText(raw, 'regiao', 'uf', 'endereco_completo'),
+    cidade: optionalText(raw, 'municipio', 'cidade'),
+    estado: optionalText(raw, 'uf', 'estado'),
+    funcionarios: optionalInteger(raw, 'funcionarios', 'funcionarios_estimado'),
+    faturamento: optionalNumber(raw, 'faturamento', 'faturamento_estimado', 'capital_social'),
+    fonte,
+    fonte_url: optionalText(raw, 'linkedin_url', 'empresa_linkedin_url', 'url_site', 'site'),
+    etapa: 'captado',
+    email_valido: email ? 'nao_verificado' : 'nao_verificado',
+    site_url: siteUrl && z.string().url().safeParse(siteUrl).success ? siteUrl : undefined,
+    site_tecnologias: tecnologias ?? [],
+    site_pagespeed: optionalInteger(raw, 'page_speed_score', 'site_pagespeed'),
+    site_https: typeof raw.https_ativo === 'boolean' ? raw.https_ativo : siteUrl?.startsWith('https://'),
+    site_blog_ativo: typeof raw.presenca_blog === 'boolean' ? raw.presenca_blog : undefined,
+    headline: optionalText(raw, 'headline', 'titulo_pagina', 'meta_descricao'),
+    ultima_atividade: optionalText(raw, 'ultima_atividade', 'ultima_publicacao'),
+    conexoes_comum: optionalInteger(raw, 'conexoes_comum'),
+    hash_deduplicacao: leadHashFor(fonte, raw, sourceKey),
+    fontes_origem: [fonte],
+    created_by: context.userId,
+    created_at: now(),
+    updated_at: now(),
+    id: crypto.randomUUID(),
+  });
 }
 
 function normalizeZodError(error: z.ZodError) {
@@ -630,6 +767,8 @@ let agents: Agent[] = [];
 let campaigns: Campaign[] = [];
 let emailCadencias: EmailCadencia[] = [];
 let emailTemplates: EmailTemplate[] = [];
+let sourceRuns: LeadSourceRun[] = [];
+let sourceRecords: LeadSourceRecord[] = [];
 let agentLogs: AgentLog[] = [];
 let reports: Report[] = [];
 
@@ -642,6 +781,8 @@ export function resetLeadsStoreForTests() {
   campaigns = clone(initialCampaigns);
   emailCadencias = clone(initialEmailCadencias);
   emailTemplates = clone(initialEmailTemplates);
+  sourceRuns = [];
+  sourceRecords = [];
   agentLogs = clone(initialAgentLogs);
   reports = clone(initialReports);
 }
@@ -773,6 +914,123 @@ export function createLead(context: LeadsRequestContext, data: unknown) {
     if (error instanceof z.ZodError) throw normalizeZodError(error);
     throw error;
   }
+}
+
+export function captureLeadsFromSource(context: LeadsRequestContext, data: unknown) {
+  const input = parseJsonObject(data);
+  try {
+    const parsed = LeadSourceCaptureRequestSchema.parse(input);
+    const baseRun = LeadSourceRunSchema.parse({
+      id: crypto.randomUUID(),
+      company_id: context.companyId,
+      fonte: parsed.fonte,
+      query: parsed.query,
+      status: parsed.fail_reason ? 'failed' : 'processing',
+      total_records: parsed.records.length,
+      created_by: context.userId,
+      started_at: now(),
+      created_at: now(),
+    });
+
+    sourceRuns.push(baseRun);
+
+    if (parsed.fail_reason) {
+      Object.assign(baseRun, {
+        status: 'failed',
+        error: parsed.fail_reason,
+        completed_at: now(),
+      });
+      return { run: baseRun, records: [] as LeadSourceRecord[], leads: [] as Lead[] };
+    }
+
+    const createdLeads: Lead[] = [];
+    const createdRecords: LeadSourceRecord[] = [];
+
+    for (const raw of parsed.records) {
+      const capturedAt = now();
+      try {
+        const sourceKey = sourceKeyFor(parsed.fonte, raw);
+        const candidate = normalizeCapturedLead(context, parsed.fonte, raw, sourceKey);
+        const duplicate = leads.find((lead) =>
+          lead.company_id === context.companyId &&
+          (
+            Boolean(candidate.hash_deduplicacao) && lead.hash_deduplicacao === candidate.hash_deduplicacao ||
+            Boolean(candidate.contato_email) && lead.contato_email?.toLowerCase() === candidate.contato_email?.toLowerCase() ||
+            Boolean(candidate.empresa_cnpj) && lead.empresa_cnpj === candidate.empresa_cnpj
+          )
+        );
+
+        const record = LeadSourceRecordSchema.parse({
+          id: crypto.randomUUID(),
+          company_id: context.companyId,
+          source_run_id: baseRun.id,
+          fonte: parsed.fonte,
+          source_key: sourceKey,
+          raw_payload: raw,
+          normalized_lead_id: duplicate?.id ?? candidate.id,
+          duplicate_status: duplicate ? 'duplicate' : 'new',
+          duplicate_of_lead_id: duplicate?.id,
+          captured_at: capturedAt,
+          created_at: capturedAt,
+        });
+
+        if (duplicate) {
+          if (!duplicate.fontes_origem.includes(parsed.fonte)) duplicate.fontes_origem.push(parsed.fonte);
+          duplicate.updated_at = capturedAt;
+          baseRun.duplicates++;
+        } else {
+          leads.push(candidate);
+          createdLeads.push(candidate);
+          baseRun.leads_created++;
+        }
+
+        sourceRecords.push(record);
+        createdRecords.push(record);
+      } catch (error) {
+        const record = LeadSourceRecordSchema.parse({
+          id: crypto.randomUUID(),
+          company_id: context.companyId,
+          source_run_id: baseRun.id,
+          fonte: parsed.fonte,
+          source_key: `${parsed.fonte}:invalid:${createdRecords.length + 1}`,
+          raw_payload: raw,
+          duplicate_status: 'new',
+          error: error instanceof Error ? error.message : 'Record normalization failed.',
+          captured_at: capturedAt,
+          created_at: capturedAt,
+        });
+        sourceRecords.push(record);
+        createdRecords.push(record);
+        baseRun.failed_records++;
+      }
+    }
+
+    Object.assign(baseRun, {
+      status: baseRun.failed_records === parsed.records.length && parsed.records.length > 0 ? 'failed' : 'done',
+      error: baseRun.failed_records > 0 ? `${baseRun.failed_records} captured records failed normalization.` : undefined,
+      completed_at: now(),
+    });
+
+    return { run: baseRun, records: createdRecords, leads: createdLeads };
+  } catch (error) {
+    if (error instanceof z.ZodError) throw normalizeZodError(error);
+    throw error;
+  }
+}
+
+export function listSourceRuns(context: LeadsRequestContext) {
+  return sourceRuns
+    .filter((run) => run.company_id === context.companyId)
+    .sort((left, right) => (right.created_at ?? '').localeCompare(left.created_at ?? ''));
+}
+
+export function getSourceRun(context: LeadsRequestContext, id: string) {
+  const run = sourceRuns.find((item) => item.id === id && item.company_id === context.companyId);
+  if (!run) throw new LeadsValidationError('Source run nÃ£o encontrado.', 404);
+  return {
+    run,
+    records: sourceRecords.filter((record) => record.company_id === context.companyId && record.source_run_id === id),
+  };
 }
 
 export function updateLead(context: LeadsRequestContext, id: string, data: unknown) {
@@ -1047,21 +1305,42 @@ export function handoffToClick(context: LeadsRequestContext, leadId: string): Le
   const lead = leads.find((l) => l.id === leadId && l.company_id === context.companyId);
   if (!lead) throw new LeadsValidationError('Lead não encontrado.', 404);
 
-  const cadenciaItems = emailCadencias.filter((ec) => ec.lead_id === leadId);
+  const cadenciaItems = emailCadencias
+    .filter((ec) => ec.lead_id === leadId && ec.company_id === context.companyId)
+    .sort((left, right) => (left.created_at ?? '').localeCompare(right.created_at ?? ''));
   const respostas = cadenciaItems.filter((ec) => ec.status === 'respondido').length;
+  const aberturas = cadenciaItems.filter((ec) => ec.status === 'aberto' || Boolean(ec.aberto_em)).length;
+  const cliques = cadenciaItems.filter((ec) => ec.status === 'clicou').length;
+  const firstCadencia = cadenciaItems[0];
+  const lastCadencia = cadenciaItems[cadenciaItems.length - 1];
+  const icp = lead.icp_id ? icps.find((i) => i.id === lead.icp_id && i.company_id === context.companyId) : undefined;
+  const dominio = lastCadencia?.dominio_id
+    ? domains.find((item) => item.id === lastCadencia.dominio_id && item.company_id === context.companyId)
+    : undefined;
+  const priority = handoffPriority(lead.score);
 
   const payload: LeadQualifiedEvent = {
     event: 'lead.qualified',
+    timestamp: now(),
+    module_source: 'fbr-leads',
     data: {
       lead_id: lead.id!,
+      empresa_id: context.companyId,
       empresa_nome: lead.empresa_nome,
-      contato_nome: lead.contato_nome,
-      contato_email: lead.contato_email!,
+      empresa_cnpj: nullable(lead.empresa_cnpj),
+      contato_nome: nullable(lead.contato_nome),
+      contato_email: nullable(lead.contato_email),
+      contato_cargo: nullable(lead.contato_cargo),
+      contato_linkedin: nullable(lead.contato_linkedin),
+      contato_telefone: nullable(lead.contato_telefone),
       score: lead.score,
-      ...(lead.icp_id ? { icp_origem: icps.find((i) => i.id === lead.icp_id)?.nome } : {}),
+      icp_id: nullable(lead.icp_id),
+      icp_nome: nullable(icp?.nome),
+      ...(icp?.nome ? { icp_origem: icp.nome } : {}),
+      etapa_final: 'sql_entregue',
       historico_interacoes: cadenciaItems.map((item) => ({
         agente: item.agente ?? 'sistema',
-        conteudo: item.body ?? item.subject ?? '',
+        conteudo: item.resposta_conteudo ?? item.body ?? item.subject ?? '',
         data: item.created_at ?? now(),
         tipo:
           item.status === 'respondido'
@@ -1070,18 +1349,56 @@ export function handoffToClick(context: LeadsRequestContext, leadId: string): Le
               ? 'email_aberto'
               : item.status === 'bounce'
                 ? 'email_bounce'
-                : 'email_enviado',
+                : item.status === 'clicou'
+                  ? 'email_clicou'
+                  : 'email_enviado',
+        metadata: {
+          toque_numero: item.toque,
+          subject: item.subject ?? '',
+          ...(item.body ? { body_preview: item.body.slice(0, 500) } : {}),
+        },
       })),
       dados_enriquecimento: {
-        ...(lead.porte ? { porte: lead.porte } : {}),
-        ...(lead.setor ? { setor: lead.setor } : {}),
-        ...(lead.regiao ? { regiao: lead.regiao } : {}),
-        ...(typeof lead.funcionarios === 'number' ? { funcionarios: lead.funcionarios } : {}),
-        ...(typeof lead.faturamento === 'number' ? { faturamento_estimado: lead.faturamento } : {}),
-        ...(lead.presenca_digital ? { presenca_digital: lead.presenca_digital } : {}),
+        cnpj: nullable(lead.empresa_cnpj),
+        setor: nullable(lead.setor),
+        porte: nullable(lead.porte),
+        funcionarios: nullable(lead.funcionarios),
+        faturamento_estimado: nullable(lead.faturamento),
+        regiao: nullable(lead.regiao),
+        site: nullable(lead.site_url),
+        presenca_digital: nullable(lead.presenca_digital),
+        tecnologias: lead.site_tecnologias,
+      },
+      cadencia: {
+        total_toques: 4,
+        toques_enviados: cadenciaItems.length,
+        cadencia_completa: cadenciaItems.length >= 4,
+        primeiro_envio: nullable(firstCadencia?.enviado_em ?? firstCadencia?.created_at),
+        ultimo_envio: nullable(lastCadencia?.enviado_em ?? lastCadencia?.created_at),
+        total_emails: cadenciaItems.length,
+        total_aberturas: aberturas,
+        total_cliques: cliques,
+        dominio_utilizado: nullable(dominio?.dominio),
+      },
+      deduplicacao: {
+        fontes_origem: lead.fontes_origem,
+        hash_principal: nullable(lead.hash_deduplicacao ?? lead.contato_email?.toLowerCase()),
+        duplicatas_encontradas: leads.filter((item) =>
+          item.company_id === context.companyId &&
+          item.id !== lead.id &&
+          Boolean(lead.contato_email) &&
+          item.contato_email?.toLowerCase() === lead.contato_email?.toLowerCase()
+        ).length,
       },
       cadencia_completa: cadenciaItems.length >= 4,
       total_respostas: respostas,
+      prioridade: priority,
+      motivo_prioridade: respostas > 0
+        ? `Respondeu positivamente com score ${lead.score}.`
+        : `Score ${lead.score} classificado como prioridade ${priority}.`,
+      sugestao_acao: respostas > 0
+        ? 'Agendar conversa comercial com contexto completo do lead.'
+        : 'Revisar contexto de cadencia antes do contato comercial.',
     },
   };
 
