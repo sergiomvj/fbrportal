@@ -175,12 +175,16 @@
 }
 
 .finance-agent-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
   gap: 12px;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
 }
 
 .finance-agent-card {
+  flex: 0 0 260px;
   display: grid;
   min-height: 178px;
   gap: 8px;

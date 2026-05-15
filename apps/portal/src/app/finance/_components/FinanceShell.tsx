@@ -28,18 +28,8 @@ export function FinanceShell() {
         <div>
           <p>FBR-Finance</p>
           <h1>Operacao financeira governada por agentes</h1>
-          <span>Modulo de entrada para KPIs, navegacao financeira, slots Vault e visibilidade de governanca.</span>
+          <span>Modulo de entrada para KPIs, navegacao financeira e visibilidade de governanca.</span>
         </div>
-        <AgentPicker
-          agents={visibleArvaAgents}
-          companyId="empresa-1"
-          linkedAgents={linkedAgents}
-          moduleId="finance"
-          moduleTags={financeAgentTags}
-          onSelect={({ agent }) =>
-            setLinkedAgents((current) => (current.some((item) => item.id === agent.id) ? current : [...current, agent]))
-          }
-        />
       </section>
 
       <section aria-label="KPIs Finance" className="finance-kpis">
