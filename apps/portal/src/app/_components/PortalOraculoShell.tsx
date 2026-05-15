@@ -6,7 +6,6 @@ import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveOraculoContext } from '@/lib/oraculo/context';
 import type { OraculoQueryResponse } from '@/lib/oraculo/types';
 import { Sidebar } from './Sidebar';
-import { Topbar } from './Topbar';
 
 const OPEN_KEY = 'fbr:oraculo:open';
 const WIDTH_KEY = 'fbr:oraculo:width';
@@ -149,7 +148,6 @@ export function PortalOraculoShell({ children }: { children: React.ReactNode }) 
       <div className="portal-shell">
         <Sidebar />
         <div className="portal-main">
-          <Topbar />
           <main className="portal-content">{children}</main>
         </div>
       </div>
@@ -167,7 +165,6 @@ export function PortalOraculoShell({ children }: { children: React.ReactNode }) 
     >
       <Sidebar />
       <div className="portal-shell-main">
-        <Topbar />
         <div className="portal-oraculo-shell__main">
           <button
             aria-controls="oraculo-panel"

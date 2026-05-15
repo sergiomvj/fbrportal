@@ -3,6 +3,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useSession } from '@fbr/auth/client';
+
+interface Company {
+  id: string;
+  nome: string;
+  logo?: string;
+}
+
+const MOCK_COMPANIES: Company[] = [
+  { id: '11111111-1111-4111-8111-111111111111', nome: 'Empresa Alpha' },
+  { id: '22222222-2222-4222-8222-222222222222', nome: 'Empresa Beta' },
+];
 
 const MODULES = [
   { id: 'mkt', label: 'Marketing', href: '/mkt', icon: (
@@ -36,8 +48,11 @@ const MODULES = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCompanyOpen, setIsCompanyOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company>(MOCK_COMPANIES[0]!);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -46,7 +61,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
       <button
         className="sidebar-mobile-toggle"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
@@ -59,7 +73,6 @@ export function Sidebar() {
         </span>
       </button>
 
-      {/* Overlay for mobile */}
       {isMobileOpen && (
         <div className="sidebar-overlay" onClick={() => setIsMobileOpen(false)} />
       )}
@@ -71,7 +84,7 @@ export function Sidebar() {
             {!isCollapsed && (
               <div className="sidebar__logo-meta">
                 <span className="sidebar__logo-text">Portal</span>
-                <span className="sidebar__logo-version">v2.0</span>
+                <span className="sidebar__logo-version">v2.1</span>
               </div>
             )}
           </Link>
@@ -86,7 +99,39 @@ export function Sidebar() {
           </button>
         </div>
 
-        <nav className="sidebar__nav" aria-label="Main navigation">
+        {/* Company Selector Integration */}
+        <div className="sidebar__company">
+          <button
+            className="sidebar__company-trigger"
+            onClick={() => setIsCompanyOpen(!isCompanyOpen)}
+          >
+            <div className="sidebar__company-icon">🏢</div>
+            {!isCollapsed && (
+              <>
+                <span className="sidebar__company-name">{selectedCompany.nome}</span>
+                <span className="sidebar__company-arrow">▼</span>
+              </>
+            )}
+          </button>
+          {!isCollapsed && isCompanyOpen && (
+            <div className="sidebar__company-dropdown">
+              {MOCK_COMPANIES.map((company) => (
+                <button
+                  key={company.id}
+                  className={`sidebar__company-option ${company.id === selectedCompany.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedCompany(company);
+                    setIsCompanyOpen(false);
+                  }}
+                >
+                  {company.nome}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <nav className="sidebar__nav">
           <ul className="sidebar__menu">
             {MODULES.map((module) => (
               <li key={module.id}>
@@ -94,11 +139,9 @@ export function Sidebar() {
                   href={module.href}
                   className={`sidebar__link ${isActive(module.href) ? 'active' : ''}`}
                   onClick={() => setIsMobileOpen(false)}
-                  title={isCollapsed ? module.label : undefined}
                 >
                   <span className="sidebar__link-icon">{module.icon}</span>
                   {!isCollapsed && <span className="sidebar__link-label">{module.label}</span>}
-                  {isActive(module.href) && <span className="sidebar__link-indicator" />}
                 </Link>
               </li>
             ))}
@@ -106,12 +149,36 @@ export function Sidebar() {
         </nav>
 
         <div className="sidebar__footer">
-          <Link href="/admin" className={`sidebar__link ${isActive('/admin') ? 'active' : ''}`} title={isCollapsed ? 'Admin' : undefined}>
+          {/* Notifications Placeholder */}
+          <button className="sidebar__link" title={isCollapsed ? 'Notificações' : undefined}>
+            <span className="sidebar__link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            </span>
+            {!isCollapsed && <span className="sidebar__link-label">Notificações</span>}
+            <span className="sidebar__badge">3</span>
+          </button>
+
+          <Link href="/admin" className={`sidebar__link ${isActive('/admin') ? 'active' : ''}`} title={isCollapsed ? 'Configurações' : undefined}>
             <span className="sidebar__link-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             </span>
             {!isCollapsed && <span className="sidebar__link-label">Configurações</span>}
           </Link>
+
+          <div className="sidebar__divider" />
+
+          {/* User Profile Integration */}
+          <button className="sidebar__user" title={isCollapsed ? user?.email : undefined}>
+            <div className="sidebar__user-avatar">
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            {!isCollapsed && (
+              <div className="sidebar__user-info">
+                <span className="sidebar__user-name">{user?.email?.split('@')[0] || 'Operador'}</span>
+                <span className="sidebar__user-role">{user?.role || 'Admin'}</span>
+              </div>
+            )}
+          </button>
         </div>
       </aside>
 
@@ -140,22 +207,14 @@ export function Sidebar() {
         .hamburger span {
           display: block;
           height: 2px;
-          background: var(--color-text-primary, #fff);
+          background: #fff;
           border-radius: 1px;
           transition: all 0.2s;
         }
 
-        .hamburger.open span:nth-child(1) {
-          transform: rotate(45deg) translate(4px, 4px);
-        }
-
-        .hamburger.open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .hamburger.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(4px, -4px);
-        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
 
         .sidebar-overlay {
           display: none;
@@ -172,33 +231,28 @@ export function Sidebar() {
           top: 0;
           bottom: 0;
           width: 260px;
-          background: #080b12;
+          background: #0f172a;
           border-right: 1px solid rgba(255, 255, 255, 0.06);
           display: flex;
           flex-direction: column;
           z-index: 1000;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          background: linear-gradient(180deg, #0f172a 0%, #080b12 100%);
         }
 
-        .sidebar.collapsed {
-          width: 80px;
-        }
+        .sidebar.collapsed { width: 80px; }
 
         .sidebar__header {
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 24px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          background: radial-gradient(circle at top left, rgba(249, 115, 22, 0.08), transparent 100%);
         }
 
         .sidebar__logo {
           display: flex;
           align-items: center;
           text-decoration: none;
-          color: var(--color-text-primary, #fff);
+          color: #fff;
           gap: 12px;
         }
 
@@ -214,29 +268,10 @@ export function Sidebar() {
           font-size: 16px;
           color: #fff;
           box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
-          flex-shrink: 0;
         }
 
-        .sidebar__logo-meta {
-          display: flex;
-          flex-direction: column;
-          line-height: 1.2;
-        }
-
-        .sidebar__logo-text {
-          font-size: 22px;
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          color: #fff;
-        }
-
-        .sidebar__logo-version {
-          font-size: 11px;
-          color: #f97316;
-          font-weight: 800;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-        }
+        .sidebar__logo-text { font-size: 22px; font-weight: 900; letter-spacing: -0.03em; }
+        .sidebar__logo-version { font-size: 11px; color: #f97316; font-weight: 800; text-transform: uppercase; }
 
         .sidebar__collapse-btn {
           background: rgba(255, 255, 255, 0.05);
@@ -249,135 +284,119 @@ export function Sidebar() {
           align-items: center;
           justify-content: center;
           border-radius: 10px;
+        }
+
+        /* Company Selector Styles */
+        .sidebar__company { padding: 0 16px 16px; position: relative; }
+        .sidebar__company-trigger {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          color: #fff;
+          cursor: pointer;
           transition: all 0.2s;
         }
-
-        .sidebar__collapse-btn:hover {
-          background: #f97316;
-          color: #fff;
-          border-color: #f97316;
+        .sidebar__company-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: #f97316; }
+        .sidebar__company-name { flex: 1; text-align: left; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar__company-arrow { font-size: 10px; color: #94a3b8; }
+        .sidebar__company-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 16px;
+          right: 16px;
+          background: #1e293b;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          z-index: 1001;
+          margin-top: 4px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+          overflow: hidden;
         }
-
-        .sidebar__nav {
-          flex: 1;
-          overflow-y: auto;
-          padding: 32px 16px;
-          scrollbar-width: none;
+        .sidebar__company-option {
+          width: 100%;
+          padding: 12px 16px;
+          background: none;
+          border: none;
+          color: #f3f7fb;
+          text-align: left;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background 0.2s;
         }
+        .sidebar__company-option:hover { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .sidebar__company-option.active { color: #f97316; font-weight: 700; }
 
-        .sidebar__nav::-webkit-scrollbar {
-          display: none;
-        }
-
-        .sidebar__menu {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
+        .sidebar__nav { flex: 1; overflow-y: auto; padding: 16px 12px; scrollbar-width: none; }
+        .sidebar__menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 
         .sidebar__link {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 14px 18px;
-          border-radius: 16px;
+          gap: 14px;
+          padding: 12px 16px;
+          border-radius: 14px;
           text-decoration: none;
           color: #94a3b8;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           font-weight: 600;
           font-size: 15px;
+          background: none;
+          border: none;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
         }
+        .sidebar__link:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
+        .sidebar__link.active { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .sidebar__link-icon { width: 22px; height: 22px; opacity: 0.7; flex-shrink: 0; }
+        .sidebar__link.active .sidebar__link-icon, .sidebar__link:hover .sidebar__link-icon { opacity: 1; color: #f97316; }
 
-        .sidebar__link:hover {
-          background: rgba(255, 255, 255, 0.05);
+        .sidebar__badge { background: #f97316; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 8px; margin-left: auto; }
+        .sidebar.collapsed .sidebar__badge { position: absolute; top: 6px; right: 6px; }
+
+        .sidebar__footer { padding: 16px 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; gap: 4px; }
+        .sidebar__divider { height: 1px; background: rgba(255, 255, 255, 0.05); margin: 8px 4px; }
+
+        .sidebar__user {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 14px;
+          cursor: pointer;
           color: #fff;
-          transform: translateX(6px);
+          transition: all 0.2s;
+          width: 100%;
         }
-
-        .sidebar.collapsed .sidebar__link:hover {
-          transform: none;
-        }
-
-        .sidebar__link.active {
-          background: rgba(249, 115, 22, 0.12);
-          color: #f97316;
-        }
-
-        .sidebar__link-icon {
-          width: 22px;
-          height: 22px;
+        .sidebar__user:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(249, 115, 22, 0.3); }
+        .sidebar__user-avatar {
+          width: 36px;
+          height: 36px;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
+          font-weight: 800;
+          font-size: 15px;
           flex-shrink: 0;
-          opacity: 0.7;
-          transition: all 0.2s;
         }
-
-        .sidebar__link.active .sidebar__link-icon,
-        .sidebar__link:hover .sidebar__link-icon {
-          opacity: 1;
-          color: #f97316;
-          transform: scale(1.1);
-        }
-
-        .sidebar__link-label {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .sidebar__link-indicator {
-          position: absolute;
-          left: -4px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 4px;
-          height: 18px;
-          background: #f97316;
-          border-radius: 0 4px 4px 0;
-          box-shadow: 0 0 15px rgba(249, 115, 22, 0.6);
-        }
-
-        .sidebar__footer {
-          padding: 16px 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
+        .sidebar__user-info { display: flex; flex-direction: column; text-align: left; }
+        .sidebar__user-name { font-size: 14px; font-weight: 700; }
+        .sidebar__user-role { font-size: 10px; color: #f97316; font-weight: 800; text-transform: uppercase; }
 
         @media (max-width: 768px) {
-          .sidebar-mobile-toggle {
-            display: block;
-          }
-
-          .sidebar-overlay {
-            display: block;
-          }
-
-          .sidebar {
-            transform: translateX(-100%);
-            display: block;
-          }
-
-          .sidebar-overlay {
-            display: block;
-          }
-
-          .sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-          }
-
-          .sidebar.mobile-open {
-            transform: translateX(0);
-          }
-
-          .sidebar.collapsed {
-            width: 260px;
-          }
+          .sidebar-mobile-toggle { display: block; }
+          .sidebar { transform: translateX(-100%); width: 280px; }
+          .sidebar.mobile-open { transform: translateX(0); }
         }
       `}</style>
     </>

@@ -360,7 +360,7 @@ input {
 .portal-oraculo-shell__main {
   min-width: 0;
   position: relative;
-  padding-top: 80px; /* Aumentado para melhor respiro */
+  padding-top: 24px;
   transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -602,9 +602,9 @@ input {
 }
 
 .portal-content {
-  margin-top: 80px;
+  margin-top: 0;
   padding: 32px;
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
