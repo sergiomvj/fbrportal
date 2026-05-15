@@ -50,6 +50,7 @@ const CATEGORY_TO_QUEUE: Record<MktJobCategory, MktQueueName> = {
   calendario: 'mkt:calendario',
   export: 'mkt:export',
   fbr_click_delivery: 'mkt:fbr_click',
+  report_outputs: 'mkt:estrategia',
 };
 
 export function getQueueForCategory(category: MktJobCategory): MktQueueName {

@@ -1,4 +1,5 @@
-import { MktEstrategia, MktRequestContext, listCopyByEstrategia, listCalendarByEstrategia, listRoadmapByEstrategia } from './mkt/store';
+import type { MktEstrategia } from './mkt/types';
+import { MktRequestContext, listCopyByEstrategia, listCalendarByEstrategia, listRoadmapByEstrategia } from './mkt/store';
 // Aqui importaríamos os stores das outras áreas quando estiverem prontos para receber
 // import { createArtigoFromMkt } from './redacao/store';
 // import { schedulePostFromMkt } from './social/store';

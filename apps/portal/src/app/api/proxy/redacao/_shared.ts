@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export function contextFromHeaders(headers: Headers) {
   const userId = headers.get('x-user-id') ?? '33333333-3333-4333-8333-333333333333';
   const companyId = headers.get('x-company-id') ?? headers.get('x-workspace-id') ?? '11111111-1111-4111-8111-111111111111';
@@ -22,7 +24,7 @@ export function jsonError(error: unknown) {
     return Response.json({ code: 'NOT_FOUND', message: error.message }, { status: 404 });
   }
 
-  return Response.json({ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' }, { status: 500 });
+  return Response.json({ code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'An unexpected error occurred.' }, { status: 500 });
 }
 
 export function contextOrResponse(request: Request) {

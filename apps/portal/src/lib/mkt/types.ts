@@ -8,6 +8,7 @@ export const MktJobCategorySchema = z.enum([
   'calendario',
   'export',
   'fbr_click_delivery',
+  'report_outputs',
 ]);
 export type MktJobCategory = z.infer<typeof MktJobCategorySchema>;
 
