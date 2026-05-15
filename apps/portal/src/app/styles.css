@@ -580,3 +580,66 @@ input {
     right: 16px;
   }
 }
+
+/* Portal Shell with Sidebar + Topbar */
+.portal-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.portal-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 260px;
+  transition: margin-left 0.2s ease;
+}
+
+.portal-shell.collapsed .portal-main {
+  margin-left: 72px;
+}
+
+.portal-content {
+  margin-top: 60px;
+  padding: 20px;
+  min-height: calc(100vh - 60px);
+}
+
+.portal-shell-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.portal-oraculo-shell .portal-shell-main {
+  margin-left: 260px;
+}
+
+.portal-oraculo-shell.collapsed .portal-shell-main {
+  margin-left: 72px;
+}
+
+/* Color variables for Sidebar/Topbar */
+:root {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-hover: #334155;
+  --color-border: #334155;
+  --color-text-primary: #f3f7fb;
+  --color-text-secondary: #94a3b8;
+  --color-primary: #3b82f6;
+  --color-primary-alpha: rgba(59, 130, 246, 0.15);
+  --color-error: #ef4444;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+}
+
+@media (max-width: 768px) {
+  .portal-main {
+    margin-left: 0;
+  }
+  
+  .portal-oraculo-shell .portal-shell-main {
+    margin-left: 0;
+  }
+}

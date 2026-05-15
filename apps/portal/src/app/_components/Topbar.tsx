@@ -31,7 +31,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 
 export function Topbar() {
   const { user } = useSession();
-  const [selectedCompany, setSelectedCompany] = useState<Company>(MOCK_COMPANIES[0]);
+  const [selectedCompany, setSelectedCompany] = useState<Company>(MOCK_COMPANIES[0]!);
   const [isCompanyOpen, setIsCompanyOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -130,8 +130,8 @@ export function Topbar() {
               {user?.email?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div className="topbar__user-info">
-              <span className="topbar__user-name">{user?.name || 'Operador'}</span>
-              <span className="topbar__user-role">Admin</span>
+              <span className="topbar__user-name">{user?.email?.split('@')[0] || 'Operador'}</span>
+              <span className="topbar__user-role">{user?.role || 'Admin'}</span>
             </div>
           </button>
           {isProfileOpen && (
@@ -141,7 +141,7 @@ export function Topbar() {
                   {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div>
-                  <strong>{user?.name || 'Operador'}</strong>
+                  <strong>{user?.email?.split('@')[0] || 'Operador'}</strong>
                   <span>{user?.email}</span>
                 </div>
               </div>
