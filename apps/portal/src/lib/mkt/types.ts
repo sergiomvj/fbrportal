@@ -27,6 +27,15 @@ export const MktEstrategiaStatusSchema = z.enum([
 ]);
 export type MktEstrategiaStatus = z.infer<typeof MktEstrategiaStatusSchema>;
 
+export const MktAvaliacaoStatusSchema = z.enum([
+  'rascunho',
+  'em_avaliacao',
+  'aprovado',
+  'rejeitado',
+]);
+export type MktAvaliacaoStatus = z.infer<typeof MktAvaliacaoStatusSchema>;
+
+
 export const MktRoleSchema = z.enum(['Admin', 'Editor', 'Viewer']);
 export type MktRole = z.infer<typeof MktRoleSchema>;
 
@@ -207,6 +216,23 @@ export const MktRoadmapTaskSchema = z.object({
   created_at: z.string().optional(),
 });
 export type MktRoadmapTask = z.infer<typeof MktRoadmapTaskSchema>;
+
+export const MktAvaliacaoSchema = z.object({
+  id: z.string().uuid().optional(),
+  empresa_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  titulo_proposta: z.string().min(3),
+  report_markdown: z.string().optional(),
+  dados_estrategicos: z.record(z.unknown()).default({}),
+  status: MktAvaliacaoStatusSchema.default('rascunho'),
+  feedback_board: z.string().nullable().optional(),
+  aprovado_por: z.string().uuid().nullable().optional(),
+  aprovado_em: z.string().nullable().optional(),
+  projeto_gerado_id: z.string().uuid().nullable().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+export type MktAvaliacao = z.infer<typeof MktAvaliacaoSchema>;
 
 export const MktChatMessageSchema = z.object({
   id: z.string().uuid().optional(),

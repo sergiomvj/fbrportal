@@ -18,11 +18,14 @@ import type {
   MktEstrategiasQuery,
   MktEstrategiaStatus,
   CampaignsQuery,
+  MktAvaliacao,
+  MktAvaliacaoStatus,
 } from './types';
 import {
   MktEstrategiaSchema,
   MktEstrategiasQuerySchema,
   CampaignsQuerySchema,
+  MktAvaliacaoSchema,
 } from './types';
 import { buildCampaignRowsFromStrategyVersions } from './campaigns';
 import { calculateAverageGenerationSeconds } from './store-helpers';
@@ -514,4 +517,95 @@ export async function createCampaign(context: MktRequestContext, data: unknown) 
   void context;
   void data;
   throw new MktValidationError('Campaigns are generated as strategy-version artifacts; use the strategy generation or regeneration flow.', 409);
+}
+
+// Avaliações Estratégicas
+export async function createAvaliacao(context: MktRequestContext, data: unknown): Promise<MktAvaliacao> {
+  const input = parseJsonObject(data);
+  const validated = MktAvaliacaoSchema.parse({
+    ...input,
+    empresa_id: context.companyId,
+    user_id: context.userId,
+    status: 'rascunho',
+    created_at: now(),
+    updated_at: now(),
+  });
+
+  const supabase = createSupabaseServerClient();
+  const { data: result, error } = await supabase.from('mkt_avaliacoes_estrategicas').insert(validated).select().single();
+  
+  if (error) throw new Error(error.message);
+  return result as MktAvaliacao;
+}
+
+export async function listAvaliacoes(context: MktRequestContext): Promise<MktAvaliacao[]> {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('mkt_avaliacoes_estrategicas')
+    .select('*')
+    .eq('empresa_id', context.companyId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data as MktAvaliacao[];
+}
+
+export async function approveAvaliacao(avaliacaoId: string, context: MktRequestContext): Promise<MktEstrategia> {
+  const supabase = createSupabaseServerClient();
+  
+  // 1. Buscar a avaliação
+  const { data: avaliacao, error: aError } = await supabase
+    .from('mkt_avaliacoes_estrategicas')
+    .select('*')
+    .eq('id', avaliacaoId)
+    .single();
+
+  if (aError || !avaliacao) throw new Error('Avaliacao not found');
+
+  // 2. Criar a Estratégia oficial
+  const estrategia = await createEstrategia(context, {
+    nome: avaliacao.titulo_proposta,
+    nicho: (avaliacao.dados_estrategicos as any)?.nicho ?? 'Geral',
+    status: 'processando'
+  });
+
+  // 3. Criar o Diagnóstico inicial baseado nos dados da avaliação
+  const dados = avaliacao.dados_estrategicos as any;
+  await saveDiagnostico({
+    estrategia_id: estrategia.id!,
+    uvp: dados.uvp ?? 'UVP não definida',
+    persona: {
+      nome: 'Persona Primária',
+      idade: 'N/A',
+      profissao: dados.target_audience?.primary ?? 'Público Geral',
+      dores: dados.pain_points ?? [],
+      desejos: dados.desires ?? [],
+      comportamento_digital: 'Digital Native',
+      canais_preferidos: dados.channels?.map((c: any) => c.name) ?? [],
+    },
+    swot: {
+      forcas: ['Estratégia Aprovada pelo Board'],
+      fraquezas: [],
+      oportunidades: [],
+      ameacas: [],
+    },
+    score_viab: 100,
+    justificativa: 'Aprovado pelo Board Estratégico',
+    aprovado: true,
+    aprovado_por: context.userId,
+    aprovado_em: now()
+  });
+
+  // 4. Marcar a avaliação como aprovada e vincular ao projeto gerado
+  await supabase
+    .from('mkt_avaliacoes_estrategicas')
+    .update({ 
+      status: 'aprovado', 
+      aprovado_por: context.userId, 
+      aprovado_em: now(),
+      projeto_gerado_id: estrategia.id 
+    })
+    .eq('id', avaliacaoId);
+
+  return estrategia;
 }
