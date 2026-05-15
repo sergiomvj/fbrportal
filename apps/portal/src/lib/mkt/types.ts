@@ -121,9 +121,30 @@ export const MktPosicionamentoSchema = z.object({
 });
 export type MktPosicionamento = z.infer<typeof MktPosicionamentoSchema>;
 
+export const MktEstrategiaCaptacaoSchema = z.object({
+  fontes_trafego: z.array(z.string()),
+  iscas_digitais: z.array(z.string()),
+  metrica_principal: z.string(),
+});
+
+export const MktEstrategiaVendasQuentesSchema = z.object({
+  fluxo_contato_imediato: z.string(),
+  oferta_irresistivel: z.string(),
+  scripts_base: z.array(z.string()),
+});
+
+export const MktEstrategiaParceriasSchema = z.object({
+  perfis_parceiros: z.array(z.string()),
+  modelo_comissionamento: z.string(),
+  acoes_co_marketing: z.array(z.string()),
+});
+
 export const MktEstrategiaConteudoSchema = z.object({
   posicionamento: MktPosicionamentoSchema,
   mix_canais: z.array(MktCanalSchema),
+  captacao: MktEstrategiaCaptacaoSchema.optional(),
+  vendas_quentes: MktEstrategiaVendasQuentesSchema.optional(),
+  parcerias: MktEstrategiaParceriasSchema.optional(),
   kpis: z.array(MktKpiSchema),
   campanhas: z.array(MktCampanhaSchema),
 });
