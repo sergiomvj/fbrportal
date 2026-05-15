@@ -55,7 +55,6 @@ RUN adduser --system --uid 1001 nextjs
 # Copia os artefatos de build do Next.js (standalone mode)
 COPY --from=installer --chown=nextjs:nodejs /app/apps/portal/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/portal/.next/static ./apps/portal/.next/static
-COPY --from=installer --chown=nextjs:nodejs /app/apps/portal/public ./apps/portal/public
 
 USER nextjs
 
