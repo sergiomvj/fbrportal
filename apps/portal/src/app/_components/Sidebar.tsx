@@ -203,67 +203,65 @@ export function Sidebar() {
         }
 
         .sidebar__logo-icon {
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
           border-radius: 12px;
           font-weight: 900;
-          font-size: 14px;
+          font-size: 16px;
           color: #fff;
-          box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+          box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
           flex-shrink: 0;
         }
 
         .sidebar__logo-meta {
           display: flex;
           flex-direction: column;
-          line-height: 1.1;
+          line-height: 1.2;
         }
 
         .sidebar__logo-text {
-          font-size: 18px;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          background: linear-gradient(to bottom, #fff, #94a3b8);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-size: 22px;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          color: #fff;
         }
 
         .sidebar__logo-version {
-          font-size: 10px;
+          font-size: 11px;
           color: #f97316;
-          font-weight: 700;
-          opacity: 0.8;
-          margin-top: 2px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
         }
 
         .sidebar__collapse-btn {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          color: var(--color-text-secondary, #94a3b8);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #fff;
           cursor: pointer;
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 8px;
+          border-radius: 10px;
           transition: all 0.2s;
         }
 
         .sidebar__collapse-btn:hover {
-          background: rgba(249, 115, 22, 0.1);
-          color: #f97316;
-          border-color: rgba(249, 115, 22, 0.3);
+          background: #f97316;
+          color: #fff;
+          border-color: #f97316;
         }
 
         .sidebar__nav {
           flex: 1;
           overflow-y: auto;
-          padding: 24px 12px;
+          padding: 32px 16px;
           scrollbar-width: none;
         }
 
@@ -277,27 +275,27 @@ export function Sidebar() {
           padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
         }
 
         .sidebar__link {
           display: flex;
           align-items: center;
-          gap: 14px;
-          padding: 12px 14px;
-          border-radius: 14px;
+          gap: 16px;
+          padding: 14px 18px;
+          border-radius: 16px;
           text-decoration: none;
-          color: var(--color-text-secondary, #94a3b8);
+          color: #94a3b8;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
-          font-weight: 500;
-          font-size: 14px;
+          font-weight: 600;
+          font-size: 15px;
         }
 
         .sidebar__link:hover {
-          background: rgba(255, 255, 255, 0.03);
-          color: var(--color-text-primary, #fff);
-          transform: translateX(4px);
+          background: rgba(255, 255, 255, 0.05);
+          color: #fff;
+          transform: translateX(6px);
         }
 
         .sidebar.collapsed .sidebar__link:hover {
@@ -305,18 +303,18 @@ export function Sidebar() {
         }
 
         .sidebar__link.active {
-          background: rgba(249, 115, 22, 0.1);
+          background: rgba(249, 115, 22, 0.12);
           color: #f97316;
         }
 
         .sidebar__link-icon {
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          opacity: 0.6;
+          opacity: 0.7;
           transition: all 0.2s;
         }
 
@@ -324,6 +322,7 @@ export function Sidebar() {
         .sidebar__link:hover .sidebar__link-icon {
           opacity: 1;
           color: #f97316;
+          transform: scale(1.1);
         }
 
         .sidebar__link-label {

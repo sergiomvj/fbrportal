@@ -196,34 +196,35 @@ export function Topbar() {
         .topbar__company-btn {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 8px 14px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-          color: var(--color-text-primary, #fff);
+          gap: 12px;
+          padding: 10px 18px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          color: #fff;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .topbar__company-btn:hover {
-          border-color: var(--color-primary, #f97316);
-          background: rgba(249, 115, 22, 0.05);
+          border-color: #f97316;
+          background: rgba(249, 115, 22, 0.08);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
         .topbar__company-icon {
-          font-size: 16px;
+          font-size: 18px;
         }
 
         .topbar__company-name {
-          font-size: 13px;
-          font-weight: 600;
+          font-size: 14px;
+          font-weight: 700;
         }
 
         .topbar__dropdown-arrow {
-          font-size: 8px;
-          color: var(--color-text-secondary, #94a3b8);
-          opacity: 0.5;
+          font-size: 10px;
+          color: #94a3b8;
+          opacity: 0.8;
         }
 
         .topbar__icon-btn {
@@ -231,78 +232,82 @@ export function Topbar() {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 38px;
-          height: 38px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
+          width: 44px;
+          height: 44px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
           cursor: pointer;
-          font-size: 16px;
-          color: var(--color-text-secondary, #94a3b8);
+          font-size: 18px;
+          color: #94a3b8;
           transition: all 0.2s;
         }
 
         .topbar__icon-btn:hover {
-          background: rgba(249, 115, 22, 0.1);
-          color: var(--color-primary, #f97316);
-          border-color: rgba(249, 115, 22, 0.2);
+          background: rgba(249, 115, 22, 0.15);
+          color: #f97316;
+          border-color: rgba(249, 115, 22, 0.3);
+          transform: translateY(-2px);
         }
 
         .topbar__badge {
           position: absolute;
-          top: -4px;
-          right: -4px;
-          min-width: 18px;
-          height: 18px;
-          padding: 0 4px;
-          background: var(--color-primary, #f97316);
-          border-radius: 9px;
-          font-size: 10px;
-          font-weight: 700;
+          top: -6px;
+          right: -6px;
+          min-width: 20px;
+          height: 20px;
+          padding: 0 6px;
+          background: #f97316;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 800;
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+          box-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+          border: 2px solid #0f172a;
         }
 
         .topbar__profile-btn {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 4px 12px 4px 4px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
+          gap: 12px;
+          padding: 6px 16px 6px 6px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
           cursor: pointer;
-          color: var(--color-text-primary, #fff);
+          color: #fff;
           transition: all 0.2s;
         }
 
         .topbar__profile-btn:hover {
-          background: rgba(249, 115, 22, 0.1);
-          border-color: rgba(249, 115, 22, 0.2);
+          background: rgba(249, 115, 22, 0.12);
+          border-color: rgba(249, 115, 22, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
         .topbar__avatar {
-          width: 30px;
-          height: 30px;
+          width: 36px;
+          height: 36px;
           background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 700;
-          font-size: 13px;
+          font-weight: 800;
+          font-size: 15px;
           color: #fff;
-          box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+          box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
         }
 
         .topbar__avatar.large {
-          width: 44px;
-          height: 44px;
-          font-size: 16px;
-          border-radius: 14px;
+          width: 52px;
+          height: 52px;
+          font-size: 20px;
+          border-radius: 16px;
         }
 
         .topbar__user-info {
@@ -312,17 +317,18 @@ export function Topbar() {
         }
 
         .topbar__user-name {
-          font-size: 13px;
-          font-weight: 600;
+          font-size: 14px;
+          font-weight: 700;
           line-height: 1.2;
         }
 
         .topbar__user-role {
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--color-primary, #f97316);
-          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #f97316;
+          font-weight: 800;
+          margin-top: 2px;
         }
 
         .topbar__dropdown-menu {
