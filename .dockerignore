@@ -1,0 +1,61 @@
+# Dependências instaladas (serão reinstaladas no container)
+node_modules
+**/node_modules
+
+# Builds anteriores
+.next
+**/.next
+dist
+**/dist
+
+# Cache do Turborepo e ferramentas
+.turbo
+**/.turbo
+
+# Arquivos de ambiente (injetados via EasyPanel)
+.env
+.env.local
+**/.env.local
+*.env.local
+
+# Arquivos de IDE e OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.swp
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+logs
+npm-debug.log*
+
+# Testes e relatórios
+coverage
+playwright-report
+test-results
+
+# Documentação interna
+docs
+fbr-portal-docs
+
+# Arquivos de TypeScript compilados (regenerados no build)
+*.tsbuildinfo
+
+# Scripts de automação local
+scripts
+squads
+
+# Ferramentas de AI locais (não necessárias no container)
+.agents
+.ai
+.aiox-core
+.antigravity
+.claude
+.codex
+.cursor
+.gemini
