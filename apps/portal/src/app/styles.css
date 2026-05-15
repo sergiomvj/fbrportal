@@ -360,6 +360,7 @@ input {
 .portal-oraculo-shell__main {
   min-width: 0;
   position: relative;
+  padding-top: 60px; /* Compensa o Topbar fixo */
 }
 
 .portal-oraculo-trigger {
@@ -621,14 +622,14 @@ input {
 
 /* Color variables for Sidebar/Topbar */
 :root {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-hover: #334155;
-  --color-border: #334155;
+  --color-bg-primary: rgba(15, 23, 42, 0.95);
+  --color-bg-secondary: #080b12;
+  --color-bg-hover: rgba(249, 115, 22, 0.1);
+  --color-border: rgba(255, 255, 255, 0.08);
   --color-text-primary: #f3f7fb;
   --color-text-secondary: #94a3b8;
-  --color-primary: #3b82f6;
-  --color-primary-alpha: rgba(59, 130, 246, 0.15);
+  --color-primary: #f97316;
+  --color-primary-alpha: rgba(249, 115, 22, 0.15);
   --color-error: #ef4444;
   --color-success: #10b981;
   --color-warning: #f59e0b;
