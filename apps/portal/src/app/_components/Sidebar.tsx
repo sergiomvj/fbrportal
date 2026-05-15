@@ -105,11 +105,15 @@ export function Sidebar() {
             className="sidebar__company-trigger"
             onClick={() => setIsCompanyOpen(!isCompanyOpen)}
           >
-            <div className="sidebar__company-icon">🏢</div>
+            <div className="sidebar__company-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>
+            </div>
             {!isCollapsed && (
               <>
                 <span className="sidebar__company-name">{selectedCompany.nome}</span>
-                <span className="sidebar__company-arrow">▼</span>
+                <span className="sidebar__company-arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: 10, height: 10 }}><path d="m6 9 6 6 6-6"/></svg>
+                </span>
               </>
             )}
           </button>
@@ -149,7 +153,6 @@ export function Sidebar() {
         </nav>
 
         <div className="sidebar__footer">
-          {/* Notifications Placeholder */}
           <button className="sidebar__link" title={isCollapsed ? 'Notificações' : undefined}>
             <span className="sidebar__link-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -170,12 +173,12 @@ export function Sidebar() {
           {/* User Profile Integration */}
           <button className="sidebar__user" title={isCollapsed ? user?.email : undefined}>
             <div className="sidebar__user-avatar">
-              {user?.email?.charAt(0).toUpperCase() || 'U'}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             {!isCollapsed && (
               <div className="sidebar__user-info">
                 <span className="sidebar__user-name">{user?.email?.split('@')[0] || 'Operador'}</span>
-                <span className="sidebar__user-role">{user?.role || 'Admin'}</span>
+                <span className="sidebar__user-role">FBR Operator</span>
               </div>
             )}
           </button>
@@ -302,8 +305,20 @@ export function Sidebar() {
           transition: all 0.2s;
         }
         .sidebar__company-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: #f97316; }
+
+        .sidebar__company-icon {
+          width: 20px;
+          height: 20px;
+          color: #f97316;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.8;
+        }
+
         .sidebar__company-name { flex: 1; text-align: left; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sidebar__company-arrow { font-size: 10px; color: #94a3b8; }
+        .sidebar__company-arrow { color: #94a3b8; display: flex; }
+
         .sidebar__company-dropdown {
           position: absolute;
           top: 100%;
@@ -353,7 +368,7 @@ export function Sidebar() {
           cursor: pointer;
         }
         .sidebar__link:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
-        .sidebar__link.active { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .sidebar__link.active { background: rgba(249, 115, 22, 0.12); color: #f97316; }
         .sidebar__link-icon { width: 22px; height: 22px; opacity: 0.7; flex-shrink: 0; }
         .sidebar__link.active .sidebar__link-icon, .sidebar__link:hover .sidebar__link-icon { opacity: 1; color: #f97316; }
 
@@ -385,12 +400,11 @@ export function Sidebar() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 800;
-          font-size: 15px;
+          color: #fff;
           flex-shrink: 0;
         }
         .sidebar__user-info { display: flex; flex-direction: column; text-align: left; }
-        .sidebar__user-name { font-size: 14px; font-weight: 700; }
+        .sidebar__user-name { font-size: 14px; font-weight: 700; color: #fff; }
         .sidebar__user-role { font-size: 10px; color: #f97316; font-weight: 800; text-transform: uppercase; }
 
         @media (max-width: 768px) {
