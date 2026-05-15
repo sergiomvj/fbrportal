@@ -162,14 +162,19 @@ export function Topbar() {
           left: 260px;
           right: 0;
           height: 60px;
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(12px);
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(16px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 24px;
+          padding: 0 32px;
           z-index: 100;
+          transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        :global(.collapsed) .topbar {
+          left: 80px;
         }
 
         .topbar__left {
