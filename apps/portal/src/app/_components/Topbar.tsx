@@ -160,7 +160,7 @@ export function Topbar() {
           position: fixed;
           top: 0;
           left: 260px;
-          right: 0;
+          right: var(--oraculo-panel-width, 0px);
           height: 60px;
           background: rgba(15, 23, 42, 0.85);
           backdrop-filter: blur(16px);
@@ -170,7 +170,7 @@ export function Topbar() {
           justify-content: space-between;
           padding: 0 32px;
           z-index: 100;
-          transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         :global(.collapsed) .topbar {
