@@ -140,33 +140,44 @@ export async function createEstrategia(context: MktRequestContext, data: unknown
 }
 
 export async function listEstrategias(context: MktRequestContext, query: Partial<MktEstrategiasQuery> = {}) {
-  const parsed = MktEstrategiasQuerySchema.parse(query);
-  const supabase = createSupabaseServerClient();
+  try {
+    const parsed = MktEstrategiasQuerySchema.parse(query);
+    const supabase = createSupabaseServerClient();
 
-  let q = supabase.from('mkt_estrategias').select('*', { count: 'exact' }).eq('empresa_id', context.companyId);
+    let q = supabase.from('mkt_estrategias').select('*', { count: 'exact' }).eq('empresa_id', context.companyId);
 
-  if (parsed.status && parsed.status.length > 0) {
-    q = q.in('status', parsed.status);
+    if (parsed.status && parsed.status.length > 0) {
+      q = q.in('status', parsed.status);
+    }
+
+    q = q.order(parsed.sort_by, { ascending: parsed.sort_dir === 'asc' });
+
+    const start = (parsed.page - 1) * parsed.page_size;
+    q = q.range(start, start + parsed.page_size - 1);
+
+    const { data, error, count } = await q;
+
+    if (error) {
+      console.error('[MKT-STORE] Error listing estrategias:', error);
+      throw new Error(error.message);
+    }
+
+    return {
+      items: data as MktEstrategia[],
+      pagination: {
+        page: parsed.page,
+        page_size: parsed.page_size,
+        total: count || 0,
+        total_pages: Math.ceil((count || 0) / parsed.page_size),
+      },
+    };
+  } catch (err) {
+    console.error('[MKT-STORE] Critical failure in listEstrategias:', err);
+    return {
+      items: [],
+      pagination: { page: 1, page_size: 10, total: 0, total_pages: 0 }
+    };
   }
-
-  q = q.order(parsed.sort_by, { ascending: parsed.sort_dir === 'asc' });
-
-  const start = (parsed.page - 1) * parsed.page_size;
-  q = q.range(start, start + parsed.page_size - 1);
-
-  const { data, error, count } = await q;
-
-  if (error) throw new Error(error.message);
-
-  return {
-    items: data as MktEstrategia[],
-    pagination: {
-      page: parsed.page,
-      page_size: parsed.page_size,
-      total: count || 0,
-      total_pages: Math.ceil((count || 0) / parsed.page_size),
-    },
-  };
 }
 
 export async function getEstrategia(estrategiaId: string, context: MktRequestContext): Promise<MktEstrategia> {
@@ -436,41 +447,63 @@ export async function getBranding(context: MktRequestContext): Promise<MktBrandi
 export async function getDashboardKpis(context: MktRequestContext): Promise<MktDashboardKpis> {
   const supabase = createSupabaseServerClient();
   
-  const { count: ativas } = await supabase.from('mkt_estrategias').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'ativa');
-  const { count: processando } = await supabase.from('mkt_estrategias').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'processando');
-  
-  const { data: diags } = await supabase.from('mkt_diagnosticos').select('aprovado, mkt_estrategias!inner(empresa_id)').eq('mkt_estrategias.empresa_id', context.companyId);
-  const aprovados = diags?.filter(d => d.aprovado).length || 0;
-  const total_diags = diags?.length || 0;
-  
-  const { count: exports } = await supabase
-    .from('mkt_exports')
-    .select('id, mkt_estrategias!inner(empresa_id)', { count: 'exact', head: true })
-    .eq('mkt_estrategias.empresa_id', context.companyId);
-  const { data: completedJobs } = await supabase
-    .from('mkt_processing_jobs')
-    .select('created_at, started_at, completed_at')
-    .eq('empresa_id', context.companyId)
-    .eq('status', 'done');
-  
-  const { count: jobsFalha } = await supabase.from('mkt_processing_jobs').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'failed');
-  const { count: agentes } = await supabase.from('mkt_agents').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('ativo', true);
+  try {
+    const { count: ativas, error: e1 } = await supabase.from('mkt_estrategias').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'ativa');
+    if (e1) console.error('[MKT-STORE] Error fetching ativas:', e1);
+    
+    const { count: processando, error: e2 } = await supabase.from('mkt_estrategias').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'processando');
+    if (e2) console.error('[MKT-STORE] Error fetching processando:', e2);
+    
+    const { data: diags, error: e3 } = await supabase.from('mkt_diagnosticos').select('aprovado, mkt_estrategias!inner(empresa_id)').eq('mkt_estrategias.empresa_id', context.companyId);
+    if (e3) console.error('[MKT-STORE] Error fetching diagnosticos:', e3);
+    
+    const aprovados = diags?.filter(d => d.aprovado).length || 0;
+    const total_diags = diags?.length || 0;
+    
+    const { count: exports, error: e4 } = await supabase
+      .from('mkt_exports')
+      .select('id, mkt_estrategias!inner(empresa_id)', { count: 'exact', head: true })
+      .eq('mkt_estrategias.empresa_id', context.companyId);
+    if (e4) console.error('[MKT-STORE] Error fetching exports:', e4);
 
-  const taxaAprovacao = total_diags > 0 ? (aprovados / total_diags) * 100 : 0;
-  const tempoMedioGeracao = calculateAverageGenerationSeconds(
-    (completedJobs as Array<{ created_at?: string | null; started_at?: string | null; completed_at?: string | null }> | null) ?? [],
-  );
+    const { data: completedJobs, error: e5 } = await supabase
+      .from('mkt_processing_jobs')
+      .select('created_at, started_at, completed_at')
+      .eq('empresa_id', context.companyId)
+      .eq('status', 'done');
+    if (e5) console.error('[MKT-STORE] Error fetching jobs:', e5);
+    
+    const { count: jobsFalha } = await supabase.from('mkt_processing_jobs').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('status', 'failed');
+    const { count: agentes } = await supabase.from('mkt_agents').select('*', { count: 'exact', head: true }).eq('empresa_id', context.companyId).eq('ativo', true);
 
-  return {
-    estrategias_ativas: ativas || 0,
-    estrategias_processando: processando || 0,
-    total_diagnosticos: total_diags,
-    total_exportacoes: exports || 0,
-    taxa_aprovacao: Number(taxaAprovacao.toFixed(1)),
-    tempo_medio_geracao: tempoMedioGeracao,
-    agentes_ativos: agentes || 0,
-    jobs_falha: jobsFalha || 0,
-  };
+    const taxaAprovacao = total_diags > 0 ? (aprovados / total_diags) * 100 : 0;
+    const tempoMedioGeracao = calculateAverageGenerationSeconds(
+      (completedJobs as Array<{ created_at?: string | null; started_at?: string | null; completed_at?: string | null }> | null) ?? [],
+    );
+
+    return {
+      estrategias_ativas: ativas || 0,
+      estrategias_processando: processando || 0,
+      total_diagnosticos: total_diags,
+      total_exportacoes: exports || 0,
+      taxa_aprovacao: Number(taxaAprovacao.toFixed(1)),
+      tempo_medio_geracao: tempoMedioGeracao,
+      agentes_ativos: agentes || 0,
+      jobs_falha: jobsFalha || 0,
+    };
+  } catch (err) {
+    console.error('[MKT-STORE] Critical failure in getDashboardKpis:', err);
+    return {
+      estrategias_ativas: 0,
+      estrategias_processando: 0,
+      total_diagnosticos: 0,
+      total_exportacoes: 0,
+      taxa_aprovacao: 0,
+      tempo_medio_geracao: 0,
+      agentes_ativos: 0,
+      jobs_falha: 0,
+    };
+  }
 }
 
 export function parseCampaignsQuery(url: string): CampaignsQuery {
