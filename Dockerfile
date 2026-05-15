@@ -42,7 +42,8 @@ RUN turbo build --filter=@fbr/portal
 # Stage 4: runner — imagem final mínima de produção
 # ============================================================
 FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat
+# fontconfig e ttf-dejavu são necessários para o @napi-rs/canvas funcionar corretamente no Alpine
+RUN apk add --no-cache libc6-compat fontconfig ttf-dejavu
 WORKDIR /app
 
 ENV NODE_ENV=production

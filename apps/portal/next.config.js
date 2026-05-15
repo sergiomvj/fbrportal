@@ -12,6 +12,12 @@ const nextConfig = {
     // Também ignoramos erros de tipo durante o build para evitar quebras em produção por TS
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Força a inclusão do canvas no bundle standalone, já que é carregado dinamicamente
+    outputFileTracingIncludes: {
+      '/**/*': ['./node_modules/@napi-rs/canvas/**/*'],
+    },
+  },
 };
 
 export default nextConfig;
