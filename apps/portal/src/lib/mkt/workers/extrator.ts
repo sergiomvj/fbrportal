@@ -9,6 +9,20 @@ import { emitExtracao } from '../sse';
 import type { MktProcessingJob, MktSwot, MktPersona } from '../types';
 import { bucketForStoragePath } from '../storage';
 
+// Configuração para silenciar avisos de canvas em ambiente sem suporte a desenho nativo
+if (typeof process !== 'undefined') {
+  (process as any).env.PDFJS_NO_CANVAS = 'true';
+  
+  // Polyfills mínimos para silenciar PDF.js no Node
+  if (typeof global !== 'undefined') {
+    (global as any).DOMMatrix = class {};
+    (global as any).Path2D = class {};
+    (global as any).ImageData = class {
+      constructor(width: number, height: number) { return { width, height, data: new Uint8ClampedArray(width * height * 4) }; }
+    };
+  }
+}
+
 const openai = createOpenAI({
   apiKey: process.env.ZAI_API_KEY || process.env.OPENAI_API_KEY || 'dummy',
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
