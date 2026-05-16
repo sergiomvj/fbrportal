@@ -12,11 +12,16 @@ const nextConfig = {
     // Também ignoramos erros de tipo durante o build para evitar quebras em produção por TS
     ignoreBuildErrors: true,
   },
-  experimental: {
-    // Força a inclusão do canvas no bundle standalone, já que é carregado dinamicamente
-    outputFileTracingIncludes: {
-      '/**/*': ['./node_modules/@napi-rs/canvas/**/*'],
-    },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // @napi-rs/canvas não está disponível no ambiente de container/Alpine.
+      // Ignoramos o módulo para silenciar os warnings do pdfjs-dist permanentemente.
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@napi-rs/canvas': false,
+      };
+    }
+    return config;
   },
 };
 
